@@ -1,3 +1,11 @@
+import os
+import tempfile
+import itertools
+import glob
+from pathlib import Path
+import keras
+
+from ..utils import download_file
 
 def make_divisible(v: int, divisor: int = 4, min_value: int | None = None) -> int:
     """Ensure layer has # channels divisble by divisor
@@ -18,3 +26,76 @@ def make_divisible(v: int, divisor: int = 4, min_value: int | None = None) -> in
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
+
+def load_model(model_path: os.PathLike) -> keras.Model:
+    """Loads a Keras model stored either remotely or locally.
+    NOTE: Currently only WANDB and local files are supported.
+
+    Args:
+        model_path (str): Source path
+            WANDB: wandb:[[entity/]project/]collectionName:[alias]
+            FILE: file:/path/to/model.tf
+            S3: s3:bucket/prefix/model.tf
+            https: https://path/to/model.tf
+
+    Returns:
+        keras.Model: Model
+    """
+
+    model_path = str(model_path)
+    model_prefix: str = model_path.split(":")[0].lower() if ":" in model_path else ""
+
+    match model_prefix:
+
+        case "wandb":
+            import wandb  # pylint: disable=C0415
+            api = wandb.Api()
+            model_path = model_path.removeprefix("wandb:")
+            artifact = api.artifact(model_path, type="model")
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                artifact.download(tmpdirname)
+                model_path = tmpdirname
+                # Find the model file
+                file_paths = [glob.glob(f"{tmpdirname}/*.{f}") for f in ["keras", "tf", "h5"]]
+                file_paths = list(itertools.chain.from_iterable(file_paths))
+                if not file_paths:
+                    raise FileNotFoundError("Model file not found in artifact")
+                model_path = file_paths[0]
+                model = keras.models.load_model(model_path)
+            # END WITH
+
+        case "s3":
+            import boto3  # pylint: disable=C0415
+            from botocore import UNSIGNED  # pylint: disable=C0415
+            from botocore.client import Config  # pylint: disable=C0415
+
+            session = boto3.Session()
+            client = session.client("s3", config=Config(signature_version=UNSIGNED))
+            model_path = model_path.removeprefix("s3:")
+            path_parts = model_path.split(":")[1].split("/")
+
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                model_ext = Path(model_path).suffix
+                dst_path = Path(tmpdirname) / f"model{model_ext}"
+                client.download_file(
+                    Bucket=path_parts[0],
+                    Key="/".join(path_parts[1:]),
+                    Filename=str(dst_path),
+                )
+                model = keras.models.load_model(dst_path)
+            # END WITH
+
+        case "https":
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                model_ext = Path(model_path).suffix
+                dst_path = Path(tmpdirname) / f"model{model_ext}"
+                download_file(model_path, dst_path)
+                model = keras.models.load_model(dst_path)
+            # END WITH
+
+        case _:
+            model_path = model_path.removeprefix("file:")
+            model = keras.models.load_model(model_path)
+    # END MATCH
+
+    return model

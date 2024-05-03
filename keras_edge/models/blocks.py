@@ -12,6 +12,17 @@ def batch_norm(name: str | None = None, momentum=0.9, epsilon=1e-3) -> keras.Lay
     name = name + ".bn" if name else None
     return keras.layers.BatchNormalization(momentum=momentum, epsilon=epsilon, name=name)
 
+def glu(dim: int = -1) -> keras.Layer:
+    """Gated linear unit layer"""
+
+    def layer(x: keras.KerasTensor) -> keras.KerasTensor:
+        out, gate = keras.ops.split(x, num_or_size_splits=2, axis=dim)
+        gate = keras.layers.Activation("sigmoid")(gate)
+        x = keras.layers.Multiply()([out, gate])
+        return x
+    # END DEF
+
+    return layer
 
 def relu(name: str | None = None) -> keras.Layer:
     """ReLU activation layer"""
@@ -61,6 +72,8 @@ def conv2d(
         strides (int | tuple[int, int], optional): Stride length. Defaults to 1.
         padding (str, optional): Padding. Defaults to "same".
         use_bias (bool, optional): Add bias. Defaults to False.
+        groups (int, optional): # groups. Defaults to 1.
+        dilation (int, optional): Dilation rate. Defaults to 1.
         name (str | None, optional): Layer name. Defaults to None.
 
     Returns:
@@ -220,5 +233,6 @@ def mbconv_block(
                 y = keras.layers.Dropout(droprate, noise_shape=(None, 1, 1, 1))(y)
             y = keras.layers.add([x, y], name=name_res)
         return y
+    # END DEF
 
     return layer
