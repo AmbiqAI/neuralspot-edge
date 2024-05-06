@@ -2,17 +2,19 @@
 name = "keras-edge"
 version = "0.1.0"
 description = ""
-authors = ["Adam Page <apage224@gmail.com>"]
+authors = ["Ambiq AI <support.aitg@ambiq.com>"]
 readme = "README.md"
 packages = [
     { include = "keras_edge" },
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 h5py = "^3.10.0"
 keras = "^3.0.4"
 pydantic = "^2.6.1"
+requests = "^2.31.0"
+tqdm = "^4.66.4"
 
 
 [build-system]
