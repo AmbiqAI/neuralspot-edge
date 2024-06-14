@@ -7,17 +7,18 @@ def layer_norm(name: str | None = None, axis=-1, scale: bool = True) -> keras.La
     return keras.layers.LayerNormalization(axis=axis, name=name, scale=scale)
 
 
-def batch_norm(name: str | None = None, momentum=0.9, epsilon=1e-3) -> keras.Layer:
+def batch_norm(name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int = -1) -> keras.Layer:
     """Batch normalization layer"""
     name = name + ".bn" if name else None
-    return keras.layers.BatchNormalization(momentum=momentum, epsilon=epsilon, name=name)
+    return keras.layers.BatchNormalization(momentum=momentum, epsilon=epsilon, axis=axis, name=name)
 
-def glu(dim: int = -1) -> keras.Layer:
+def glu(dim: int = -1, hard: bool = False, name: str | None = None) -> keras.Layer:
     """Gated linear unit layer"""
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         out, gate = keras.ops.split(x, num_or_size_splits=2, axis=dim)
-        gate = keras.layers.Activation("sigmoid")(gate)
+        act = keras.activations.sigmoid if hard else keras.activations.hard_sigmoid
+        gate = keras.layers.Activation(act)(gate)
         x = keras.layers.Multiply()([out, gate])
         return x
     # END DEF
@@ -28,6 +29,12 @@ def relu(name: str | None = None) -> keras.Layer:
     """ReLU activation layer"""
     name = name + ".act" if name else None
     return keras.layers.ReLU(name=name)
+
+def swish(name: str | None = None, hard: bool = False) -> keras.Layer:
+    """Swish activation layer"""
+    name = name + ".act" if name else None
+    act = keras.activations.hard_swish if hard else keras.activations.swish
+    return keras.layers.Activation(act, name=name)
 
 
 def relu6(name: str | None = None) -> keras.Layer:
