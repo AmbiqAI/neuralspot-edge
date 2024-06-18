@@ -7,6 +7,7 @@ import keras
 
 from ..utils import download_file
 
+
 def make_divisible(v: int, divisor: int = 4, min_value: int | None = None) -> int:
     """Ensure layer has # channels divisble by divisor
        https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/mobilenet.py
@@ -27,6 +28,7 @@ def make_divisible(v: int, divisor: int = 4, min_value: int | None = None) -> in
         new_v += divisor
     return new_v
 
+
 def load_model(model_path: os.PathLike) -> keras.Model:
     """Loads a Keras model stored either remotely or locally.
     NOTE: Currently only WANDB and local files are supported.
@@ -46,9 +48,9 @@ def load_model(model_path: os.PathLike) -> keras.Model:
     model_prefix: str = model_path.split(":")[0].lower() if ":" in model_path else ""
 
     match model_prefix:
-
         case "wandb":
             import wandb  # pylint: disable=C0415
+
             api = wandb.Api()
             model_path = model_path.removeprefix("wandb:")
             artifact = api.artifact(model_path, type="model")
@@ -56,7 +58,9 @@ def load_model(model_path: os.PathLike) -> keras.Model:
                 artifact.download(tmpdirname)
                 model_path = tmpdirname
                 # Find the model file
-                file_paths = [glob.glob(f"{tmpdirname}/*.{f}") for f in ["keras", "tf", "h5"]]
+                file_paths = [
+                    glob.glob(f"{tmpdirname}/*.{f}") for f in ["keras", "tf", "h5"]
+                ]
                 file_paths = list(itertools.chain.from_iterable(file_paths))
                 if not file_paths:
                     raise FileNotFoundError("Model file not found in artifact")

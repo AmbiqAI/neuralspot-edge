@@ -1,10 +1,12 @@
-""" RegNet https://arxiv.org/abs/2101.00590"""
+"""RegNet https://arxiv.org/abs/2101.00590"""
+
 from typing import Callable, Literal, cast
 
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, conv2d, make_divisible, relu6, se_block
+from .blocks import batch_norm, conv2d, relu6, se_block
+from .utils import make_divisible
 
 
 class RegNetBlockParam(BaseModel):
@@ -33,7 +35,7 @@ class RegNetParams(BaseModel):
     block_style: Literal["y", "z"] = Field(default="y", description="Block style")
     include_top: bool = Field(default=True, description="Include top")
     dropout: float = Field(default=0.2, description="Dropout rate")
-    model_name: str = Field(default="RegNet", description="Model name")
+    name: str = Field(default="RegNet", description="Model name")
 
 
 def yblock(
@@ -247,5 +249,5 @@ def RegNet(
         if params.dropout > 0 and params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)
         y = keras.layers.Dense(num_classes, dtype="float32", name=name)(y)
-    model = keras.Model(x, y, name=params.model_name)
+    model = keras.Model(x, y, name=params.name)
     return model

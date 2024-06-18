@@ -1,4 +1,5 @@
-""" ConvMixer https://arxiv.org/abs/2201.09792"""
+"""ConvMixer https://arxiv.org/abs/2201.09792"""
+
 from typing import Callable, cast
 
 import keras
@@ -15,7 +16,7 @@ class ConvMixerParams(BaseModel):
     kernel_size: int = Field(default=5, description="Filter size")
     patch_size: int = Field(default=2, description="Patch size")
     include_top: bool = Field(default=True, description="Include top")
-    model_name: str = Field(default="RegNet", description="Model name")
+    name: str = Field(default="RegNet", description="Model name")
 
 
 def conv_mixer_block(

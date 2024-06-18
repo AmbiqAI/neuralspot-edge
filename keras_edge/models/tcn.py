@@ -1,11 +1,11 @@
-"""TCN """
+"""TCN"""
+
 from typing import Literal
 
 import keras
 from pydantic import BaseModel, Field
 
 from .blocks import se_block
-from .defines import KerasLayer
 
 
 class TcnBlockParams(BaseModel):
@@ -16,26 +16,38 @@ class TcnBlockParams(BaseModel):
     filters: int = Field(..., description="# filters")
     kernel: int | tuple[int, int] = Field(default=3, description="Kernel size")
     dilation: int | tuple[int, int] = Field(default=1, description="Dilation rate")
-    ex_ratio = Field(default=1, description="Expansion ratio")
+    ex_ratio: int = Field(default=1, description="Expansion ratio")
     se_ratio: float = Field(default=0, description="Squeeze and excite ratio")
     dropout: float | None = Field(default=None, description="Dropout rate")
-    norm: Literal["batch", "layer"] | None = Field(default="layer", description="Normalization type")
+    norm: Literal["batch", "layer"] | None = Field(
+        default="layer", description="Normalization type"
+    )
 
 
 class TcnParams(BaseModel):
     """TCN parameters"""
 
-    input_kernel: int | tuple[int, int] | None = Field(default=None, description="Input kernel size")
-    input_norm: Literal["batch", "layer"] | None = Field(default="layer", description="Input normalization type")
-    block_type: Literal["lg", "mb", "sm"] = Field(default="mb", description="Block type")
-    blocks: list[TcnBlockParams] = Field(default_factory=list, description="UNext blocks")
-    output_kernel: int | tuple[int, int] = Field(default=3, description="Output kernel size")
+    input_kernel: int | tuple[int, int] | None = Field(
+        default=None, description="Input kernel size"
+    )
+    input_norm: Literal["batch", "layer"] | None = Field(
+        default="layer", description="Input normalization type"
+    )
+    block_type: Literal["lg", "mb", "sm"] = Field(
+        default="mb", description="Block type"
+    )
+    blocks: list[TcnBlockParams] = Field(
+        default_factory=list, description="UNext blocks"
+    )
+    output_kernel: int | tuple[int, int] = Field(
+        default=3, description="Output kernel size"
+    )
     include_top: bool = Field(default=True, description="Include top")
     use_logits: bool = Field(default=True, description="Use logits")
-    model_name: str = Field(default="UNext", description="Model name")
+    name: str = Field(default="UNext", description="Model name")
 
 
-def norm_layer(norm: str, name: str) -> KerasLayer:
+def norm_layer(norm: str, name: str) -> keras.Layer:
     """Normalization layer
 
     Args:
@@ -43,7 +55,7 @@ def norm_layer(norm: str, name: str) -> KerasLayer:
         name (str): Name
 
     Returns:
-        KerasLayer: Layer
+        keras.Layer: Layer
     """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
@@ -64,7 +76,7 @@ def norm_layer(norm: str, name: str) -> KerasLayer:
     return layer
 
 
-def tcn_block_lg(params: TcnBlockParams, name: str) -> KerasLayer:
+def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
     """TCN large block
 
     Args:
@@ -72,7 +84,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> KerasLayer:
         name (str): Name
 
     Returns:
-        KerasLayer: Layer
+        keras.Layer: Layer
     """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
@@ -120,7 +132,9 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> KerasLayer:
             # END IF
 
             if params.dropout and params.dropout > 0:
-                y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{lcl_name}.DROP")(y)
+                y = keras.layers.SpatialDropout2D(
+                    rate=params.dropout, name=f"{lcl_name}.DROP"
+                )(y)
             # END IF
 
         # END FOR
@@ -129,7 +143,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> KerasLayer:
     return layer
 
 
-def tcn_block_mb(params: TcnBlockParams, name: str) -> KerasLayer:
+def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
     """TCN mbconv block
 
     Args:
@@ -137,7 +151,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> KerasLayer:
         name (str): Name
 
     Returns:
-        KerasLayer: Layer
+        keras.Layer: Layer
     """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
@@ -223,14 +237,16 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> KerasLayer:
             y = keras.layers.Add(name=f"{name}.ADD")([y, y_skip])
 
         if params.dropout and params.dropout > 0:
-            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(y)
+            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(
+                y
+            )
         # END IF
         return y
 
     return layer
 
 
-def tcn_block_sm(params: TcnBlockParams, name: str) -> KerasLayer:
+def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
     """TCN small block
 
     Args:
@@ -238,7 +254,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> KerasLayer:
         name (str): Name
 
     Returns:
-        KerasLayer: Layer
+        keras.Layer: Layer
     """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
@@ -309,21 +325,23 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> KerasLayer:
             y = keras.layers.Add(name=f"{name}.ADD")([y, y_skip])
 
         if params.dropout and params.dropout > 0:
-            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(y)
+            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(
+                y
+            )
         # END IF
         return y
 
     return layer
 
 
-def tcn_core(params: TcnParams) -> KerasLayer:
+def tcn_core(params: TcnParams) -> keras.Layer:
     """TCN core
 
     Args:
         params (TcnParams): Parameters
 
     Returns:
-        KerasLayer: Layer
+        keras.Layer: Layer
     """
     if params.block_type == "lg":
         tcn_block = tcn_block_lg
@@ -369,7 +387,10 @@ def Tcn(
     # Encode each channel separately
     if params.input_kernel:
         y = keras.layers.DepthwiseConv2D(
-            kernel_size=params.input_kernel, use_bias=params.input_norm is None, name="ENC.CN", padding="same"
+            kernel_size=params.input_kernel,
+            use_bias=params.input_norm is None,
+            name="ENC.CN",
+            padding="same",
         )(y)
         y = norm_layer(params.input_norm, "ENC")(y)
     # END IF
@@ -394,5 +415,5 @@ def Tcn(
         y = keras.layers.Reshape(y.shape[2:])(y)
 
     # Define the model
-    model = keras.Model(x, y, name=params.model_name)
+    model = keras.Model(x, y, name=params.name)
     return model

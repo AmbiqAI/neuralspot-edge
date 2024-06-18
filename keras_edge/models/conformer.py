@@ -95,7 +95,6 @@ def fc_block(
             depth,
             use_bias=use_bias,
             name=f"{name}.fc2"
-            )(y)
         )(y)
         return y
     # END DEF

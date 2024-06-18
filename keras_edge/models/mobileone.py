@@ -1,9 +1,9 @@
 """MobileOne https://arxiv.org/abs/2206.04040"""
+
 import keras
 from pydantic import BaseModel, Field
 
 from .blocks import batch_norm, conv2d, relu6, se_block
-
 
 
 class MobileOneBlockParams(BaseModel):
@@ -22,10 +22,14 @@ class MobileOneBlockParams(BaseModel):
 class MobileOneParams(BaseModel):
     """MobileOne parameters"""
 
-    blocks: list[MobileOneBlockParams] = Field(default_factory=list, description="MobileOne blocks")
+    blocks: list[MobileOneBlockParams] = Field(
+        default_factory=list, description="MobileOne blocks"
+    )
 
     input_filters: int = Field(default=3, description="Input filters")
-    input_kernel_size: int | tuple[int, int] = Field(default=3, description="Input kernel size")
+    input_kernel_size: int | tuple[int, int] = Field(
+        default=3, description="Input kernel size"
+    )
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     input_padding: int | tuple[int, int] = Field(default=1, description="Input padding")
 
@@ -33,7 +37,7 @@ class MobileOneParams(BaseModel):
     include_top: bool = Field(default=True, description="Include top")
     dropout: float = Field(default=0.2, description="Dropout rate")
     # drop_connect_rate: float = Field(default=0.2, description="Drop connect rate")
-    model_name: str = Field(default="MobileOne", description="Model name")
+    name: str = Field(default="MobileOne", description="Model name")
 
 
 def mobileone_block(
@@ -63,8 +67,14 @@ def mobileone_block(
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_filters = x.shape[-1]
-        stride_len = strides if isinstance(strides, int) else sum(strides) / len(strides)
-        kernel_len = kernel_size if isinstance(kernel_size, int) else sum(kernel_size) / len(kernel_size)
+        stride_len = (
+            strides if isinstance(strides, int) else sum(strides) / len(strides)
+        )
+        kernel_len = (
+            kernel_size
+            if isinstance(kernel_size, int)
+            else sum(kernel_size) / len(kernel_size)
+        )
         is_downsample = stride_len > 1
         is_depthwise = groups > 1 and groups == input_filters
         has_skip_branch = output_filters == input_filters and stride_len == 1
@@ -114,7 +124,9 @@ def mobileone_block(
                 )(x)
                 y_scale = batch_norm(name=name_scale)(y_scale)
                 if is_downsample:
-                    y_scale = keras.layers.MaxPool2D(pool_size=strides, padding="same")(y_scale)
+                    y_scale = keras.layers.MaxPool2D(pool_size=strides, padding="same")(
+                        y_scale
+                    )
             else:
                 y_scale = keras.layers.Conv2D(
                     output_filters,
@@ -145,7 +157,9 @@ def mobileone_block(
                 )(yp)
                 y_branch = batch_norm(name=name_branch)(y_branch)
                 if is_downsample:
-                    y_branch = keras.layers.MaxPool2D(pool_size=strides, padding="same")(y_branch)
+                    y_branch = keras.layers.MaxPool2D(
+                        pool_size=strides, padding="same"
+                    )(y_branch)
             else:
                 y_branch = keras.layers.Conv2D(
                     output_filters,
@@ -248,7 +262,7 @@ def MobileOne(
             y = keras.layers.Dropout(params.dropout)(y)
         y = keras.layers.Dense(num_classes, name=name)(y)
 
-    model = keras.Model(x, y, name=params.model_name)
+    model = keras.Model(x, y, name=params.name)
 
     return model
 

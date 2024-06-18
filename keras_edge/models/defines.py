@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+
 class MBConvParams(BaseModel):
     """MBConv parameters"""
 

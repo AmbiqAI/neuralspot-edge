@@ -1,4 +1,5 @@
-""" UNet """
+"""UNet"""
+
 from typing import Literal
 
 import keras
@@ -19,19 +20,29 @@ class UNetBlockParams(BaseModel):
     skip: bool = Field(default=True, description="Add skip connection")
     seperable: bool = Field(default=False, description="Use seperable convs")
     dropout: float | None = Field(default=None, description="Dropout rate")
-    norm: Literal["batch", "layer"] | None = Field(default="batch", description="Normalization type")
-    dilation: int | tuple[int, int] | None = Field(default=None, description="Dilation factor")
+    norm: Literal["batch", "layer"] | None = Field(
+        default="batch", description="Normalization type"
+    )
+    dilation: int | tuple[int, int] | None = Field(
+        default=None, description="Dilation factor"
+    )
 
 
 class UNetParams(BaseModel):
     """UNet parameters"""
 
-    blocks: list[UNetBlockParams] = Field(default_factory=list, description="UNet blocks")
+    blocks: list[UNetBlockParams] = Field(
+        default_factory=list, description="UNet blocks"
+    )
     include_top: bool = Field(default=True, description="Include top")
     use_logits: bool = Field(default=True, description="Use logits")
-    model_name: str = Field(default="UNet", description="Model name")
-    output_kernel_size: int | tuple[int, int] = Field(default=3, description="Output kernel size")
-    output_kernel_stride: int | tuple[int, int] = Field(default=1, description="Output kernel stride")
+    name: str = Field(default="UNet", description="Model name")
+    output_kernel_size: int | tuple[int, int] = Field(
+        default=3, description="Output kernel size"
+    )
+    output_kernel_stride: int | tuple[int, int] = Field(
+        default=1, description="Output kernel stride"
+    )
 
 
 def UNet(
@@ -119,7 +130,9 @@ def UNet(
 
         skip_layers.append(y if block.skip else None)
 
-        y = keras.layers.MaxPooling2D(block.pool, strides=block.strides, padding="same", name=f"{name}.pool")(y)
+        y = keras.layers.MaxPooling2D(
+            block.pool, strides=block.strides, padding="same", name=f"{name}.pool"
+        )(y)
     # END FOR
 
     #### DECODER ####
@@ -166,7 +179,9 @@ def UNet(
         dname = f"{name}.D{block.depth+1}"
         skip_layer = skip_layers.pop()
         if skip_layer is not None:
-            y = keras.layers.concatenate([y, skip_layer], name=f"{dname}.cat")  # Can add or concatenate
+            y = keras.layers.concatenate(
+                [y, skip_layer], name=f"{dname}.cat"
+            )  # Can add or concatenate
             # Use 1x1 conv to reduce filters
             y = keras.layers.Conv2D(
                 block.filters,
@@ -247,5 +262,5 @@ def UNet(
         y = keras.layers.Reshape(y.shape[2:])(y)
     # END IF
     # Define the model
-    model = keras.Model(x, y, name=params.model_name)
+    model = keras.Model(x, y, name=params.name)
     return model

@@ -38,9 +38,7 @@ def cct_tokenizer_block(
                 kernel_initializer="he_normal",
             )(y)
             y = keras.layers.ZeroPadding2D(padding)(y)
-            y = keras.layers.MaxPool2D(pooling_kernel_size, pooling_stride, "same")(
-                y
-            )
+            y = keras.layers.MaxPool2D(pooling_kernel_size, pooling_stride, "same")(y)
         # END FOR
 
         y = cast(
@@ -132,8 +130,9 @@ def CCT(
 
     # Apply positional embedding.
     if positional_emb:
-
-        dummy_outputs = cct_tokenizer_block()(keras.ops.zeros((1, image_size, image_size, 3)))
+        dummy_outputs = cct_tokenizer_block()(
+            keras.ops.zeros((1, image_size, image_size, 3))
+        )
         seq_length = dummy_outputs.shape[1]
         projection_dim = dummy_outputs.shape[-1]
 
@@ -177,7 +176,9 @@ def CCT(
     representation = keras.layers.LayerNormalization(epsilon=1e-5)(encoded_patches)
     attention_weights = keras.layers.Dense(1)(representation)
     attention_weights = keras.layers.Softmax(axis=1)(attention_weights)
-    weighted_representation = keras.layers.Multiply()([keras.ops.transpose(attention_weights), representation])
+    weighted_representation = keras.layers.Multiply()(
+        [keras.ops.transpose(attention_weights), representation]
+    )
     weighted_representation = keras.ops.squeeze(weighted_representation, -2)
 
     # Classify outputs.

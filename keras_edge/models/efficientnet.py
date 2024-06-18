@@ -1,4 +1,5 @@
-""" EfficientNet https://arxiv.org/abs/2104.00298"""
+"""EfficientNet https://arxiv.org/abs/2104.00298"""
+
 import keras
 from pydantic import BaseModel, Field
 
@@ -10,18 +11,24 @@ from .utils import make_divisible
 class EfficientNetParams(BaseModel):
     """EfficientNet parameters"""
 
-    blocks: list[MBConvParams] = Field(default_factory=list, description="EfficientNet blocks")
+    blocks: list[MBConvParams] = Field(
+        default_factory=list, description="EfficientNet blocks"
+    )
     input_filters: int = Field(default=0, description="Input filters")
-    input_kernel_size: int | tuple[int, int] = Field(default=3, description="Input kernel size")
+    input_kernel_size: int | tuple[int, int] = Field(
+        default=3, description="Input kernel size"
+    )
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     output_filters: int = Field(default=0, description="Output filters")
     include_top: bool = Field(default=True, description="Include top")
     dropout: float = Field(default=0.2, description="Dropout rate")
     drop_connect_rate: float = Field(default=0.2, description="Drop connect rate")
-    model_name: str = Field(default="EfficientNetV2", description="Model name")
+    name: str = Field(default="EfficientNetV2", description="Model name")
 
 
-def efficientnet_core(blocks: list[MBConvParams], drop_connect_rate: float = 0) -> keras.Layer:
+def efficientnet_core(
+    blocks: list[MBConvParams], drop_connect_rate: float = 0
+) -> keras.Layer:
     """EfficientNet core
 
     Args:
@@ -96,12 +103,16 @@ def EfficientNetV2(
         y = relu6(name=name)(y)
     # END IF
 
-    y = efficientnet_core(blocks=params.blocks, drop_connect_rate=params.drop_connect_rate)(y)
+    y = efficientnet_core(
+        blocks=params.blocks, drop_connect_rate=params.drop_connect_rate
+    )(y)
 
     if params.output_filters:
         name = "neck"
         filters = make_divisible(params.output_filters, 8)
-        y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), padding="same", name=name)(y)
+        y = conv2d(
+            filters, kernel_size=(1, 1), strides=(1, 1), padding="same", name=name
+        )(y)
         y = batch_norm(name=name)(y)
         y = relu6(name=name)(y)
 
@@ -112,5 +123,5 @@ def EfficientNetV2(
             y = keras.layers.Dropout(params.dropout)(y)
         y = keras.layers.Dense(num_classes, name=name)(y)
 
-    model = keras.Model(x, y, name=params.model_name)
+    model = keras.Model(x, y, name=params.name)
     return model

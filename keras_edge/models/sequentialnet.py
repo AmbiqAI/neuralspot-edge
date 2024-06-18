@@ -16,10 +16,12 @@ class SequentialLayerParams(BaseModel):
 class SequentialNetworkParams(BaseModel):
     """Sequential Network parameters"""
 
-    layers: list[SequentialLayerParams] = Field(default_factory=list, description="Network layers")
+    layers: list[SequentialLayerParams] = Field(
+        default_factory=list, description="Network layers"
+    )
     include_top: bool = Field(default=True, description="Include top")
     output_activation: str | None = Field(default=None, description="Output activation")
-    model_name: str = Field(default="SequentialNetwork", description="Model name")
+    name: str = Field(default="SequentialNetwork", description="Model name")
 
 
 def SequentialNetwork(
@@ -52,11 +54,13 @@ def SequentialNetwork(
         if params.output_activation:
             y = keras.layers.Activation(params.output_activation)(y)
 
-    model = keras.Model(x, y, name=params.model_name)
+    model = keras.Model(x, y, name=params.name)
     return model
 
 
-def sequentialnet_from_object(x: keras.KerasTensor, params: dict, num_classes: int | None = None) -> keras.Model:
+def sequentialnet_from_object(
+    x: keras.KerasTensor, params: dict, num_classes: int | None = None
+) -> keras.Model:
     """Create model from object
 
     Args:
@@ -67,4 +71,6 @@ def sequentialnet_from_object(x: keras.KerasTensor, params: dict, num_classes: i
     Returns:
         keras.Model: Model
     """
-    return SequentialNetwork(x=x, params=SequentialNetworkParams(**params), num_classes=num_classes)
+    return SequentialNetwork(
+        x=x, params=SequentialNetworkParams(**params), num_classes=num_classes
+    )

@@ -8,7 +8,6 @@ import pandas as pd
 import tensorflow as tf
 
 
-
 def create_tflite_converter(
     model: keras.Model,
     quantize: bool = False,
@@ -50,9 +49,15 @@ def create_tflite_converter(
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
         if test_x is not None:
-            converter.target_spec.supported_ops = supported_ops or [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-            converter.inference_input_type = tf.dtypes.as_dtype(input_type) if input_type else None
-            converter.inference_output_type = tf.dtypes.as_dtype(output_type) if output_type else None
+            converter.target_spec.supported_ops = supported_ops or [
+                tf.lite.OpsSet.TFLITE_BUILTINS_INT8
+            ]
+            converter.inference_input_type = (
+                tf.dtypes.as_dtype(input_type) if input_type else None
+            )
+            converter.inference_output_type = (
+                tf.dtypes.as_dtype(output_type) if output_type else None
+            )
 
             def rep_dataset():
                 for i in range(test_x.shape[0]):
@@ -92,7 +97,9 @@ def debug_quant_tflite(
 
     # Add custom metrics
     layer_stats["range"] = 255.0 * layer_stats["scale"]
-    layer_stats["rmse/scale"] = layer_stats.apply(lambda row: np.sqrt(row["mean_squared_error"]) / row["scale"], axis=1)
+    layer_stats["rmse/scale"] = layer_stats.apply(
+        lambda row: np.sqrt(row["mean_squared_error"]) / row["scale"], axis=1
+    )
     return debugger, layer_stats
 
 
@@ -129,9 +136,13 @@ def predict_tflite(
     input_details = inputs_details[input_name]
     output_details = outputs_details[output_name]
     input_scale: list[float] = input_details["quantization_parameters"]["scales"]
-    input_zero_point: list[int] = input_details["quantization_parameters"]["zero_points"]
+    input_zero_point: list[int] = input_details["quantization_parameters"][
+        "zero_points"
+    ]
     output_scale: list[float] = output_details["quantization_parameters"]["scales"]
-    output_zero_point: list[int] = output_details["quantization_parameters"]["zero_points"]
+    output_zero_point: list[int] = output_details["quantization_parameters"][
+        "zero_points"
+    ]
 
     inputs = inputs.reshape([-1] + input_details["shape_signature"].tolist()[1:])
     if len(input_scale) and len(input_zero_point):
@@ -139,7 +150,10 @@ def predict_tflite(
         inputs = inputs.astype(input_details["dtype"])
 
     outputs = np.array(
-        [model_sig(**{input_name: inputs[i : i + 1]})[output_name][0] for i in range(inputs.shape[0])],
+        [
+            model_sig(**{input_name: inputs[i : i + 1]})[output_name][0]
+            for i in range(inputs.shape[0])
+        ],
         dtype=output_details["dtype"],
     )
 

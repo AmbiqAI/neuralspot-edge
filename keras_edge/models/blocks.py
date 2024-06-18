@@ -7,10 +7,15 @@ def layer_norm(name: str | None = None, axis=-1, scale: bool = True) -> keras.La
     return keras.layers.LayerNormalization(axis=axis, name=name, scale=scale)
 
 
-def batch_norm(name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int = -1) -> keras.Layer:
+def batch_norm(
+    name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int = -1
+) -> keras.Layer:
     """Batch normalization layer"""
     name = name + ".bn" if name else None
-    return keras.layers.BatchNormalization(momentum=momentum, epsilon=epsilon, axis=axis, name=name)
+    return keras.layers.BatchNormalization(
+        momentum=momentum, epsilon=epsilon, axis=axis, name=name
+    )
+
 
 def glu(dim: int = -1, hard: bool = False, name: str | None = None) -> keras.Layer:
     """Gated linear unit layer"""
@@ -21,14 +26,17 @@ def glu(dim: int = -1, hard: bool = False, name: str | None = None) -> keras.Lay
         gate = keras.layers.Activation(act)(gate)
         x = keras.layers.Multiply()([out, gate])
         return x
+
     # END DEF
 
     return layer
+
 
 def relu(name: str | None = None) -> keras.Layer:
     """ReLU activation layer"""
     name = name + ".act" if name else None
     return keras.layers.ReLU(name=name)
+
 
 def swish(name: str | None = None, hard: bool = False) -> keras.Layer:
     """Swish activation layer"""
@@ -40,7 +48,7 @@ def swish(name: str | None = None, hard: bool = False) -> keras.Layer:
 def relu6(name: str | None = None) -> keras.Layer:
     """Hard ReLU activation layer"""
     name = name + ".act" if name else None
-    return keras.layers.Activation('relu6', name=name)
+    return keras.layers.Activation("relu6", name=name)
 
 
 def mish(name: str | None = None) -> keras.Layer:
@@ -150,7 +158,9 @@ def se_block(ratio: int = 8, name: str | None = None) -> keras.Layer:
         name_pool = f"{name}.pool" if name else None
         name_sq = f"{name}.sq" if name else None
         y = keras.layers.GlobalAveragePooling2D(name=name_pool, keepdims=True)(x)
-        y = conv2d(num_chan // ratio, kernel_size=(1, 1), use_bias=True, name=name_sq)(y)
+        y = conv2d(num_chan // ratio, kernel_size=(1, 1), use_bias=True, name=name_sq)(
+            y
+        )
         y = relu6(name=name_sq)(y)
         # Excite
         name_ex = f"{name}.ex" if name else None
@@ -188,7 +198,9 @@ def mbconv_block(
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_filters = x.shape[-1]
-        stride_len = strides if isinstance(strides, int) else sum(strides) / len(strides)
+        stride_len = (
+            strides if isinstance(strides, int) else sum(strides) / len(strides)
+        )
         is_downsample = stride_len > 1
         add_residual = input_filters == output_filters and not is_downsample
         # Expand: narrow -> wide
@@ -240,6 +252,7 @@ def mbconv_block(
                 y = keras.layers.Dropout(droprate, noise_shape=(None, 1, 1, 1))(y)
             y = keras.layers.add([x, y], name=name_res)
         return y
+
     # END DEF
 
     return layer

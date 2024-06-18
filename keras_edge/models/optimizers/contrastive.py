@@ -4,6 +4,7 @@ from typing import Callable
 import keras
 import tensorflow as tf
 
+
 class ContrastiveModel(keras.Model):
     """Base class for contrastive learning models"""
 
@@ -11,8 +12,10 @@ class ContrastiveModel(keras.Model):
         self,
         encoder: keras.Model,
         projector: keras.Model,
-        contrastive_augmenter: Callable[[keras.KerasTensor], keras.KerasTensor] | None = None,
-        classification_augmenter: Callable[[keras.KerasTensor], keras.KerasTensor] | None = None,
+        contrastive_augmenter: Callable[[keras.KerasTensor], keras.KerasTensor]
+        | None = None,
+        classification_augmenter: Callable[[keras.KerasTensor], keras.KerasTensor]
+        | None = None,
         linear_probe: keras.Model | None = None,
     ):
         super().__init__()
@@ -56,7 +59,7 @@ class ContrastiveModel(keras.Model):
         self,
         contrastive_optimizer: keras.optimizers.Optimizer,
         probe_optimizer: keras.optimizers.Optimizer | None = None,
-        **kwargs
+        **kwargs,
     ):
         """Compile the model with the specified optimizers"""
         super().compile(**kwargs)
@@ -68,8 +71,12 @@ class ContrastiveModel(keras.Model):
         self.probe_loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
         self.contrastive_loss_tracker = keras.metrics.Mean(name="loss")
-        self.contrastive_accuracy = keras.metrics.SparseCategoricalAccuracy(name="c_acc")
-        self.correlation_accuracy = keras.metrics.SparseCategoricalAccuracy(name="r_acc")
+        self.contrastive_accuracy = keras.metrics.SparseCategoricalAccuracy(
+            name="c_acc"
+        )
+        self.correlation_accuracy = keras.metrics.SparseCategoricalAccuracy(
+            name="r_acc"
+        )
 
         self.probe_accuracy = keras.metrics.SparseCategoricalAccuracy()
 
@@ -103,7 +110,9 @@ class ContrastiveModel(keras.Model):
         batch_size = keras.ops.shape(features_1)[0]
         contrastive_labels = keras.ops.arange(batch_size)
         self.contrastive_accuracy.update_state(contrastive_labels, similarities)
-        self.contrastive_accuracy.update_state(contrastive_labels, keras.ops.transpose(similarities))
+        self.contrastive_accuracy.update_state(
+            contrastive_labels, keras.ops.transpose(similarities)
+        )
 
     def update_correlation_accuracy(self, features_1, features_2):
         """Update the correlation accuracy metric
@@ -111,18 +120,26 @@ class ContrastiveModel(keras.Model):
         """
 
         # normalization so that cross-correlation will be between -1 and 1
-        features_1 = (features_1 - keras.ops.mean(features_1, axis=0)) / keras.ops.std(features_1, axis=0)
-        features_2 = (features_2 - keras.ops.mean(features_2, axis=0)) / keras.ops.std(features_2, axis=0)
+        features_1 = (features_1 - keras.ops.mean(features_1, axis=0)) / keras.ops.std(
+            features_1, axis=0
+        )
+        features_2 = (features_2 - keras.ops.mean(features_2, axis=0)) / keras.ops.std(
+            features_2, axis=0
+        )
 
         # the cross correlation of image representations should be the identity matrix
         batch_size = keras.ops.shape(features_1)[0]
-        batch_size = keras.ops.cast(batch_size,  dtype="float32")
-        cross_correlation = keras.ops.matmul(features_1, keras.ops.transpose(features_2)) / batch_size
+        batch_size = keras.ops.cast(batch_size, dtype="float32")
+        cross_correlation = (
+            keras.ops.matmul(features_1, keras.ops.transpose(features_2)) / batch_size
+        )
 
         feature_dim = keras.ops.shape(features_1)[1]
         correlation_labels = keras.ops.arange(feature_dim)
         self.correlation_accuracy.update_state(correlation_labels, cross_correlation)
-        self.correlation_accuracy.update_state(correlation_labels, keras.ops.transpose(cross_correlation))
+        self.correlation_accuracy.update_state(
+            correlation_labels, keras.ops.transpose(cross_correlation)
+        )
 
     def train_step(self, data):
         """Training step for the model"""

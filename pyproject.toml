@@ -15,8 +15,20 @@ keras = "^3.0.4"
 pydantic = "^2.6.1"
 requests = "^2.31.0"
 tqdm = "^4.66.4"
+tensorflow = "^2.16.1"
 
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.25.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+
+[tool.poetry.group.ci]
+optional = true
+
+[tool.poetry.group.ci.dependencies]
+ruff = "^0.4.9"

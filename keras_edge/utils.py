@@ -24,7 +24,7 @@ def set_random_seed(seed: int | None = None) -> int:
     random.seed(seed)
     np.random.seed(seed)
     try:
-        import keras   # pylint: disable=import-outside-toplevel
+        import keras  # pylint: disable=import-outside-toplevel
     except ImportError:
         pass
     else:
@@ -110,7 +110,9 @@ def env_flag(env_var: str, default: bool = False) -> bool:
     return environ_string in ["1", "true", "yes", "on"]
 
 
-def download_file(src: str, dst: os.PathLike, progress: bool = True, chunk_size: int = 8192):
+def download_file(
+    src: str, dst: os.PathLike, progress: bool = True, chunk_size: int = 8192
+):
     """Download file from supplied url to destination streaming.
 
     Args:

@@ -1,4 +1,5 @@
-"""" MobileNet """
+""" " MobileNet"""
+
 from typing import cast
 
 import keras
@@ -11,7 +12,7 @@ class MobileNetV1Params(BaseModel):
     input_filters: int = Field(default=8, description="Input filters")
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     include_top: bool = Field(default=True, description="Include top")
-    model_name: str = Field(default="RegNet", description="Model name")
+    name: str = Field(default="RegNet", description="Model name")
 
 
 def MobileNetV1(  # pylint: disable=too-many-statements

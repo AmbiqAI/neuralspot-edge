@@ -1,4 +1,5 @@
-""" ResNet """
+"""ResNet"""
+
 import keras
 from pydantic import BaseModel, Field
 
@@ -18,13 +19,17 @@ class ResNetBlockParams(BaseModel):
 class ResNetParams(BaseModel):
     """ResNet parameters"""
 
-    blocks: list[ResNetBlockParams] = Field(default_factory=list, description="ResNet blocks")
+    blocks: list[ResNetBlockParams] = Field(
+        default_factory=list, description="ResNet blocks"
+    )
     input_filters: int = Field(default=0, description="Input filters")
-    input_kernel_size: int | tuple[int, int] = Field(default=3, description="Input kernel size")
+    input_kernel_size: int | tuple[int, int] = Field(
+        default=3, description="Input kernel size"
+    )
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     include_top: bool = Field(default=True, description="Include top")
     dropout: float = Field(default=0.2, description="Dropout rate")
-    model_name: str = Field(default="ResNet", description="Model name")
+    name: str = Field(default="ResNet", description="Model name")
 
 
 def generate_bottleneck_block(
@@ -47,7 +52,9 @@ def generate_bottleneck_block(
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         num_chan = x.shape[-1]
-        projection = num_chan != filters * expansion or (strides > 1 if isinstance(strides, int) else strides[0] > 1)
+        projection = num_chan != filters * expansion or (
+            strides > 1 if isinstance(strides, int) else strides[0] > 1
+        )
 
         bx = conv2d(filters, 1, 1)(x)
         bx = batch_norm()(bx)
@@ -88,7 +95,9 @@ def generate_residual_block(
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         num_chan = x.shape[-1]
-        projection = num_chan != filters or (strides > 1 if isinstance(strides, int) else strides[0] > 1)
+        projection = num_chan != filters or (
+            strides > 1 if isinstance(strides, int) else strides[0] > 1
+        )
         bx = conv2d(filters, kernel_size, strides)(x)
         bx = batch_norm()(bx)
         bx = relu6()(bx)
@@ -139,7 +148,11 @@ def ResNet(
 
     for stage, block in enumerate(params.blocks):
         for d in range(block.depth):
-            func = generate_bottleneck_block if block.bottleneck else generate_residual_block
+            func = (
+                generate_bottleneck_block
+                if block.bottleneck
+                else generate_residual_block
+            )
             y = func(
                 filters=block.filters,
                 kernel_size=block.kernel_size,
