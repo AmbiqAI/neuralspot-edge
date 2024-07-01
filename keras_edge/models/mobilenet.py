@@ -12,6 +12,7 @@ class MobileNetV1Params(BaseModel):
     input_filters: int = Field(default=8, description="Input filters")
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     include_top: bool = Field(default=True, description="Include top")
+    output_activation: str | None = Field(default=None, description="Output activation")
     name: str = Field(default="RegNet", description="Model name")
 
 

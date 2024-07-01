@@ -6,3 +6,8 @@ from . import resnet
 from . import regnet
 from . import tcn
 from . import unet
+from . import convmixer
+from . import unext
+from . import sequentialnet
+from . import conformer
+from . import metaformer

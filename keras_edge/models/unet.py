@@ -5,7 +5,8 @@ from typing import Literal
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, layer_norm, relu6
+from .blocks import batch_norm, layer_norm
+from .activations import relu6
 
 
 class UNetBlockParams(BaseModel):
@@ -264,3 +265,20 @@ def UNet(
     # Define the model
     model = keras.Model(x, y, name=params.name)
     return model
+
+def unet_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return UNet(x=x, params=UNetParams(**params), num_classes=num_classes)

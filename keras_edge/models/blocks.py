@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 import keras
-
+from .activations import relu6, sigmoid
 
 def layer_norm(name: str | None = None, axis=-1, scale: bool = True) -> keras.Layer:
     """Layer normalization layer"""
@@ -16,58 +17,33 @@ def batch_norm(
         momentum=momentum, epsilon=epsilon, axis=axis, name=name
     )
 
+def norm_layer(norm: str, name: str) -> keras.Layer:
+    """Normalization layer
 
-def glu(dim: int = -1, hard: bool = False, name: str | None = None) -> keras.Layer:
-    """Gated linear unit layer"""
+    Args:
+        norm (str): Normalization type
+        name (str): Name
+
+    Returns:
+        KerasLayer: Layer
+    """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
-        out, gate = keras.ops.split(x, num_or_size_splits=2, axis=dim)
-        act = keras.activations.sigmoid if hard else keras.activations.hard_sigmoid
-        gate = keras.layers.Activation(act)(gate)
-        x = keras.layers.Multiply()([out, gate])
+        """Functional normalization layer
+
+        Args:
+            x (tf.Tensor): Input tensor
+
+        Returns:
+            tf.Tensor: Output tensor
+        """
+        if norm == "batch":
+            return batch_norm(name=name)(x)
+        if norm == "layer":
+            return layer_norm(name=name)(x)
         return x
 
-    # END DEF
-
     return layer
-
-
-def relu(name: str | None = None) -> keras.Layer:
-    """ReLU activation layer"""
-    name = name + ".act" if name else None
-    return keras.layers.ReLU(name=name)
-
-
-def swish(name: str | None = None, hard: bool = False) -> keras.Layer:
-    """Swish activation layer"""
-    name = name + ".act" if name else None
-    act = keras.activations.hard_swish if hard else keras.activations.swish
-    return keras.layers.Activation(act, name=name)
-
-
-def relu6(name: str | None = None) -> keras.Layer:
-    """Hard ReLU activation layer"""
-    name = name + ".act" if name else None
-    return keras.layers.Activation("relu6", name=name)
-
-
-def mish(name: str | None = None) -> keras.Layer:
-    """Mish activation layer"""
-    name = name + ".act" if name else None
-    return keras.layers.Activation(keras.activations.mish, name=name)
-
-
-def gelu(name: str | None = None) -> keras.Layer:
-    """GeLU activation layer"""
-    name = name + ".act" if name else None
-    return keras.layers.Activation("gelu", name=name)
-
-
-def hard_sigmoid(name: str | None = None) -> keras.Layer:
-    """Hard sigmoid activation layer"""
-    name = name + ".act" if name else None
-    return keras.layers.Activation(keras.activations.hard_sigmoid, name=name)
-
 
 def conv2d(
     filters: int,
@@ -141,7 +117,11 @@ def conv1d(
     )
 
 
-def se_block(ratio: int = 8, name: str | None = None) -> keras.Layer:
+def se_block(
+    ratio: int = 8,
+    name: str | None = None,
+    activation: str = "relu6",
+) -> keras.Layer:
     """Squeeze & excite block
 
     Args:
@@ -157,17 +137,17 @@ def se_block(ratio: int = 8, name: str | None = None) -> keras.Layer:
         # Squeeze
         name_pool = f"{name}.pool" if name else None
         name_sq = f"{name}.sq" if name else None
+        name_act = f"{name}.sq.act" if name else None
         y = keras.layers.GlobalAveragePooling2D(name=name_pool, keepdims=True)(x)
-        y = conv2d(num_chan // ratio, kernel_size=(1, 1), use_bias=True, name=name_sq)(
-            y
-        )
-        y = relu6(name=name_sq)(y)
+        y = conv2d(num_chan // ratio, kernel_size=(1, 1), use_bias=True, name=name_sq)(y)
+        y = keras.layers.Activation(activation, name=name_act)(y)
         # Excite
         name_ex = f"{name}.ex" if name else None
         y = conv2d(num_chan, kernel_size=(1, 1), use_bias=True, name=name_ex)(y)
-        y = hard_sigmoid(name=name_ex)(y)
+        y = sigmoid(name=name_ex, hard=True)(y)
         y = keras.layers.Multiply()([x, y])
         return y
+    # END DEF
 
     return layer
 
@@ -179,6 +159,8 @@ def mbconv_block(
     strides: int | tuple[int, int] = 1,
     se_ratio: float = 8,
     droprate: float = 0,
+    norm: str = "batch",
+    activation: str = "relu6",
     name: str | None = None,
 ) -> keras.Layer:
     """MBConv block w/ expansion and SE
@@ -190,6 +172,8 @@ def mbconv_block(
         strides (int | tuple[int, int], optional): Stride length. Defaults to 1.
         se_ratio (float, optional): SE ratio. Defaults to 8.
         droprate (float, optional): Drop rate. Defaults to 0.
+        norm (str, optional): Normalization type. Defaults to "batch".
+        activation (str, optional): Activation function. Defaults to "relu6".
         name (str|None, optional): Block name. Defaults to None.
 
     Returns:
@@ -201,8 +185,10 @@ def mbconv_block(
         stride_len = (
             strides if isinstance(strides, int) else sum(strides) / len(strides)
         )
-        is_downsample = stride_len > 1
-        add_residual = input_filters == output_filters and not is_downsample
+        is_symmetric = isinstance(kernel_size, Iterable) and kernel_size[0] == kernel_size[1]
+        is_downsample = not is_symmetric and stride_len > 1
+
+        add_residual = input_filters == output_filters and stride_len == 1
         # Expand: narrow -> wide
         if expand_ratio != 1:
             name_ex = f"{name}.exp" if name else None
@@ -214,11 +200,10 @@ def mbconv_block(
             y = x
 
         # Apply: wide -> wide
-        # NOTE: DepthwiseConv2D only supports equal size stride -> use maxpooling instead
         name_dp = f"{name}.dp" if name else None
         y = keras.layers.DepthwiseConv2D(
             kernel_size=kernel_size,
-            strides=(1, 1),
+            strides=strides if is_symmetric else (1, 1),
             padding="same",
             use_bias=False,
             depthwise_initializer="he_normal",
@@ -226,8 +211,10 @@ def mbconv_block(
         )(y)
         y = batch_norm(name=name_dp)(y)
         y = relu6(name=name_dp)(y)
+        # NOTE: DepthwiseConv2D only supports equal size stride -> use maxpooling as needed
         if is_downsample:
             y = keras.layers.MaxPool2D(pool_size=strides, padding="same")(y)
+        # END IF
 
         # SE: wide -> wide
         if se_ratio:

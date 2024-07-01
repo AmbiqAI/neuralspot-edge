@@ -31,7 +31,7 @@ def make_divisible(v: int, divisor: int = 4, min_value: int | None = None) -> in
 
 def load_model(model_path: os.PathLike) -> keras.Model:
     """Loads a Keras model stored either remotely or locally.
-    NOTE: Currently only WANDB and local files are supported.
+    NOTE: Currently supports wandb, s3, and https for remote.
 
     Args:
         model_path (str): Source path

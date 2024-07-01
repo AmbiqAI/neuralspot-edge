@@ -32,13 +32,13 @@ class UNextParams(BaseModel):
     )
     include_top: bool = Field(default=True, description="Include top")
     use_logits: bool = Field(default=True, description="Use logits")
-    name: str = Field(default="UNext", description="Model name")
     output_kernel_size: int | tuple[int, int] = Field(
         default=3, description="Output kernel size"
     )
     output_kernel_stride: int | tuple[int, int] = Field(
         default=1, description="Output kernel stride"
     )
+    name: str = Field(default="UNext", description="Model name")
 
 
 def se_block(ratio: int = 8, name: str | None = None):
@@ -72,6 +72,34 @@ def se_block(ratio: int = 8, name: str | None = None):
 
     return layer
 
+def norm_layer(norm: str, name: str) -> keras.Layer:
+    """Normalization layer
+
+    Args:
+        norm (str): Normalization type
+        name (str): Name
+
+    Returns:
+        keras.Layer: Layer
+    """
+
+    def layer(x: keras.KerasTensor) -> keras.KerasTensor:
+        """Functional normalization layer
+
+        Args:
+            x (keras.KerasTensor): Input tensor
+
+        Returns:
+            keras.KerasTensor: Output tensor
+        """
+        if norm == "batch":
+            return keras.layers.BatchNormalization(axis=-1, name=f"{name}.BN")(x)
+        if norm == "layer":
+            ln_axis = 2 if x.shape[1] == 1 else 1 if x.shape[2] == 1 else (1, 2)
+            return keras.layers.LayerNormalization(axis=ln_axis, name=f"{name}.LN")(x)
+        return x
+
+    return layer
 
 def UNext_block(
     output_filters: int,
@@ -117,22 +145,23 @@ def UNext_block(
         # END IF
 
         # Inverted expansion block
-        y = keras.layers.Conv2D(
-            filters=int(expand_ratio * input_filters),
-            kernel_size=1,
-            strides=1,
-            padding="same",
-            use_bias=norm is None,
-            groups=input_filters,
-            kernel_initializer="he_normal",
-            kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.expand" if name else None,
-        )(y)
+        if expand_ratio != 1:
+            y = keras.layers.Conv2D(
+                filters=int(expand_ratio * input_filters),
+                kernel_size=1,
+                strides=1,
+                padding="same",
+                use_bias=norm is None,
+                groups=input_filters,
+                kernel_initializer="he_normal",
+                kernel_regularizer=keras.regularizers.L2(1e-3),
+                name=f"{name}.expand" if name else None,
+            )(y)
 
-        y = keras.layers.Activation(
-            "relu6",
-            name=f"{name}.relu" if name else None,
-        )(y)
+            y = keras.layers.Activation(
+                "relu6",
+                name=f"{name}.relu" if name else None,
+            )(y)
 
         # Squeeze and excite
         if se_ratio > 1:
@@ -356,3 +385,20 @@ def UNext(
     # Define the model
     model = keras.Model(x, y, name=params.name)
     return model
+
+def unext_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensorkeras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return UNext(x=x, params=UNextParams(**params), num_classes=num_classes)

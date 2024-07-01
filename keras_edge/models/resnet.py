@@ -3,7 +3,8 @@
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, conv2d, relu6
+from .blocks import batch_norm, conv2d
+from .activations import relu6
 
 
 class ResNetBlockParams(BaseModel):
@@ -28,6 +29,7 @@ class ResNetParams(BaseModel):
     )
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     include_top: bool = Field(default=True, description="Include top")
+    output_activation: str | None = Field(default=None, description="Output activation")
     dropout: float = Field(default=0.2, description="Dropout rate")
     name: str = Field(default="ResNet", description="Model name")
 
@@ -162,8 +164,34 @@ def ResNet(
     # END FOR
 
     if params.include_top:
-        y = keras.layers.GlobalAveragePooling2D()(y)
-        y = keras.layers.Dense(num_classes)(y)
+        name = "top"
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
+        if 0 < params.dropout < 1:
+            y = keras.layers.Dropout(params.dropout)(y)
+
+        if num_classes is not None:
+            y = keras.layers.Dense(num_classes, name=name)(y)
+
+        if params.output_activation:
+            y = keras.layers.Activation(params.output_activation)(y)
+
 
     model = keras.Model(x, y, name="model")
     return model
+
+def resnet_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int | None = None,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return ResNet(x=x, params=ResNetParams(**params), num_classes=num_classes)

@@ -16,12 +16,13 @@ class TcnBlockParams(BaseModel):
     filters: int = Field(..., description="# filters")
     kernel: int | tuple[int, int] = Field(default=3, description="Kernel size")
     dilation: int | tuple[int, int] = Field(default=1, description="Dilation rate")
-    ex_ratio: int = Field(default=1, description="Expansion ratio")
+    ex_ratio: float = Field(default=1, description="Expansion ratio")
     se_ratio: float = Field(default=0, description="Squeeze and excite ratio")
     dropout: float | None = Field(default=None, description="Dropout rate")
     norm: Literal["batch", "layer"] | None = Field(
         default="layer", description="Normalization type"
     )
+    activation: str = Field(default="relu6", description="Activation function")
 
 
 class TcnParams(BaseModel):
@@ -37,14 +38,15 @@ class TcnParams(BaseModel):
         default="mb", description="Block type"
     )
     blocks: list[TcnBlockParams] = Field(
-        default_factory=list, description="UNext blocks"
+        default_factory=list, description="TCN blocks"
     )
     output_kernel: int | tuple[int, int] = Field(
         default=3, description="Output kernel size"
     )
     include_top: bool = Field(default=True, description="Include top")
     use_logits: bool = Field(default=True, description="Use logits")
-    name: str = Field(default="UNext", description="Model name")
+    output_activation: str | None = Field(default=None, description="Output activation")
+    name: str = Field(default="TCN", description="Model name")
 
 
 def norm_layer(norm: str, name: str) -> keras.Layer:
@@ -124,7 +126,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
             if y_skip.shape[-1] == y.shape[-1]:
                 y = keras.layers.Add(name=f"{lcl_name}.ADD")([y, y_skip])
 
-            y = keras.layers.Activation("relu6", name=f"{lcl_name}.RELU")(y)
+            y = keras.layers.Activation(params.activation, name=f"{lcl_name}.ACT")(y)
 
             # Squeeze and excite
             if params.se_ratio > 0:
@@ -173,7 +175,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
                     name=f"{lcl_name}.EX.CN",
                 )(y)
                 y = norm_layer(params.norm, f"{lcl_name}.EX")(y)
-                y = keras.layers.Activation("relu6", name=f"{lcl_name}.EX.RELU")(y)
+                y = keras.layers.Activation(params.activation, name=f"{lcl_name}.EX.ACT")(y)
             # END IF
 
             branches = []
@@ -199,7 +201,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
                 y = branches[0]
             # END IF
 
-            y = keras.layers.Activation("relu6", name=f"{lcl_name}.DW.RELU")(y)
+            y = keras.layers.Activation(params.activation, name=f"{lcl_name}.DW.ACT")(y)
 
             # Squeeze and excite
             if params.se_ratio and y.shape[-1] // params.se_ratio > 0:
@@ -229,7 +231,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
                 y = branches[0]
             # END IF
 
-            y = keras.layers.Activation("relu6", name=f"{lcl_name}.PW.RELU")(y)
+            y = keras.layers.Activation(params.activation, name=f"{lcl_name}.PW.ACT")(y)
         # END FOR
 
         # Skip connection
@@ -286,7 +288,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
                 y = branches[0]
             # END IF
 
-            y = keras.layers.Activation("relu6", name=f"{lcl_name}.DW.RELU")(y)
+            y = keras.layers.Activation(params.activation, name=f"{lcl_name}.DW.ACT")(y)
 
             branches = []
             for b in range(params.branch):
@@ -312,7 +314,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
                 y = branches[0]
             # END IF
 
-            y = keras.layers.Activation("relu6", name=f"{lcl_name}.PW.RELU")(y)
+            y = keras.layers.Activation(params.activation, name=f"{lcl_name}.PW.ACT")(y)
         # END FOR
 
         # Squeeze and excite
@@ -406,7 +408,9 @@ def Tcn(
             name="NECK.conv",
             use_bias=True,
         )(y)
-        if not params.use_logits:
+        if params.output_activation:
+            y = keras.layers.Activation(params.output_activation)(y)
+        elif not params.use_logits:
             y = keras.layers.Softmax()(y)
         # END IF
     # END IF
@@ -417,3 +421,20 @@ def Tcn(
     # Define the model
     model = keras.Model(x, y, name=params.name)
     return model
+
+def tcn_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int | None = None,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return Tcn(x=x, params=TcnParams(**params), num_classes=num_classes)

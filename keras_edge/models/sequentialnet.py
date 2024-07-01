@@ -1,10 +1,13 @@
 """Simple Sequential Network"""
-
+import logging
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, conv2d, relu6, se_block
+from .blocks import batch_norm, conv2d, se_block
+from .activations import relu6
+from .utils import load_model
 
+logger = logging.getLogger(__name__)
 
 class SequentialLayerParams(BaseModel):
     """Sequential layer parameters"""
@@ -43,6 +46,13 @@ def SequentialNetwork(
                 y = batch_norm(y)
             case "se_block":
                 y = se_block(y, **layer.params)
+            case "load_model":
+                prev_model = load_model(layer.params["model_file"])
+                trainable = layer.params.get("trainable", True)
+                if not trainable:
+                    logger.info(f"Freezing model {prev_model.name}")
+                prev_model.trainable = trainable
+                y = prev_model(y, training=trainable)
             case _:
                 raise ValueError(f"Unknown layer {layer.name}")
         # END MATCH

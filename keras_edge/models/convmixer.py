@@ -1,11 +1,12 @@
 """ConvMixer https://arxiv.org/abs/2201.09792"""
 
-from typing import Callable, cast
+from typing import Callable
 
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, gelu
+from .blocks import batch_norm
+from .activations import gelu
 
 
 class ConvMixerParams(BaseModel):
@@ -16,6 +17,7 @@ class ConvMixerParams(BaseModel):
     kernel_size: int = Field(default=5, description="Filter size")
     patch_size: int = Field(default=2, description="Patch size")
     include_top: bool = Field(default=True, description="Include top")
+    output_activation: str | None = Field(default=None, description="Output activation")
     name: str = Field(default="RegNet", description="Model name")
 
 
@@ -32,17 +34,14 @@ def conv_mixer_block(
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         # Depthwise convolution.
         x0 = x
-        x = cast(
-            keras.KerasTensor,
-            keras.layers.DepthwiseConv2D(kernel_size=kernel_size, padding="same")(x),
-        )
+        x = keras.layers.DepthwiseConv2D(kernel_size=kernel_size, padding="same")(x)
         x = gelu()(x)
         x = batch_norm()(x)
         # Residual
-        x = cast(keras.KerasTensor, keras.layers.Add()([x, x0]))
+        x = keras.layers.Add()([x, x0])
 
         # Pointwise convolution.
-        x = cast(keras.KerasTensor, keras.layers.Conv2D(filters, kernel_size=1)(x))
+        x = keras.layers.Conv2D(filters, kernel_size=1)(x)
         x = gelu()(x)
         x = batch_norm()(x)
         return x
@@ -65,29 +64,45 @@ def ConvMixer(
     Returns:
         keras.Model: Model
     """
-    # Extract patch embeddings.
-    y = cast(
-        keras.KerasTensor,
-        keras.layers.Conv2D(
-            filters=params.filters,
-            kernel_size=params.patch_size,
-            strides=params.patch_size,
-            padding="same",
-            use_bias=True,
-        )(x),
-    )
-    y = cast(keras.KerasTensor, gelu()(y))
+    # Extract patch embeddings
+    y = keras.layers.Conv2D(
+        filters=params.filters,
+        kernel_size=params.patch_size,
+        strides=params.patch_size,
+        padding="same",
+        use_bias=True,
+    )(x)
+    y = gelu()(y)
     y = batch_norm()(y)
 
-    # ConvMixer blocks.
+    # ConvMixer blocks
     for _ in range(params.depth):
         y = conv_mixer_block(filters=params.filters, kernel_size=params.kernel_size)(y)
 
-    # Classification block.
+    # Classification block
     if params.include_top:
         y = keras.layers.GlobalAvgPool2D(keepdims=False)(y)
-        # y = keras.layers.Conv2D(num_classes, kernel_size=1)(y)
-        y = keras.layers.Dense(num_classes)(y)
+        if num_classes is not None:
+            y = keras.layers.Dense(num_classes)(y)
+        if params.output_activation:
+            y = keras.layers.Activation(params.output_activation)(y)
 
     model = keras.Model(x, y)
     return model
+
+def convmixer_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int | None = None,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return ConvMixer(x=x, params=ConvMixerParams(**params), num_classes=num_classes)

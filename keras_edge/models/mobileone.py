@@ -3,7 +3,8 @@
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, conv2d, relu6, se_block
+from .blocks import batch_norm, conv2d, se_block
+from .activations import relu6
 
 
 class MobileOneBlockParams(BaseModel):
@@ -35,6 +36,7 @@ class MobileOneParams(BaseModel):
 
     # output_filters: int = Field(default=0, description="Output filters")
     include_top: bool = Field(default=True, description="Include top")
+    output_activation: str | None = Field(default=None, description="Output activation")
     dropout: float = Field(default=0.2, description="Dropout rate")
     # drop_connect_rate: float = Field(default=0.2, description="Drop connect rate")
     name: str = Field(default="MobileOne", description="Model name")
@@ -260,7 +262,10 @@ def MobileOne(
         y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
         if 0 < params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)
-        y = keras.layers.Dense(num_classes, name=name)(y)
+        if num_classes is not None:
+            y = keras.layers.Dense(num_classes, name=name)(y)
+        if params.output_activation:
+            y = keras.layers.Activation(params.output_activation)(y)
 
     model = keras.Model(x, y, name=params.name)
 
@@ -322,3 +327,20 @@ def MobileOneU0(x, num_classes):
         num_classes=num_classes,
         inference_mode=False,
     )
+
+def mobileone_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int | None = None,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (tf.Tensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return MobileOne(x=x, params=MobileOneParams(**params), num_classes=num_classes)

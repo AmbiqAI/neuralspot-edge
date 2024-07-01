@@ -103,3 +103,21 @@ def TsMixer(x: keras.KerasTensor, params: any, num_classes: int):
     # Define the model
     model = keras.Model(x, y, name=params.name)
     return model
+
+
+def tsmixer_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return TsMixer(x=x, params=TsMixerParams(**params), num_classes=num_classes)

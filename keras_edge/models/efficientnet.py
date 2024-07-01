@@ -1,9 +1,12 @@
 """EfficientNet https://arxiv.org/abs/2104.00298"""
 
+from typing import Literal
+
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, conv2d, mbconv_block, relu6
+from .blocks import batch_norm, conv2d, mbconv_block
+from .activations import relu6
 from .defines import MBConvParams
 from .utils import make_divisible
 
@@ -20,9 +23,13 @@ class EfficientNetParams(BaseModel):
     )
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     output_filters: int = Field(default=0, description="Output filters")
+    output_activation: str | None = Field(default=None, description="Output activation")
     include_top: bool = Field(default=True, description="Include top")
     dropout: float = Field(default=0.2, description="Dropout rate")
     drop_connect_rate: float = Field(default=0.2, description="Drop connect rate")
+    use_logits: bool = Field(default=True, description="Use logits")
+    activation: str = Field(default="relu6", description="Activation function")
+    norm: Literal["batch", "layer"] | None = Field(default="layer", description="Normalization type")
     name: str = Field(default="EfficientNetV2", description="Model name")
 
 
@@ -54,6 +61,7 @@ def efficientnet_core(
                     block.strides if d == 0 else 1,
                     block.se_ratio,
                     droprate=block_drop_rate,
+                    norm=block.norm,
                     name=name,
                 )(x)
                 global_block_id += 1
@@ -121,7 +129,30 @@ def EfficientNetV2(
         y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
         if 0 < params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)
-        y = keras.layers.Dense(num_classes, name=name)(y)
+        if num_classes is not None:
+            y = keras.layers.Dense(num_classes, name=name)(y)
+
+        if params.output_activation:
+            y = keras.layers.Activation(params.output_activation)(y)
+        elif not params.use_logits:
+            y = keras.layers.Softmax()(y)
 
     model = keras.Model(x, y, name=params.name)
     return model
+
+def efficientnetv2_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int | None = None,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return EfficientNetV2(x=x, params=EfficientNetParams(**params), num_classes=num_classes)
