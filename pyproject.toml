@@ -16,6 +16,7 @@ pydantic = "^2.6.1"
 requests = "^2.31.0"
 tqdm = "^4.66.4"
 tensorflow = "^2.16.1"
+matplotlib = "^3.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -24,6 +25,7 @@ ipython = "^8.25.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
 
 
 
