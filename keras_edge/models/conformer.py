@@ -6,7 +6,6 @@ from .blocks import layer_norm, batch_norm
 from .activations import swish, glu, relu
 
 class SubsampleBlockParams(BaseModel):
-    downsamples: int = 3
     depth: int = 256
     kernel_size: int = 3
     strides: int = 2
@@ -23,18 +22,15 @@ class ConformerBlockParams(BaseModel):
 
 class ConformerParams(BaseModel):
     """Conformer parameters"""
-    subsample: SubsampleBlockParams = SubsampleBlockParams()
-    blocks: list[ConformerBlockParams] = []
+    subsamples: list[SubsampleBlockParams] = Field(default_factory=list, description="Subsample blocks")
+    blocks: list[ConformerBlockParams] = Field(default_factory=list, description="Conformer blocks")
     output_activation: str | None = Field(default=None, description="Output activation")
     include_top: bool = Field(default=True, description="Include top")
     name: str = Field(default="Fast Conformer", description="Model name")
 
 
-def subsample_block(
-    depth: int,
-    kernel_size: int = 3,
-    strides: int = 2,
-    num_downsamples: int = 3,
+def subsampler(
+    blocks: SubsampleBlockParams,
     kernel_initializer: str = "glorot_uniform",
     bias_initializer: str = "zeros",
     kernel_regularizer=None,
@@ -43,27 +39,12 @@ def subsample_block(
 ):
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
-        y = keras.layers.Conv2D(
-            filters=depth,
-            kernel_size=kernel_size,
-            strides=strides,
-            kernel_initializer=kernel_initializer,
-            kernel_regularizer=kernel_regularizer,
-            bias_initializer=bias_initializer,
-            bias_regularizer=bias_regularizer,
-            padding='same',
-            name=f'{name}_conv1'
-        )(y)
-        y = relu(
-            name=f'{name}_relu1'
-        )(y)
-
-        # Apply convolutional downsampling
-        for i in range(1, num_downsamples):
+        # Apply subsampling blocks
+        for i, block in enumerate(blocks):
             y = keras.layers.SeparableConv2D(
-                filters=depth,
-                kernel_size=kernel_size,
-                strides=strides,
+                filters=block.depth,
+                kernel_size=block.kernel_size,
+                strides=block.strides,
                 depthwise_initializer=kernel_initializer,
                 pointwise_initializer=kernel_initializer,
                 depthwise_regularizer=kernel_regularizer,
@@ -78,18 +59,19 @@ def subsample_block(
             )(y)
         # END FOR
 
-        # Swap to (b,t,c,f) and merge (c,f) to get (b,t,c*f)
-        y = keras.ops.transpose(y, axes=[0, 1, 3, 2])
+        # Swap from (b,f,t,c) to (b,t,c,f) and merge (c,f) to get (b,t,c*f)
+        y = keras.ops.transpose(y, axes=[0, 2, 3, 1])
         y = keras.layers.Reshape((y.shape[1], -1))(y)
 
         # Can serve as learnable embedding
         y = keras.layers.Dense(
-            units=depth,
+            units=blocks[-1].depth,
             kernel_initializer=kernel_initializer,
             bias_initializer=bias_initializer,
             name=f'{name}_dense'
         )(y) # (b,t,c*f) -> (b,t,d)
         return y
+
     # END DEF
     return layer
 
@@ -327,8 +309,8 @@ def Conformer(
     """
     y = x
 
-    y = subsample_block(
-        depth=params.subsample.depth,
+    y = subsampler(
+        blocks=params.subsamples,
         kernel_size=params.subsample.kernel_size,
         strides=params.subsample.strides,
         num_downsamples=params.subsample.downsamples,

@@ -139,7 +139,7 @@ def se_block(
         name_sq = f"{name}.sq" if name else None
         name_act = f"{name}.sq.act" if name else None
         y = keras.layers.GlobalAveragePooling2D(name=name_pool, keepdims=True)(x)
-        y = conv2d(num_chan // ratio, kernel_size=(1, 1), use_bias=True, name=name_sq)(y)
+        y = conv2d(int(num_chan // ratio), kernel_size=(1, 1), use_bias=True, name=name_sq)(y)
         y = keras.layers.Activation(activation, name=name_act)(y)
         # Excite
         name_ex = f"{name}.ex" if name else None

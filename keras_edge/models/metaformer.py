@@ -33,7 +33,7 @@ def patch_embedding(
     padding: str = "same",
 ) -> keras.layers.Layer:
     """Patch embedding layer using 2D convolution"""
-    # SHAPE (B, T, F, C) -> (B, T//S, F//S, E)
+    # SHAPE (B, F, T, C) -> (B, F//S, T//S, E)
     # SHAPE (B, H, W, C) -> (B, H//S, W//S, E
     return keras.layers.Conv2D(
         filters=embed_dim,

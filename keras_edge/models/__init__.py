@@ -11,3 +11,4 @@ from . import unext
 from . import sequentialnet
 from . import conformer
 from . import metaformer
+from . import defines

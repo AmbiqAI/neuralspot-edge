@@ -41,7 +41,7 @@ class SpecAugment(keras.Layer):
         Returns:
             keras.KerasTensor: Frequency mask
         """
-        n_mels = keras.ops.cast(keras.ops.shape(x)[1], dtype="float32")
+        n_mels = keras.ops.shape(x)[1]
         freq_indices = keras.ops.reshape(keras.ops.arange(n_mels, dtype="int32"), (1, -1, 1))
 
         # We use the paper's notation
@@ -75,7 +75,7 @@ class SpecAugment(keras.Layer):
             keras.KerasTensor: Time mask
 
         """
-        n_steps = keras.ops.cast(keras.ops.shape(x)[0], dtype="float32")
+        n_steps = keras.ops.shape(x)[0]
         time_indices = keras.ops.reshape(keras.ops.arange(n_steps, dtype="int32"), (-1, 1, 1))
 
         # We use the paper's notation
