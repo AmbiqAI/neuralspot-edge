@@ -18,6 +18,9 @@ tqdm = "^4.66.4"
 tensorflow = "^2.16.1"
 matplotlib = "^3.9.0"
 pandas = "^2.2.2"
+scikit-learn = "^1.5.1"
+plotly = "^5.22.0"
+seaborn = "^0.13.2"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -26,6 +29,9 @@ ipython = "^8.25.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+
 
 
 

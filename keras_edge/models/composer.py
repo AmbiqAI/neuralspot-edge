@@ -1,4 +1,4 @@
-"""Simple Sequential Network"""
+"""Composer network"""
 import logging
 import keras
 from pydantic import BaseModel, Field
@@ -9,30 +9,32 @@ from .utils import load_model
 
 logger = logging.getLogger(__name__)
 
-class SequentialLayerParams(BaseModel):
-    """Sequential layer parameters"""
+class ComposerLayerParams(BaseModel):
+    """Composer layer parameters"""
 
     name: str = Field(..., description="Layer name")
     params: dict = Field(default_factory=dict, description="Layer arguments")
 
 
-class SequentialNetworkParams(BaseModel):
-    """Sequential Network parameters"""
+class ComposerParams(BaseModel):
+    """Composer Network parameters"""
 
-    layers: list[SequentialLayerParams] = Field(
+    layers: list[ComposerLayerParams] = Field(
         default_factory=list, description="Network layers"
     )
     include_top: bool = Field(default=True, description="Include top")
     output_activation: str | None = Field(default=None, description="Output activation")
-    name: str = Field(default="SequentialNetwork", description="Model name")
+    name: str = Field(default="Composer", description="Model name")
 
 
-def SequentialNetwork(
+def Composer(
     x: keras.KerasTensor,
-    params: SequentialNetworkParams,
+    params: ComposerParams,
     num_classes: int | None = None,
 ) -> keras.Model:
-    """Create a simple sequential network"""
+    """Composes a sequential set of networks/layers.
+    Useful for adding custom layers to a pre-trained model (e.g. foundation).
+    """
     y = x
     for layer in params.layers:
         match layer.name:
@@ -81,6 +83,6 @@ def sequentialnet_from_object(
     Returns:
         keras.Model: Model
     """
-    return SequentialNetwork(
-        x=x, params=SequentialNetworkParams(**params), num_classes=num_classes
+    return Composer(
+        x=x, params=ComposerParams(**params), num_classes=num_classes
     )

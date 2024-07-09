@@ -8,7 +8,9 @@ from . import tcn
 from . import unet
 from . import convmixer
 from . import unext
-from . import sequentialnet
+from . import composer
 from . import conformer
 from . import metaformer
 from . import defines
+
+from .utils import load_model
