@@ -70,7 +70,7 @@ def Composer(
     return model
 
 
-def sequentialnet_from_object(
+def composer_from_object(
     x: keras.KerasTensor, params: dict, num_classes: int | None = None
 ) -> keras.Model:
     """Create model from object

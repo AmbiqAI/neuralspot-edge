@@ -5,6 +5,7 @@ from . import efficientnet
 from . import resnet
 from . import regnet
 from . import tcn
+from . import tsmixer
 from . import unet
 from . import convmixer
 from . import unext

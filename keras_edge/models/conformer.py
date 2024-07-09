@@ -341,3 +341,20 @@ def Conformer(
 
     model = keras.Model(x, y, name=params.name)
     return model
+
+def conformer_from_object(
+    x: keras.KerasTensor,
+    params: dict,
+    num_classes: int | None = None,
+) -> keras.Model:
+    """Create model from object
+
+    Args:
+        x (keras.KerasTensor): Input tensor
+        params (dict): Model parameters.
+        num_classes (int, optional): # classes.
+
+    Returns:
+        keras.Model: Model
+    """
+    return Conformer(x=x, params=ConformerParams(**params), num_classes=num_classes)
