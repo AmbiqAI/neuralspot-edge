@@ -8,12 +8,8 @@ import pandas as pd
 import plotly.express as px
 import seaborn as sns
 from sklearn.metrics import (
-    auc,
     confusion_matrix,
-    f1_score,
-    jaccard_score,
     multilabel_confusion_matrix,
-    roc_curve,
 )
 
 def multilabel_confusion_matrix_plot(
