@@ -17,22 +17,21 @@ class QuantizationType(StrEnum):
     INT8 = "INT8"
     INT16X8 = "INT16X8"
 
-    # "fp32", "fp16", "int8", "int16x8", "int32"
-    # float32 weights, bias, activation
-    # float16 weights, bias, activation
-    # int8 weights, bias, activation
-    # int8 weights, int64 bias, int16 activation
-
-
 class TfLiteKerasConverter:
 
     def __init__(self,
         model: keras.Model,
     ):
+        """TFLite Keras model converter that handles conversion, evaluation, and prediction.
+
+        Args:
+            model (keras.Model): Keras model
+        """
         self.model = model
         self.representative_dataset = None
-        self._baseline_tflite_content: str|None = None
+        self._converter: tf.lite.TFLiteConverter|None = None
         self._tflite_content: str|None = None
+        self.tf_model_path = tempfile.TemporaryDirectory()
 
     def convert(
         self,
@@ -54,8 +53,6 @@ class TfLiteKerasConverter:
         Returns:
             str: TFLite content
         """
-        tf_model_path = tempfile.TemporaryDirectory()
-
         quantization = QuantizationType(quantization)
 
         feat_shape = self.model.input_shape[1:]
@@ -69,19 +66,17 @@ class TfLiteKerasConverter:
             model_cf = model_func.get_concrete_function(input_spec)
             converter = tf.lite.TFLiteConverter.from_concrete_functions([model_cf])
         else:
-            self.model.export(tf_model_path.name, format="tf_saved_model")
-            converter = tf.lite.TFLiteConverter.from_saved_model(tf_model_path.name)
+            self.model.export(self.tf_model_path.name, format="tf_saved_model")
+            converter = tf.lite.TFLiteConverter.from_saved_model(self.tf_model_path.name)
             # Following is broken...hence that workaround
             # converter = tf.lite.TFLiteConverter.from_keras_model(model=model)
         # END IF
-
-        # Convert model without quantization/optimization (baseline)
-        self._baseline_tflite_content = converter.convert()
 
         if test_x is None:
             test_x = np.random.rand(1000, *feat_shape)
 
         def rep_dataset():
+            """Helper function to generate representative dataset"""
             for i in range(test_x.shape[0]):
                 yield [test_x[i : i + 1]]
 
@@ -108,16 +103,15 @@ class TfLiteKerasConverter:
                 converter.representative_dataset = self.representative_dataset
                 converter.optimizations = [tf.lite.Optimize.DEFAULT]
                 converter.target_spec.supported_ops = [tf.lite.OpsSet.EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8]
+        # END MATCH
 
         # For fallback append tf.lite.OpsSet.TFLITE_BUILTINS for INT8 and INT16X8
         if not strict and quantization in [QuantizationType.INT8, QuantizationType.INT16X8]:
             converter.target_spec.supported_ops.append(tf.lite.OpsSet.TFLITE_BUILTINS)
 
         # Convert model
+        self._converter = converter
         self._tflite_content = converter.convert()
-
-        # Cleanup
-        tf_model_path.cleanup()
 
         return self._tflite_content
 
@@ -125,13 +119,15 @@ class TfLiteKerasConverter:
         """Debug quantized TFLite model content.
         """
 
-        if self._tflite_content is None:
+        if self._converter is None:
             raise ValueError("No TFLite content to debug. Run convert() first.")
+
+        if self.representative_dataset is None:
+            raise ValueError("No representative dataset provided. Run convert() with test_x first.")
 
         # Debug model
         debugger = tf.lite.experimental.QuantizationDebugger(
-            quant_debug_model_content=self._tflite_content,
-            float_model_content=self._baseline_tflite_content,
+            converter=self._converter,
             debug_dataset=self.representative_dataset
         )
         debugger.run()
@@ -285,8 +281,132 @@ class TfLiteKerasConverter:
                 src_path=f.name,
                 dst_path=header_path,
                 var_name=name,
-                var_dtype="unsigned char",
                 chunk_len=20,
                 is_header=True
             )
         # END WITH
+
+    def cleanup(self):
+        """Cleanup temporary files"""
+        self.tf_model_path.cleanup()
+
+class TfLiteKerasInterpreter:
+
+    def __init__(
+        self,
+        model_content: str,
+        input_name: str | None = None,
+        output_name: str | None = None,
+        signature_key: str | None = None,
+    ):
+        """TFLite model interpreter that takes care of I/O conversion and prediction.
+
+        Args:
+            model_content (str): TFLite model content
+            input_name (str | None, optional): Input layer name. Defaults to None.
+            output_name (str | None, optional): Output layer name. Defaults to None.
+            signature_key (str | None, optional): Signature key. Defaults to None
+        """
+        self.model_content = model_content
+        self.interpreter = tf.lite.Interpreter(model_content=model_content)
+        self.interpreter.allocate_tensors()
+
+        self.signature_key = signature_key
+        self._has_signature = False
+
+        self._input_name = input_name
+        self._input_shape = None
+        self._input_scale = None
+        self._input_zero_point = None
+        self._input_dtype = "float32"
+
+        self._output_name = output_name
+        self._output_scale = None
+        self._output_zero_point = None
+        self._output_dtype = "float32"
+
+    def compile(self):
+        """Compile model and extract input/output details."""
+
+        # Some models may lose signature after converting to tflite due to TF issues.
+        # Most prevalent for models lowered to concrete functions.
+        self._has_signature = len(self.interpreter.get_signature_list()) > 0
+
+        if not self._has_signature:
+            input_details = self.interpreter.get_input_details()[0]
+            output_details = self.interpreter.get_output_details()[0]
+            self._input_shape = input_details["shape_signature"].tolist()
+            self._input_name = input_details['index']
+            self._output_name = output_details['index']
+
+        else:
+            model_sig = self.interpreter.get_signature_runner(self.signature_key)
+            inputs_details = model_sig.get_input_details()
+            outputs_details = model_sig.get_output_details()
+            if self._input_name is None:
+                self._input_name = list(inputs_details.keys())[0]
+            if self._output_name is None:
+                self._output_name = list(outputs_details.keys())[0]
+            input_details = inputs_details[self._input_name]
+            output_details = outputs_details[self._output_name]
+            self._input_shape = input_details["shape_signature"].tolist()[1:]
+        # END IF
+
+        input_scale: list[float] = input_details["quantization_parameters"]["scales"]
+        input_zero_point: list[int] = input_details["quantization_parameters"]["zero_points"]
+        output_scale: list[float] = output_details["quantization_parameters"]["scales"]
+        output_zero_point: list[int] = output_details["quantization_parameters"]["zero_points"]
+
+        self._input_dtype = input_details["dtype"]
+        if len(input_scale) and len(input_zero_point):
+            self._input_scale = input_scale[0]
+            self._input_zero_point = input_zero_point[0]
+        # END IF
+
+        self._output_dtype = output_details["dtype"]
+        if len(output_scale) and len(output_zero_point):
+            self._output_scale = output_scale[0]
+            self._output_zero_point = output_zero_point[0]
+        # END IF
+
+    def predict(
+        self,
+        x: npt.NDArray,
+    ) -> npt.NDArray:
+        """Predict using TFLite model
+
+        Args:
+            x (npt.NDArray): Input samples
+
+        Returns:
+            npt.NDArray: Predicted values
+        """
+        inputs = x.copy()
+        inputs: npt.NDArray = inputs.reshape([-1] + self._input_shape)
+        if self._input_scale and self._input_zero_point:
+            inputs = inputs / self._input_scale + self._input_zero_point
+        inputs = inputs.astype(self._input_dtype)
+
+        if not self._has_signature:
+
+            outputs = []
+            for sample in inputs:
+                self.interpreter.set_tensor(self._input_name, sample)
+                self.interpreter.invoke()
+                y = self.interpreter.get_tensor(self._output_name)
+                outputs.append(y)
+            outputs = np.concatenate(outputs, axis=0)
+
+        else:
+            model_sig = self.interpreter.get_signature_runner(self.signature_key)
+            outputs = np.array([
+                model_sig(**{self._input_name: inputs[i : i + 1]})[self._output_name][0]
+                for i in range(inputs.shape[0])
+            ], dtype=self._output_dtype)
+        # END IF
+
+        outputs = outputs.astype(self._output_dtype)
+        if self._output_scale and self._output_zero_point:
+            outputs = (outputs - self._output_zero_point) * self._output_scale
+        # END IF
+        return outputs
