@@ -369,6 +369,46 @@ class TfLiteKerasInterpreter:
             self._output_zero_point = output_zero_point[0]
         # END IF
 
+    def convert_input(
+        self,
+        x: npt.NDArray
+    ) -> npt.NDArray:
+        """Convert input data based on quantization.
+
+        NOTE: predict() will call this method internally.
+
+        Args:
+            x (npt.NDArray): Input samples
+
+        Returns:
+            npt.NDArray: Prepared input samples
+        """
+        inputs = x.copy()
+        inputs = inputs.reshape([-1] + self._input_shape)
+        if self._input_scale and self._input_zero_point:
+            inputs = inputs / self._input_scale + self._input_zero_point
+        inputs = inputs.astype(self._input_dtype)
+        return inputs
+
+    def convert_output(
+        self,
+        outputs: npt.NDArray
+    ) -> npt.NDArray:
+        """Convert output data based on quantization.
+
+        NOTE: predict() will call this method internally.
+
+        Args:
+            outputs (npt.NDArray): Output samples
+
+        Returns:
+            npt.NDArray: Prepared output samples
+        """
+        outputs = outputs.astype(self._output_dtype)
+        if self._output_scale and self._output_zero_point:
+            outputs = (outputs - self._output_zero_point) * self._output_scale
+        return outputs
+
     def predict(
         self,
         x: npt.NDArray,
@@ -381,14 +421,9 @@ class TfLiteKerasInterpreter:
         Returns:
             npt.NDArray: Predicted values
         """
-        inputs = x.copy()
-        inputs: npt.NDArray = inputs.reshape([-1] + self._input_shape)
-        if self._input_scale and self._input_zero_point:
-            inputs = inputs / self._input_scale + self._input_zero_point
-        inputs = inputs.astype(self._input_dtype)
+        inputs = self.convert_input(x)
 
         if not self._has_signature:
-
             outputs = []
             for sample in inputs:
                 self.interpreter.set_tensor(self._input_name, sample)
@@ -396,7 +431,6 @@ class TfLiteKerasInterpreter:
                 y = self.interpreter.get_tensor(self._output_name)
                 outputs.append(y)
             outputs = np.concatenate(outputs, axis=0)
-
         else:
             model_sig = self.interpreter.get_signature_runner(self.signature_key)
             outputs = np.array([
@@ -405,8 +439,6 @@ class TfLiteKerasInterpreter:
             ], dtype=self._output_dtype)
         # END IF
 
-        outputs = outputs.astype(self._output_dtype)
-        if self._output_scale and self._output_zero_point:
-            outputs = (outputs - self._output_zero_point) * self._output_scale
-        # END IF
+        outputs = self.convert_output(outputs)
+
         return outputs
