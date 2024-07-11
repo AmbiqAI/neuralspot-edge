@@ -1,6 +1,7 @@
 import keras
 import tensorflow as tf
 
+
 class SpecAugment(keras.Layer):
     """
     Implementation of a layer that contains the SpecAugment Transformation
@@ -12,7 +13,7 @@ class SpecAugment(keras.Layer):
         time_mask_param: int,
         n_freq_mask: int = 1,
         n_time_mask: int = 1,
-        mask_value: float = 0.
+        mask_value: float = 0.0,
     ):
         """SpecAugment layer w/o time warping
 
@@ -98,7 +99,6 @@ class SpecAugment(keras.Layer):
         masks = keras.ops.cast(tf.map_fn(elems=mel_repeated, fn=self._time_mask_single), dtype="bool")
         mask = keras.ops.any(masks, 0)
         return keras.ops.where(mask, self.mask_value, x)
-
 
     def _apply_spec_augment(self, x: keras.KerasTensor) -> keras.KerasTensor:
         """Apply SpecAugment to a single mel spectrogram

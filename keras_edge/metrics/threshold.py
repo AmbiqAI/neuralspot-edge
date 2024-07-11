@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 
+
 def get_predicted_threshold_indices(
     y_prob: npt.NDArray,
     y_pred: npt.NDArray,

@@ -21,9 +21,7 @@ class ConvMixerParams(BaseModel):
     name: str = Field(default="RegNet", description="Model name")
 
 
-def conv_mixer_block(
-    filters: int, kernel_size: int
-) -> Callable[[keras.KerasTensor], keras.KerasTensor]:
+def conv_mixer_block(filters: int, kernel_size: int) -> Callable[[keras.KerasTensor], keras.KerasTensor]:
     """ConvMixer block
 
     Args:
@@ -89,6 +87,7 @@ def ConvMixer(
 
     model = keras.Model(x, y)
     return model
+
 
 def convmixer_from_object(
     x: keras.KerasTensor,

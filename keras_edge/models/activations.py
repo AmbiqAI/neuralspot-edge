@@ -15,6 +15,7 @@ def glu(dim: int = -1, hard: bool = False, name: str | None = None) -> keras.Lay
 
     return layer
 
+
 def relu(name: str | None = None, truncated: bool = False) -> keras.Layer:
     """ReLU activation layer"""
     name = name + ".act" if name else None
@@ -46,11 +47,13 @@ def gelu(name: str | None = None) -> keras.Layer:
     name = name + ".act" if name else None
     return keras.layers.Activation(keras.activations.gelu, name=name)
 
+
 def sigmoid(name: str | None = None, hard: bool = False) -> keras.Layer:
     """Sigmoid activation layer"""
     name = name + ".act" if name else None
     activation = keras.activations.hard_sigmoid if hard else keras.activations.sigmoid
     return keras.layers.Activation(activation, name=name)
+
 
 def hard_sigmoid(name: str | None = None) -> keras.Layer:
     """Hard sigmoid activation layer"""

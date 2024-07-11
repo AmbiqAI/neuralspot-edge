@@ -80,9 +80,7 @@ class StochasticDepth(keras.layers.Layer):
         return inputs
 
 
-def cct_mlp(
-    x: keras.KerasTensor, hidden_units: list[int], dropout_rate: float
-) -> keras.KerasTensor:
+def cct_mlp(x: keras.KerasTensor, hidden_units: list[int], dropout_rate: float) -> keras.KerasTensor:
     """CCT MPL block
 
     Args:
@@ -130,9 +128,7 @@ def CCT(
 
     # Apply positional embedding.
     if positional_emb:
-        dummy_outputs = cct_tokenizer_block()(
-            keras.ops.zeros((1, image_size, image_size, 3))
-        )
+        dummy_outputs = cct_tokenizer_block()(keras.ops.zeros((1, image_size, image_size, 3)))
         seq_length = dummy_outputs.shape[1]
         projection_dim = dummy_outputs.shape[-1]
 
@@ -154,9 +150,9 @@ def CCT(
         x1 = keras.layers.LayerNormalization(epsilon=1e-5)(encoded_patches)
 
         # Create a multi-head attention layer.
-        attention_output = keras.layers.MultiHeadAttention(
-            num_heads=num_heads, key_dim=projection_dim, dropout=0.1
-        )(x1, x1)
+        attention_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=projection_dim, dropout=0.1)(
+            x1, x1
+        )
 
         # Skip connection 1.
         attention_output = StochasticDepth(dpr[i])(attention_output)
@@ -176,9 +172,7 @@ def CCT(
     representation = keras.layers.LayerNormalization(epsilon=1e-5)(encoded_patches)
     attention_weights = keras.layers.Dense(1)(representation)
     attention_weights = keras.layers.Softmax(axis=1)(attention_weights)
-    weighted_representation = keras.layers.Multiply()(
-        [keras.ops.transpose(attention_weights), representation]
-    )
+    weighted_representation = keras.layers.Multiply()([keras.ops.transpose(attention_weights), representation])
     weighted_representation = keras.ops.squeeze(weighted_representation, -2)
 
     # Classify outputs.

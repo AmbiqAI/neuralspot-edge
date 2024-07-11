@@ -1,4 +1,5 @@
 """Composer network"""
+
 import logging
 import keras
 from pydantic import BaseModel, Field
@@ -8,6 +9,7 @@ from .activations import relu6
 from .utils import load_model
 
 logger = logging.getLogger(__name__)
+
 
 class ComposerLayerParams(BaseModel):
     """Composer layer parameters"""
@@ -19,9 +21,7 @@ class ComposerLayerParams(BaseModel):
 class ComposerParams(BaseModel):
     """Composer Network parameters"""
 
-    layers: list[ComposerLayerParams] = Field(
-        default_factory=list, description="Network layers"
-    )
+    layers: list[ComposerLayerParams] = Field(default_factory=list, description="Network layers")
     include_top: bool = Field(default=True, description="Include top")
     output_activation: str | None = Field(default=None, description="Output activation")
     name: str = Field(default="Composer", description="Model name")
@@ -70,9 +70,7 @@ def Composer(
     return model
 
 
-def composer_from_object(
-    x: keras.KerasTensor, params: dict, num_classes: int | None = None
-) -> keras.Model:
+def composer_from_object(x: keras.KerasTensor, params: dict, num_classes: int | None = None) -> keras.Model:
     """Create model from object
 
     Args:
@@ -83,6 +81,4 @@ def composer_from_object(
     Returns:
         keras.Model: Model
     """
-    return Composer(
-        x=x, params=ComposerParams(**params), num_classes=num_classes
-    )
+    return Composer(x=x, params=ComposerParams(**params), num_classes=num_classes)

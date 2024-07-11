@@ -4,10 +4,8 @@ import keras
 class Distiller(keras.Model):
     teacher: keras.models.Model
     student: keras.models.Model
-    def __init__(self,
-        student: keras.models.Model,
-        teacher: keras.models.Model
-    ):
+
+    def __init__(self, student: keras.models.Model, teacher: keras.models.Model):
         super().__init__()
         self.teacher = teacher
         self.student = student
@@ -39,14 +37,7 @@ class Distiller(keras.Model):
         self.alpha = alpha
         self.temperature = temperature
 
-    def compute_loss(
-        self,
-        x=None,
-        y=None,
-        y_pred=None,
-        sample_weight=None,
-        allow_empty=False
-    ):
+    def compute_loss(self, x=None, y=None, y_pred=None, sample_weight=None, allow_empty=False):
         teacher_pred = self.teacher(x, training=False)
         student_loss = self.student_loss_fn(y, y_pred)
 

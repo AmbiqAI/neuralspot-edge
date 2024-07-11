@@ -2,20 +2,18 @@ from collections.abc import Iterable
 import keras
 from .activations import relu6, sigmoid
 
+
 def layer_norm(name: str | None = None, axis=-1, scale: bool = True) -> keras.Layer:
     """Layer normalization layer"""
     name = name + ".ln" if name else None
     return keras.layers.LayerNormalization(axis=axis, name=name, scale=scale)
 
 
-def batch_norm(
-    name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int = -1
-) -> keras.Layer:
+def batch_norm(name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int = -1) -> keras.Layer:
     """Batch normalization layer"""
     name = name + ".bn" if name else None
-    return keras.layers.BatchNormalization(
-        momentum=momentum, epsilon=epsilon, axis=axis, name=name
-    )
+    return keras.layers.BatchNormalization(momentum=momentum, epsilon=epsilon, axis=axis, name=name)
+
 
 def norm_layer(norm: str, name: str) -> keras.Layer:
     """Normalization layer
@@ -44,6 +42,7 @@ def norm_layer(norm: str, name: str) -> keras.Layer:
         return x
 
     return layer
+
 
 def conv2d(
     filters: int,
@@ -147,6 +146,7 @@ def se_block(
         y = sigmoid(name=name_ex, hard=True)(y)
         y = keras.layers.Multiply()([x, y])
         return y
+
     # END DEF
 
     return layer
@@ -182,9 +182,7 @@ def mbconv_block(
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_filters = x.shape[-1]
-        stride_len = (
-            strides if isinstance(strides, int) else sum(strides) / len(strides)
-        )
+        stride_len = strides if isinstance(strides, int) else sum(strides) / len(strides)
         is_symmetric = isinstance(kernel_size, Iterable) and kernel_size[0] == kernel_size[1]
         is_downsample = not is_symmetric and stride_len > 1
 

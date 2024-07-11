@@ -12,6 +12,7 @@ from sklearn.metrics import (
     multilabel_confusion_matrix,
 )
 
+
 def multilabel_confusion_matrix_plot(
     y_true: npt.NDArray,
     y_pred: npt.NDArray,

@@ -19,25 +19,17 @@ class UNextBlockParams(BaseModel):
     expand_ratio: float = Field(default=1, description="Expansion ratio")
     se_ratio: float = Field(default=0, description="Squeeze and excite ratio")
     dropout: float | None = Field(default=None, description="Dropout rate")
-    norm: Literal["batch", "layer"] | None = Field(
-        default="layer", description="Normalization type"
-    )
+    norm: Literal["batch", "layer"] | None = Field(default="layer", description="Normalization type")
 
 
 class UNextParams(BaseModel):
     """UNext parameters"""
 
-    blocks: list[UNextBlockParams] = Field(
-        default_factory=list, description="UNext blocks"
-    )
+    blocks: list[UNextBlockParams] = Field(default_factory=list, description="UNext blocks")
     include_top: bool = Field(default=True, description="Include top")
     use_logits: bool = Field(default=True, description="Use logits")
-    output_kernel_size: int | tuple[int, int] = Field(
-        default=3, description="Output kernel size"
-    )
-    output_kernel_stride: int | tuple[int, int] = Field(
-        default=1, description="Output kernel stride"
-    )
+    output_kernel_size: int | tuple[int, int] = Field(default=3, description="Output kernel size")
+    output_kernel_stride: int | tuple[int, int] = Field(default=1, description="Output kernel stride")
     name: str = Field(default="UNext", description="Model name")
 
 
@@ -47,9 +39,7 @@ def se_block(ratio: int = 8, name: str | None = None):
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         num_chan = x.shape[-1]
         # Squeeze
-        y = keras.layers.GlobalAveragePooling2D(
-            name=f"{name}.pool" if name else None, keepdims=True
-        )(x)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool" if name else None, keepdims=True)(x)
 
         y = keras.layers.Conv2D(
             num_chan // ratio,
@@ -61,16 +51,13 @@ def se_block(ratio: int = 8, name: str | None = None):
         y = keras.layers.Activation("relu6", name=f"{name}.relu" if name else None)(y)
 
         # Excite
-        y = keras.layers.Conv2D(
-            num_chan, kernel_size=1, use_bias=True, name=f"{name}.ex" if name else None
-        )(y)
-        y = keras.layers.Activation(
-            keras.activations.hard_sigmoid, name=f"{name}.sigg" if name else None
-        )(y)
+        y = keras.layers.Conv2D(num_chan, kernel_size=1, use_bias=True, name=f"{name}.ex" if name else None)(y)
+        y = keras.layers.Activation(keras.activations.hard_sigmoid, name=f"{name}.sigg" if name else None)(y)
         y = keras.layers.Multiply(name=f"{name}.mul" if name else None)([x, y])
         return y
 
     return layer
+
 
 def norm_layer(norm: str, name: str) -> keras.Layer:
     """Normalization layer
@@ -101,6 +88,7 @@ def norm_layer(norm: str, name: str) -> keras.Layer:
 
     return layer
 
+
 def UNext_block(
     output_filters: int,
     expand_ratio: float = 1,
@@ -115,9 +103,7 @@ def UNext_block(
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_filters: int = x.shape[-1]
-        strides_len = (
-            strides if isinstance(strides, int) else sum(strides) // len(strides)
-        )
+        strides_len = strides if isinstance(strides, int) else sum(strides) // len(strides)
         add_residual = input_filters == output_filters and strides_len == 1
         ln_axis = 2 if x.shape[1] == 1 else 1 if x.shape[2] == 1 else (1, 2)
 
@@ -385,6 +371,7 @@ def UNext(
     # Define the model
     model = keras.Model(x, y, name=params.name)
     return model
+
 
 def unext_from_object(
     x: keras.KerasTensor,

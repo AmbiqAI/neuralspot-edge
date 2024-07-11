@@ -9,12 +9,8 @@ from pydantic import BaseModel, Field
 class TsBlockParams(BaseModel):
     """TsMixer block parameters"""
 
-    norm: Literal["batch", "layer"] | None = Field(
-        default="layer", description="Normalization type"
-    )
-    activation: Literal["relu", "gelu"] | None = Field(
-        default="relu", description="Activation type"
-    )
+    norm: Literal["batch", "layer"] | None = Field(default="layer", description="Normalization type")
+    activation: Literal["relu", "gelu"] | None = Field(default="relu", description="Activation type")
     dropout: float | None = Field(default=None, description="Dropout rate")
     ff_dim: int | None = Field(default=None, description="Feed forward dimension")
 
@@ -22,9 +18,7 @@ class TsBlockParams(BaseModel):
 class TsMixerParams(BaseModel):
     """TsMixer parameters"""
 
-    blocks: list[TsBlockParams] = Field(
-        default_factory=list, description="UNext blocks"
-    )
+    blocks: list[TsBlockParams] = Field(default_factory=list, description="UNext blocks")
     name: str = Field(default="TsMixer", description="Model name")
 
 
@@ -65,23 +59,19 @@ def ts_block(params: TsBlockParams, name: str) -> keras.Layer:
         y = norm_layer(params.norm, name=f"{name}.TL")(x)
 
         y = keras.ops.transpose(y, axes=[0, 2, 1])  # [Batch, Channel, Input Length]
-        y = keras.layers.Dense(
-            y.shape[-1], activation=params.activation, name=f"{name}.TL.DENSE"
-        )(y)
+        y = keras.layers.Dense(y.shape[-1], activation=params.activation, name=f"{name}.TL.DENSE")(y)
         y = keras.ops.transpose(y, axes=[0, 2, 1])  # [Batch, Input Length, Channel]
         y = keras.layers.Dropout(params.dropout, name=f"{name}.TL.DROP")(y)
         res = y + x
 
         # Feature Linear
         y = norm_layer(params.norm, name=f"{name}.FL")(res)
-        y = keras.layers.Dense(
-            params.ff_dim, activation=params.activation, name=f"{name}.FL.DENSE"
-        )(y)  # [Batch, Input Length, FF_Dim]
+        y = keras.layers.Dense(params.ff_dim, activation=params.activation, name=f"{name}.FL.DENSE")(
+            y
+        )  # [Batch, Input Length, FF_Dim]
         y = keras.layers.Dropout(params.dropout, name=f"{name}.FL.DROP")(y)
 
-        y = keras.layers.Dense(x.shape[-1], name=f"{name}.RL.DENSE")(
-            y
-        )  # [Batch, Input Length, Channel]
+        y = keras.layers.Dense(x.shape[-1], name=f"{name}.RL.DENSE")(y)  # [Batch, Input Length, Channel]
         y = keras.layers.Dropout(params.dropout, name=f"{name}.RL.DROP")(y)
         return y + res
 

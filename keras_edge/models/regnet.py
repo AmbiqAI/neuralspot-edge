@@ -15,9 +15,7 @@ class RegNetBlockParam(BaseModel):
 
     filters: int = Field(..., description="# filters")
     depth: int = Field(default=1, description="Layer depth")
-    group_width: int = Field(
-        default=1, description="Group width. Must be divisible by in/out filters"
-    )
+    group_width: int = Field(default=1, description="Group width. Must be divisible by in/out filters")
     kernel_size: int | tuple[int, int] = Field(default=3, description="Kernel size")
     strides: int | tuple[int, int] = Field(default=1, description="Stride size")
     se_ratio: float = Field(default=8, description="Squeeze Excite ratio")
@@ -27,9 +25,7 @@ class RegNetBlockParam(BaseModel):
 class RegNetParams(BaseModel):
     """RegNet parameters"""
 
-    blocks: list[RegNetBlockParam] = Field(
-        default_factory=list, description="RegNet blocks"
-    )
+    blocks: list[RegNetBlockParam] = Field(default_factory=list, description="RegNet blocks")
     input_filters: int = Field(default=0, description="Input filters")
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     output_filters: int = Field(default=0, description="Output filters")
@@ -65,9 +61,7 @@ def yblock(
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_filters = x.shape[-1]
         groups = output_filters // group_width
-        use_skip = (input_filters != output_filters) or (
-            strides != 1 if isinstance(strides, int) else strides[0] != 1
-        )
+        use_skip = (input_filters != output_filters) or (strides != 1 if isinstance(strides, int) else strides[0] != 1)
 
         name_ex = f"{name}.exp" if name else None
         y = conv2d(output_filters, kernel_size=(1, 1), name=name_ex)(x)
@@ -132,9 +126,7 @@ def zblock(
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_filters = x.shape[-1]
         groups = input_filters // group_width
-        use_add = input_filters == output_filters and (
-            strides == 1 if isinstance(strides, int) else strides[0] == 1
-        )
+        use_add = input_filters == output_filters and (strides == 1 if isinstance(strides, int) else strides[0] == 1)
         expand_ratio = 2
 
         name_ex = f"{name}.exp" if name else None
@@ -226,9 +218,7 @@ def RegNet(
     if params.input_filters > 0:
         name = "stem"
         filters = make_divisible(params.input_filters, 8)
-        y = conv2d(
-            filters, kernel_size=(3, 3), strides=params.input_strides, name=name
-        )(x)
+        y = conv2d(filters, kernel_size=(3, 3), strides=params.input_strides, name=name)(x)
         y = batch_norm(name=name)(y)
         y = cast(keras.KerasTensor, relu6(name=name)(y))
     else:
@@ -239,9 +229,7 @@ def RegNet(
     if params.output_filters:
         name = "neck"
         filters = make_divisible(params.output_filters, 8)
-        y = conv2d(
-            filters, kernel_size=(1, 1), strides=(1, 1), padding="valid", name=name
-        )(y)
+        y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), padding="valid", name=name)(y)
         y = batch_norm(name=name)(y)
         y = relu6(name=name)(y)
 
@@ -258,6 +246,7 @@ def RegNet(
 
     model = keras.Model(x, y, name=params.name)
     return model
+
 
 def regnet_from_object(
     x: keras.KerasTensor,

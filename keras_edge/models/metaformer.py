@@ -1,23 +1,27 @@
 import keras
 from pydantic import BaseModel, Field
 
+
 class NameArgs(BaseModel):
     """Name and arguments"""
+
     name: str = Field(default="conv", description="Name")
     args: dict = Field(default_factory=dict, description="Arguments")
 
+
 class MetaFormerBlockParams(BaseModel):
     """MetaFormer block parameters"""
+
     layers: int = Field(default=2, description="Number of layers")
     patch_embed: dict = Field(default_factory=dict, description="Patch embedding")
     token_mixer: NameArgs = Field(default_factory=dict, description="Token mixer")
     channel_mixer: NameArgs = Field(default_factory=dict, description="Channel mixer")
 
+
 class MetaFormerParams(BaseModel):
     """MetaFormer parameters"""
-    blocks: list[MetaFormerBlockParams] = Field(
-        default_factory=list, description="MetaFormer blocks"
-    )
+
+    blocks: list[MetaFormerBlockParams] = Field(default_factory=list, description="MetaFormer blocks")
     output_filters: int = Field(default=0, description="Output filters")
     output_activation: str | None = Field(default=None, description="Output activation")
     include_top: bool = Field(default=True, description="Include top")
@@ -29,7 +33,7 @@ class MetaFormerParams(BaseModel):
 def patch_embedding(
     embed_dim: int,
     patch_shape: tuple[int, int],
-    stride_shape: tuple[int, int]|None = None,
+    stride_shape: tuple[int, int] | None = None,
     padding: str = "same",
 ) -> keras.layers.Layer:
     """Patch embedding layer using 2D convolution"""
@@ -43,6 +47,7 @@ def patch_embedding(
         use_bias=False,
     )
 
+
 def pool_token_mixer(
     pool_size: tuple[int, int] = (2, 2),
 ) -> keras.layers.Layer:
@@ -54,16 +59,22 @@ def pool_token_mixer(
     Returns:
         keras.layers.Layer: Token mixer layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
-        y = keras.layers.AveragePooling2D(
-            pool_size=pool_size,
-            strides=(1, 1),
-            padding="same",
-        )(y) - y
+        y = (
+            keras.layers.AveragePooling2D(
+                pool_size=pool_size,
+                strides=(1, 1),
+                padding="same",
+            )(y)
+            - y
+        )
         return y
+
     # END DEF
     return layer
+
 
 def conv_token_mixer(
     embed_dim: int,
@@ -80,6 +91,7 @@ def conv_token_mixer(
     Returns:
         keras.layers.Layer: Token mixer layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
         y = keras.layers.SeparableConv2D(
@@ -90,8 +102,10 @@ def conv_token_mixer(
             use_bias=False,
         )(y)
         return y
+
     # END DEF
     return layer
+
 
 def attention_token_mixer(
     embed_dim: int,
@@ -108,12 +122,13 @@ def attention_token_mixer(
     Returns:
         keras.layers.Layer: Token mixer layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         input_shape = keras.ops.shape(x)
         height = input_shape[1]
         width = input_shape[2]
         channels = input_shape[3]
-        y = x # Shape is B, H, W, C
+        y = x  # Shape is B, H, W, C
         y = keras.layers.Reshape((height * width, channels))(y)
         y = keras.layers.MultiHeadAttention(
             num_heads=num_heads,
@@ -123,8 +138,10 @@ def attention_token_mixer(
         # Reshape back to B, H, W, C
         y = keras.layers.Reshape((height, width, channels))(y)
         return y
+
     # END DEF
     return layer
+
 
 def mlp_channel_mixer(
     embed_dim: int,
@@ -143,6 +160,7 @@ def mlp_channel_mixer(
     Returns:
         keras.layers.Layer: Channel mixer layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
         y = keras.layers.Conv2D(
@@ -163,13 +181,15 @@ def mlp_channel_mixer(
             y = keras.layers.Dropout(dropout)(y)
 
         return y
+
     # END DEF
     return layer
 
+
 def metaformer_block(
-    token_mixer: keras.layers.Layer|None = None,
-    channel_mixer: keras.layers.Layer|None = None,
-    name: str = 'mf_block',
+    token_mixer: keras.layers.Layer | None = None,
+    channel_mixer: keras.layers.Layer | None = None,
+    name: str = "mf_block",
 ) -> keras.layers.Layer:
     """Metaformer block
 
@@ -188,10 +208,7 @@ def metaformer_block(
 
         if token_mixer:
             # Apply layer normalization
-            y1 = keras.layers.LayerNormalization(
-                name=f"{name}.token_ln",
-                axis=-1
-            )(y)
+            y1 = keras.layers.LayerNormalization(name=f"{name}.token_ln", axis=-1)(y)
 
             # Apply token mixer
             y1 = token_mixer(y1)
@@ -202,10 +219,7 @@ def metaformer_block(
 
         if channel_mixer:
             # Apply layer normalization
-            y1 = keras.layers.LayerNormalization(
-                name=f"{name}.ch_ln",
-                axis=-1
-            )(y)
+            y1 = keras.layers.LayerNormalization(name=f"{name}.ch_ln", axis=-1)(y)
 
             # Apply channel mixer
             y1 = channel_mixer(y1)
@@ -214,9 +228,11 @@ def metaformer_block(
             y = y + y1
 
         return y
+
     # END DEF
 
     return layer
+
 
 def MetaFormer(
     x: keras.KerasTensor,
@@ -236,10 +252,10 @@ def MetaFormer(
     y = x
 
     for b, block in enumerate(params.blocks):
-        print("Adding block", b+1)
+        print("Adding block", b + 1)
         # Apply patch embedding
         y = patch_embedding(**block.patch_embed)(y)
-        for l in range(block.layers):
+        for lyr in range(block.layers):
             token_mixer = None
             if block.token_mixer.name == "conv":
                 token_mixer = conv_token_mixer(**block.token_mixer.args)
@@ -255,7 +271,7 @@ def MetaFormer(
             y = metaformer_block(
                 token_mixer=token_mixer,
                 channel_mixer=channel_mixer,
-                name=f"B{b+1}.L{l+1}",
+                name=f"B{b+1}.L{lyr+1}",
             )(y)
         # END FOR
     # END FOR
@@ -273,6 +289,7 @@ def MetaFormer(
 
     model = keras.Model(x, y, name=params.name)
     return model
+
 
 def ccaa_metaformer(
     x: keras.KerasTensor,
@@ -305,7 +322,7 @@ def ccaa_metaformer(
                         activation="gelu",
                         dropout=0.1,
                     ),
-                )
+                ),
             ),
             MetaFormerBlockParams(
                 layers=2,
@@ -330,7 +347,7 @@ def ccaa_metaformer(
                         activation="gelu",
                         dropout=0.1,
                     ),
-                )
+                ),
             ),
             MetaFormerBlockParams(
                 layers=2,
@@ -355,7 +372,7 @@ def ccaa_metaformer(
                         activation="gelu",
                         dropout=0.1,
                     ),
-                )
+                ),
             ),
             MetaFormerBlockParams(
                 layers=2,
@@ -380,7 +397,7 @@ def ccaa_metaformer(
                         activation="gelu",
                         dropout=0.1,
                     ),
-                )
+                ),
             ),
         ],
         include_top=True,

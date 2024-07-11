@@ -1,14 +1,17 @@
-""" Fast Conformer"""
+"""Fast Conformer"""
+
 import keras
 from pydantic import BaseModel, Field
 
 from .blocks import layer_norm, batch_norm
 from .activations import swish, glu, relu
 
+
 class SubsampleBlockParams(BaseModel):
     depth: int = 256
     kernel_size: int = 3
     strides: int = 2
+
 
 class ConformerBlockParams(BaseModel):
     depth: int = 256
@@ -20,8 +23,10 @@ class ConformerBlockParams(BaseModel):
     dropout: float = 0.1
     use_bias: bool = True
 
+
 class ConformerParams(BaseModel):
     """Conformer parameters"""
+
     subsamples: list[SubsampleBlockParams] = Field(default_factory=list, description="Subsample blocks")
     blocks: list[ConformerBlockParams] = Field(default_factory=list, description="Conformer blocks")
     output_activation: str | None = Field(default=None, description="Output activation")
@@ -51,12 +56,10 @@ def subsampler(
                 pointwise_regularizer=kernel_regularizer,
                 bias_initializer=bias_initializer,
                 bias_regularizer=bias_regularizer,
-                padding='same',
-                name=f'{name}_conv{i+1}'
+                padding="same",
+                name=f"{name}_conv{i+1}",
             )(y)
-            y = relu(
-                name=f'{name}_relu{i+1}'
-            )(y)
+            y = relu(name=f"{name}_relu{i+1}")(y)
         # END FOR
 
         # Swap from (b,f,t,c) to (b,t,c,f) and merge (c,f) to get (b,t,c*f)
@@ -68,12 +71,13 @@ def subsampler(
             units=blocks[-1].depth,
             kernel_initializer=kernel_initializer,
             bias_initializer=bias_initializer,
-            name=f'{name}_dense'
-        )(y) # (b,t,c*f) -> (b,t,d)
+            name=f"{name}_dense",
+        )(y)  # (b,t,c*f) -> (b,t,d)
         return y
 
     # END DEF
     return layer
+
 
 def fc_block(
     depth: int,
@@ -85,14 +89,12 @@ def fc_block(
     bias_initializer: str = "zeros",
     kernel_regularizer=None,
     bias_regularizer=None,
-    name: str = 'fc_block',
+    name: str = "fc_block",
 ):
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
-        y = layer_norm(
-            name=f"{name}.ln"
-        )(y)
+        y = layer_norm(name=f"{name}.ln")(y)
 
         y = keras.layers.Dense(
             int(ex_factor * depth),
@@ -101,16 +103,11 @@ def fc_block(
             kernel_regularizer=kernel_regularizer,
             bias_regularizer=bias_regularizer,
             use_bias=use_bias,
-            name=f"{name}.fc1"
+            name=f"{name}.fc1",
         )(y)
-        y = swish(
-            name=f"{name}.swish"
-        )(y)
+        y = swish(name=f"{name}.swish")(y)
         if 0 < dropout < 1:
-            y = keras.layers.Dropout(
-                dropout,
-                name=f"{name}.dropout1"
-            )(y)
+            y = keras.layers.Dropout(dropout, name=f"{name}.dropout1")(y)
         # END IF
         y = keras.layers.Dense(
             depth,
@@ -119,17 +116,16 @@ def fc_block(
             kernel_regularizer=kernel_regularizer,
             bias_regularizer=bias_regularizer,
             use_bias=use_bias,
-            name=f"{name}.fc2"
+            name=f"{name}.fc2",
         )(y)
         if 0 < dropout < 1:
-            y = keras.layers.Dropout(
-                dropout,
-                name=f"{name}.dropout2"
-            )(y)
+            y = keras.layers.Dropout(dropout, name=f"{name}.dropout2")(y)
         # END IF
         return x + residual_factor * y
+
     # END DEF
     return layer
+
 
 def conv_block(
     depth: int,
@@ -146,9 +142,7 @@ def conv_block(
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
-        y = layer_norm(
-            name=f"{name}.ln"
-        )(y)
+        y = layer_norm(name=f"{name}.ln")(y)
 
         y = keras.layers.Conv1D(
             filters=scale_factor * depth,
@@ -171,7 +165,7 @@ def conv_block(
             bias_initializer=bias_initializer,
             depthwise_regularizer=kernel_regularizer,
             bias_regularizer=bias_regularizer,
-            name=f"{name}.dw_conv"
+            name=f"{name}.dw_conv",
         )(y)
         y = batch_norm(name=f"{name}.bn")(y)
 
@@ -185,20 +179,19 @@ def conv_block(
             bias_initializer=bias_initializer,
             kernel_regularizer=kernel_regularizer,
             bias_regularizer=bias_regularizer,
-            name=f"{name}.pw_conv2"
+            name=f"{name}.pw_conv2",
         )(y)
 
         if 0 < dropout < 1:
-            y = keras.layers.Dropout(
-                rate=dropout,
-                name=f"{name}.dropout"
-            )(y)
+            y = keras.layers.Dropout(rate=dropout, name=f"{name}.dropout")(y)
         # END IF
 
         # Residual connection
         return x + y
+
     # END DEF
     return layer
+
 
 def att_block(
     depth: int,
@@ -209,9 +202,7 @@ def att_block(
 ):
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
-        y = layer_norm(
-            name=f"{name}.ln"
-        )(y)
+        y = layer_norm(name=f"{name}.ln")(y)
 
         # Att type: rel, abs, none
         y = keras.layers.MultiHeadAttention(
@@ -219,18 +210,17 @@ def att_block(
             key_dim=depth // num_heads,
             value_dim=depth // num_heads,
             dropout=dropout,
-            name=f"{name}.mha"
+            name=f"{name}.mha",
         )(y, y)
 
         if 0 < dropout < 1:
-            y = keras.layers.Dropout(
-                dropout,
-                name=f"{name}.dropout"
-            )(y)
+            y = keras.layers.Dropout(dropout, name=f"{name}.dropout")(y)
 
         return y
+
     # END DEF
     return layer
+
 
 def conformer_block(
     depth: int,
@@ -241,7 +231,7 @@ def conformer_block(
     kernel_size: int = 9,
     dropout: float = 0.1,
     use_bias: bool = True,
-    name: str = 'cf_block',
+    name: str = "cf_block",
 ):
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
@@ -253,7 +243,7 @@ def conformer_block(
             residual_factor=fc_res_factor,
             dropout=dropout,
             use_bias=use_bias,
-            name=f"{name}.fcb1"
+            name=f"{name}.fcb1",
         )(y)
 
         # ATT Block w/ residual
@@ -262,16 +252,11 @@ def conformer_block(
             embedding=embedding,
             num_heads=num_heads,
             dropout=dropout,
-            name=f"{name}.att"
+            name=f"{name}.att",
         )(y)
 
         # Conv Block w/ residual
-        y = conv_block(
-            depth=depth,
-            kernel_size=kernel_size,
-            dropout=dropout,
-            name=f"{name}.cvb"
-        )(y)
+        y = conv_block(depth=depth, kernel_size=kernel_size, dropout=dropout, name=f"{name}.cvb")(y)
 
         # 2nd FC Block w/ residual
         y = fc_block(
@@ -280,17 +265,17 @@ def conformer_block(
             residual_factor=fc_res_factor,
             dropout=dropout,
             use_bias=use_bias,
-            name=f"{name}.fcb2"
+            name=f"{name}.fcb2",
         )(y)
 
         # Output Layer Norm
-        y = layer_norm(
-            name=f"{name}.out.ln"
-        )(y)
+        y = layer_norm(name=f"{name}.out.ln")(y)
 
         return y
+
     # END DEF
     return layer
+
 
 def Conformer(
     x: keras.KerasTensor,
@@ -314,7 +299,7 @@ def Conformer(
         kernel_size=params.subsample.kernel_size,
         strides=params.subsample.strides,
         num_downsamples=params.subsample.downsamples,
-        name="subsample"
+        name="subsample",
     )(y)
 
     for i, block in enumerate(params.blocks):
@@ -327,7 +312,7 @@ def Conformer(
             kernel_size=block.kernel_size,
             dropout=block.dropout,
             use_bias=block.use_bias,
-            name=f"CB{i+1}"
+            name=f"CB{i+1}",
         )(y)
 
     if params.include_top:
@@ -341,6 +326,7 @@ def Conformer(
 
     model = keras.Model(x, y, name=params.name)
     return model
+
 
 def conformer_from_object(
     x: keras.KerasTensor,

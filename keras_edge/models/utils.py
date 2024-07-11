@@ -58,9 +58,7 @@ def load_model(model_path: os.PathLike) -> keras.Model:
                 artifact.download(tmpdirname)
                 model_path = tmpdirname
                 # Find the model file
-                file_paths = [
-                    glob.glob(f"{tmpdirname}/*.{f}") for f in ["keras", "tf", "h5"]
-                ]
+                file_paths = [glob.glob(f"{tmpdirname}/*.{f}") for f in ["keras", "tf", "h5"]]
                 file_paths = list(itertools.chain.from_iterable(file_paths))
                 if not file_paths:
                     raise FileNotFoundError("Model file not found in artifact")

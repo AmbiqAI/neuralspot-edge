@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class PatchLayer(keras.layers.Layer):
     """This layer will extract patches from an image and reshape them into flattened vectors.
     Useful as preprocessing technique for patch-based self-supervised learning methods like
@@ -15,14 +16,16 @@ class PatchLayer(keras.layers.Layer):
         patch_row_size (int): The height of the patch.
         patch_col_size (int): The width of the patch.
     """
-    def __init__(self,
-            height: int,
-            width: int,
-            ch: int,
-            patch_height: int,
-            patch_width: int,
-            **kwargs
-        ):
+
+    def __init__(
+        self,
+        height: int,
+        width: int,
+        ch: int,
+        patch_height: int,
+        patch_width: int,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.height = height
         self.width = width
@@ -34,24 +37,19 @@ class PatchLayer(keras.layers.Layer):
         self.resize = keras.layers.Reshape((-1, patch_height * patch_width * ch))
 
     def call(self, images):
-
         # Create patches from the input images
         patches = keras.ops.image.extract_patches(
             image=images,
             size=(self.patch_height, self.patch_width),
             strides=(self.patch_height, self.patch_width),
-            padding="valid"
+            padding="valid",
         )
 
         # Reshape the patches to (batch, num_patches, patch_area)
         patches = self.resize(patches)
         return patches
 
-    def show_patched_image(
-        self,
-        images: keras.KerasTensor,
-        patches: keras.KerasTensor
-    ):
+    def show_patched_image(self, images: keras.KerasTensor, patches: keras.KerasTensor):
         """Utility function which accepts a batch of images and its
         corresponding patches and help visualize one image and its patches
         side by side.
@@ -97,7 +95,7 @@ class PatchLayer(keras.layers.Layer):
 
         """
         num_patches = patch.shape[0]
-        n = int(self.height/self.patch_height)
+        n = int(self.height / self.patch_height)
 
         patch = keras.ops.reshape(patch, (num_patches, self.patch_height, self.patch_width, self.ch_size))
         rows = keras.ops.split(patch, n, axis=0)
@@ -105,8 +103,8 @@ class PatchLayer(keras.layers.Layer):
         reconstructed = keras.ops.concatenate(rows, axis=0)
         return reconstructed
 
-class MaskedPatchEncoder(keras.layers.Layer):
 
+class MaskedPatchEncoder(keras.layers.Layer):
     def __init__(
         self,
         patch_height: int,
@@ -139,7 +137,6 @@ class MaskedPatchEncoder(keras.layers.Layer):
         self.downstream = downstream
 
     def build(self, input_shape):
-
         (_, self.num_patches, self.patch_area) = input_shape
 
         # A trainable mask token initialized randomly from a normal distribution
@@ -153,9 +150,7 @@ class MaskedPatchEncoder(keras.layers.Layer):
         self.projection = keras.layers.Dense(units=self.projection_dim)
 
         # Create the positional embedding layer
-        self.position_embedding = keras.layers.Embedding(
-            input_dim=self.num_patches, output_dim=self.projection_dim
-        )
+        self.position_embedding = keras.layers.Embedding(input_dim=self.num_patches, output_dim=self.projection_dim)
 
         # Number of patches that will be masked
         self.num_mask = int(self.mask_proportion * self.num_patches)
@@ -167,14 +162,10 @@ class MaskedPatchEncoder(keras.layers.Layer):
         positions = keras.ops.arange(start=0, stop=self.num_patches, step=1)
         positions = keras.ops.expand_dims(positions, axis=0)
         pos_embeddings = self.position_embedding(positions)
-        pos_embeddings = keras.ops.tile(
-            pos_embeddings, [batch_size, 1, 1]
-        )  # (B, num_patches, projection_dim)
+        pos_embeddings = keras.ops.tile(pos_embeddings, [batch_size, 1, 1])  # (B, num_patches, projection_dim)
 
         # Embed the patches.
-        patch_embeddings = (
-            self.projection(patches) + pos_embeddings
-        )  # (B, num_patches, projection_dim)
+        patch_embeddings = self.projection(patches) + pos_embeddings  # (B, num_patches, projection_dim)
 
         if self.downstream:
             return patch_embeddings
@@ -209,24 +200,15 @@ class MaskedPatchEncoder(keras.layers.Layer):
                 unmask_indices,  # The indices that were unmaksed.
             )
 
-    def get_random_indices(
-        self,
-        batch_size: int
-    ):
+    def get_random_indices(self, batch_size: int):
         # Create random indices from a uniform distribution and then split
         # it into mask and unmask indices.
-        rand_indices = keras.ops.argsort(
-            keras.random.uniform(shape=(batch_size, self.num_patches)), axis=-1
-        )
+        rand_indices = keras.ops.argsort(keras.random.uniform(shape=(batch_size, self.num_patches)), axis=-1)
         mask_indices = rand_indices[:, : self.num_mask]
         unmask_indices = rand_indices[:, self.num_mask :]
         return mask_indices, unmask_indices
 
-    def generate_masked_image(
-        self,
-        patches: keras.KerasTensor,
-        unmask_indices: keras.KerasTensor
-    ):
+    def generate_masked_image(self, patches: keras.KerasTensor, unmask_indices: keras.KerasTensor):
         # Choose a random patch and it corresponding unmask index.
         idx = np.random.choice(patches.shape[0])
         patch = patches[idx]

@@ -2,10 +2,20 @@ import keras
 import tensorflow as tf
 from typing import Callable
 
+
 class MaskedAutoencoder(keras.Model):
     def __init__(
         self,
-        patch_layer: Callable[[keras.KerasTensor], tuple[keras.KerasTensor, keras.KerasTensor, keras.KerasTensor, keras.KerasTensor, keras.KerasTensor]],
+        patch_layer: Callable[
+            [keras.KerasTensor],
+            tuple[
+                keras.KerasTensor,
+                keras.KerasTensor,
+                keras.KerasTensor,
+                keras.KerasTensor,
+                keras.KerasTensor,
+            ],
+        ],
         patch_encoder: Callable[[keras.KerasTensor], keras.KerasTensor],
         encoder: keras.Model,
         decoder: keras.Model,
@@ -72,7 +82,6 @@ class MaskedAutoencoder(keras.Model):
             raise NotImplementedError("PyTorch backend is not supported.")
 
     def _tensorflow_train_step(self, x):
-
         with tf.GradientTape() as tape:
             total_loss, loss_patch, loss_output = self.calculate_loss(x)
 

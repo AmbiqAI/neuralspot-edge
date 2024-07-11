@@ -31,14 +31,24 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
+[tool.poetry.group.docs]
+optional = true
 
-
-
-
-
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.28"
+mkdocstrings-python = "^1.10.5"
+markdown-include = "^0.8.1"
+mkdocs-exclude = "^1.0.2"
 
 [tool.poetry.group.ci]
 optional = true
 
 [tool.poetry.group.ci.dependencies]
 ruff = "^0.4.9"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+ignore = ["F401"]

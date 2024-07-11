@@ -11,15 +11,17 @@ import tensorflow as tf
 
 from ..cpp import xxd_c_dump
 
+
 class QuantizationType(StrEnum):
     FP32 = "FP32"
     FP16 = "FP16"
     INT8 = "INT8"
     INT16X8 = "INT16X8"
 
-class TfLiteKerasConverter:
 
-    def __init__(self,
+class TfLiteKerasConverter:
+    def __init__(
+        self,
         model: keras.Model,
     ):
         """TFLite Keras model converter that handles conversion, evaluation, and prediction.
@@ -29,17 +31,17 @@ class TfLiteKerasConverter:
         """
         self.model = model
         self.representative_dataset = None
-        self._converter: tf.lite.TFLiteConverter|None = None
-        self._tflite_content: str|None = None
+        self._converter: tf.lite.TFLiteConverter | None = None
+        self._tflite_content: str | None = None
         self.tf_model_path = tempfile.TemporaryDirectory()
 
     def convert(
         self,
         test_x: npt.NDArray | None = None,
         quantization: QuantizationType = QuantizationType.FP32,
-        io_type: str|None = None,
+        io_type: str | None = None,
         use_concrete: bool = False,
-        strict: bool = True
+        strict: bool = True,
     ) -> str:
         """Convert TF model into TFLite model content
 
@@ -56,7 +58,7 @@ class TfLiteKerasConverter:
         quantization = QuantizationType(quantization)
 
         feat_shape = self.model.input_shape[1:]
-        input_shape = (1,) + feat_shape # Add 1 for batch dimension
+        input_shape = (1,) + feat_shape  # Add 1 for batch dimension
         input_spec = tf.TensorSpec(shape=input_shape, dtype=self.model.input_dtype)
 
         # Following is a workaround for bug (https://github.com/tensorflow/tflite-micro/issues/2319)
@@ -68,7 +70,7 @@ class TfLiteKerasConverter:
         else:
             self.model.export(self.tf_model_path.name, format="tf_saved_model")
             converter = tf.lite.TFLiteConverter.from_saved_model(self.tf_model_path.name)
-            # Following is broken...hence that workaround
+            # Following is broken...hence the workaround
             # converter = tf.lite.TFLiteConverter.from_keras_model(model=model)
         # END IF
 
@@ -100,13 +102,21 @@ class TfLiteKerasConverter:
                 converter.representative_dataset = self.representative_dataset
             # int8 weights, int64 bias, int16 activation
             case QuantizationType.INT16X8:
-                converter.representative_dataset = self.representative_dataset
                 converter.optimizations = [tf.lite.Optimize.DEFAULT]
-                converter.target_spec.supported_ops = [tf.lite.OpsSet.EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8]
+                converter.target_spec.supported_ops = [
+                    tf.lite.OpsSet.EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8
+                ]
+                io_dtype = tf.dtypes.as_dtype(io_type) if io_type else tf.float32
+                converter.inference_input_type = io_dtype
+                converter.inference_output_type = io_dtype
+                converter.representative_dataset = self.representative_dataset
         # END MATCH
 
         # For fallback append tf.lite.OpsSet.TFLITE_BUILTINS for INT8 and INT16X8
-        if not strict and quantization in [QuantizationType.INT8, QuantizationType.INT16X8]:
+        if not strict and quantization in [
+            QuantizationType.INT8,
+            QuantizationType.INT16X8,
+        ]:
             converter.target_spec.supported_ops.append(tf.lite.OpsSet.TFLITE_BUILTINS)
 
         # Convert model
@@ -116,8 +126,7 @@ class TfLiteKerasConverter:
         return self._tflite_content
 
     def debug_quantization(self) -> pd.DataFrame:
-        """Debug quantized TFLite model content.
-        """
+        """Debug quantized TFLite model content."""
 
         if self._converter is None:
             raise ValueError("No TFLite content to debug. Run convert() first.")
@@ -127,8 +136,7 @@ class TfLiteKerasConverter:
 
         # Debug model
         debugger = tf.lite.experimental.QuantizationDebugger(
-            converter=self._converter,
-            debug_dataset=self.representative_dataset
+            converter=self._converter, debug_dataset=self.representative_dataset
         )
         debugger.run()
 
@@ -164,13 +172,9 @@ class TfLiteKerasConverter:
             input_details = interpreter.get_input_details()[0]
 
             input_scale: list[float] = input_details["quantization_parameters"]["scales"]
-            input_zero_point: list[int] = input_details["quantization_parameters"][
-                "zero_points"
-            ]
+            input_zero_point: list[int] = input_details["quantization_parameters"]["zero_points"]
             output_scale: list[float] = output_details["quantization_parameters"]["scales"]
-            output_zero_point: list[int] = output_details["quantization_parameters"][
-                "zero_points"
-            ]
+            output_zero_point: list[int] = output_details["quantization_parameters"]["zero_points"]
 
             inputs = inputs.reshape([-1] + input_details["shape_signature"].tolist())
             if len(input_scale) and len(input_zero_point):
@@ -179,9 +183,9 @@ class TfLiteKerasConverter:
 
             outputs = []
             for sample in inputs:
-                interpreter.set_tensor(input_details['index'], sample)
+                interpreter.set_tensor(input_details["index"], sample)
                 interpreter.invoke()
-                y = interpreter.get_tensor(output_details['index'])
+                y = interpreter.get_tensor(output_details["index"])
                 outputs.append(y)
             outputs = np.concatenate(outputs, axis=0)
 
@@ -202,13 +206,9 @@ class TfLiteKerasConverter:
         input_details = inputs_details[input_name]
         output_details = outputs_details[output_name]
         input_scale: list[float] = input_details["quantization_parameters"]["scales"]
-        input_zero_point: list[int] = input_details["quantization_parameters"][
-            "zero_points"
-        ]
+        input_zero_point: list[int] = input_details["quantization_parameters"]["zero_points"]
         output_scale: list[float] = output_details["quantization_parameters"]["scales"]
-        output_zero_point: list[int] = output_details["quantization_parameters"][
-            "zero_points"
-        ]
+        output_zero_point: list[int] = output_details["quantization_parameters"]["zero_points"]
 
         inputs = inputs.reshape([-1] + input_details["shape_signature"].tolist()[1:])
         if len(input_scale) and len(input_zero_point):
@@ -216,10 +216,7 @@ class TfLiteKerasConverter:
             inputs = inputs.astype(input_details["dtype"])
 
         outputs = np.array(
-            [
-                model_sig(**{input_name: inputs[i : i + 1]})[output_name][0]
-                for i in range(inputs.shape[0])
-            ],
+            [model_sig(**{input_name: inputs[i : i + 1]})[output_name][0] for i in range(inputs.shape[0])],
             dtype=output_details["dtype"],
         )
 
@@ -282,7 +279,7 @@ class TfLiteKerasConverter:
                 dst_path=header_path,
                 var_name=name,
                 chunk_len=20,
-                is_header=True
+                is_header=True,
             )
         # END WITH
 
@@ -290,8 +287,8 @@ class TfLiteKerasConverter:
         """Cleanup temporary files"""
         self.tf_model_path.cleanup()
 
-class TfLiteKerasInterpreter:
 
+class TfLiteKerasInterpreter:
     def __init__(
         self,
         model_content: str,
@@ -336,8 +333,8 @@ class TfLiteKerasInterpreter:
             input_details = self.interpreter.get_input_details()[0]
             output_details = self.interpreter.get_output_details()[0]
             self._input_shape = input_details["shape_signature"].tolist()
-            self._input_name = input_details['index']
-            self._output_name = output_details['index']
+            self._input_name = input_details["index"]
+            self._output_name = output_details["index"]
 
         else:
             model_sig = self.interpreter.get_signature_runner(self.signature_key)
@@ -369,10 +366,7 @@ class TfLiteKerasInterpreter:
             self._output_zero_point = output_zero_point[0]
         # END IF
 
-    def convert_input(
-        self,
-        x: npt.NDArray
-    ) -> npt.NDArray:
+    def convert_input(self, x: npt.NDArray) -> npt.NDArray:
         """Convert input data based on quantization.
 
         NOTE: predict() will call this method internally.
@@ -390,10 +384,7 @@ class TfLiteKerasInterpreter:
         inputs = inputs.astype(self._input_dtype)
         return inputs
 
-    def convert_output(
-        self,
-        outputs: npt.NDArray
-    ) -> npt.NDArray:
+    def convert_output(self, outputs: npt.NDArray) -> npt.NDArray:
         """Convert output data based on quantization.
 
         NOTE: predict() will call this method internally.
@@ -433,10 +424,13 @@ class TfLiteKerasInterpreter:
             outputs = np.concatenate(outputs, axis=0)
         else:
             model_sig = self.interpreter.get_signature_runner(self.signature_key)
-            outputs = np.array([
-                model_sig(**{self._input_name: inputs[i : i + 1]})[self._output_name][0]
-                for i in range(inputs.shape[0])
-            ], dtype=self._output_dtype)
+            outputs = np.array(
+                [
+                    model_sig(**{self._input_name: inputs[i : i + 1]})[self._output_name][0]
+                    for i in range(inputs.shape[0])
+                ],
+                dtype=self._output_dtype,
+            )
         # END IF
 
         outputs = self.convert_output(outputs)

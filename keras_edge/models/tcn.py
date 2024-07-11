@@ -19,30 +19,18 @@ class TcnBlockParams(BaseModel):
     ex_ratio: float = Field(default=1, description="Expansion ratio")
     se_ratio: float = Field(default=0, description="Squeeze and excite ratio")
     dropout: float | None = Field(default=None, description="Dropout rate")
-    norm: Literal["batch", "layer"] | None = Field(
-        default="layer", description="Normalization type"
-    )
+    norm: Literal["batch", "layer"] | None = Field(default="layer", description="Normalization type")
     activation: str = Field(default="relu6", description="Activation function")
 
 
 class TcnParams(BaseModel):
     """TCN parameters"""
 
-    input_kernel: int | tuple[int, int] | None = Field(
-        default=None, description="Input kernel size"
-    )
-    input_norm: Literal["batch", "layer"] | None = Field(
-        default="layer", description="Input normalization type"
-    )
-    block_type: Literal["lg", "mb", "sm"] = Field(
-        default="mb", description="Block type"
-    )
-    blocks: list[TcnBlockParams] = Field(
-        default_factory=list, description="TCN blocks"
-    )
-    output_kernel: int | tuple[int, int] = Field(
-        default=3, description="Output kernel size"
-    )
+    input_kernel: int | tuple[int, int] | None = Field(default=None, description="Input kernel size")
+    input_norm: Literal["batch", "layer"] | None = Field(default="layer", description="Input normalization type")
+    block_type: Literal["lg", "mb", "sm"] = Field(default="mb", description="Block type")
+    blocks: list[TcnBlockParams] = Field(default_factory=list, description="TCN blocks")
+    output_kernel: int | tuple[int, int] = Field(default=3, description="Output kernel size")
     include_top: bool = Field(default=True, description="Include top")
     use_logits: bool = Field(default=True, description="Use logits")
     output_activation: str | None = Field(default=None, description="Output activation")
@@ -134,9 +122,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
             # END IF
 
             if params.dropout and params.dropout > 0:
-                y = keras.layers.SpatialDropout2D(
-                    rate=params.dropout, name=f"{lcl_name}.DROP"
-                )(y)
+                y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{lcl_name}.DROP")(y)
             # END IF
 
         # END FOR
@@ -239,9 +225,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
             y = keras.layers.Add(name=f"{name}.ADD")([y, y_skip])
 
         if params.dropout and params.dropout > 0:
-            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(
-                y
-            )
+            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(y)
         # END IF
         return y
 
@@ -327,9 +311,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
             y = keras.layers.Add(name=f"{name}.ADD")([y, y_skip])
 
         if params.dropout and params.dropout > 0:
-            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(
-                y
-            )
+            y = keras.layers.SpatialDropout2D(rate=params.dropout, name=f"{name}.DROP")(y)
         # END IF
         return y
 
@@ -421,6 +403,7 @@ def Tcn(
     # Define the model
     model = keras.Model(x, y, name=params.name)
     return model
+
 
 def tcn_from_object(
     x: keras.KerasTensor,

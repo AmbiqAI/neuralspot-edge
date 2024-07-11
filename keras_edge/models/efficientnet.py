@@ -14,13 +14,9 @@ from .utils import make_divisible
 class EfficientNetParams(BaseModel):
     """EfficientNet parameters"""
 
-    blocks: list[MBConvParams] = Field(
-        default_factory=list, description="EfficientNet blocks"
-    )
+    blocks: list[MBConvParams] = Field(default_factory=list, description="EfficientNet blocks")
     input_filters: int = Field(default=0, description="Input filters")
-    input_kernel_size: int | tuple[int, int] = Field(
-        default=3, description="Input kernel size"
-    )
+    input_kernel_size: int | tuple[int, int] = Field(default=3, description="Input kernel size")
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
     output_filters: int = Field(default=0, description="Output filters")
     output_activation: str | None = Field(default=None, description="Output activation")
@@ -33,9 +29,7 @@ class EfficientNetParams(BaseModel):
     name: str = Field(default="EfficientNetV2", description="Model name")
 
 
-def efficientnet_core(
-    blocks: list[MBConvParams], drop_connect_rate: float = 0
-) -> keras.Layer:
+def efficientnet_core(blocks: list[MBConvParams], drop_connect_rate: float = 0) -> keras.Layer:
     """EfficientNet core
 
     Args:
@@ -111,16 +105,12 @@ def EfficientNetV2(
         y = relu6(name=name)(y)
     # END IF
 
-    y = efficientnet_core(
-        blocks=params.blocks, drop_connect_rate=params.drop_connect_rate
-    )(y)
+    y = efficientnet_core(blocks=params.blocks, drop_connect_rate=params.drop_connect_rate)(y)
 
     if params.output_filters:
         name = "neck"
         filters = make_divisible(params.output_filters, 8)
-        y = conv2d(
-            filters, kernel_size=(1, 1), strides=(1, 1), padding="same", name=name
-        )(y)
+        y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), padding="same", name=name)(y)
         y = batch_norm(name=name)(y)
         y = relu6(name=name)(y)
 
@@ -139,6 +129,7 @@ def EfficientNetV2(
 
     model = keras.Model(x, y, name=params.name)
     return model
+
 
 def efficientnetv2_from_object(
     x: keras.KerasTensor,
