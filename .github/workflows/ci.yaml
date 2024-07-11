@@ -15,5 +15,5 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'poetry'
-      - run: poetry install
+      - run: poetry install --no-root --only ci
       - run: poetry run ruff lint
