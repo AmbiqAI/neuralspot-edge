@@ -1,1 +1,1 @@
-from .converter import QuantizationType, TfLiteKerasConverter, TfLiteKerasInterpreter
+from .converter import QuantizationType, TfLiteKerasConverter
