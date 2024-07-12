@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "keras-edge"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Ambiq AI <support.aitg@ambiq.com>"]
 readme = "README.md"
