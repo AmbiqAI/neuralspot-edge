@@ -35,6 +35,7 @@ class TfLiteKerasConverter:
         Args:
             model (keras.Model): Keras model
         """
+        self.model = model
         self.representative_dataset = None
         self._converter: tf.lite.TFLiteConverter | None = None
         self._tflite_content: str | None = None
@@ -61,7 +62,6 @@ class TfLiteKerasConverter:
             str: TFLite content
         """
         quantization = QuantizationType(quantization)
-        self.model._track_variable
         feat_shape = self.model.input_shape[1:]
         input_shape = (1,) + feat_shape  # Add 1 for batch dimension
         input_spec = tf.TensorSpec(shape=input_shape, dtype=self.model.input_dtype)
