@@ -18,6 +18,10 @@ class QuantizationType(StrEnum):
     INT8 = "INT8"
     INT16X8 = "INT16X8"
 
+class ConversionType(StrEnum):
+    KERAS = "KERAS"
+    SAVED_MODEL = "SAVED_MODEL"
+    CONCRETE = "CONCRETE"
 
 class TfLiteKerasConverter:
     def __init__(
@@ -29,7 +33,6 @@ class TfLiteKerasConverter:
         Args:
             model (keras.Model): Keras model
         """
-        self.model = keras.models.clone_model(model)
         self.representative_dataset = None
         self._converter: tf.lite.TFLiteConverter | None = None
         self._tflite_content: str | None = None
@@ -40,7 +43,7 @@ class TfLiteKerasConverter:
         test_x: npt.NDArray | None = None,
         quantization: QuantizationType = QuantizationType.FP32,
         io_type: str | None = None,
-        use_concrete: bool = False,
+        mode: ConversionType = ConversionType.KERAS,
         strict: bool = True,
     ) -> str:
         """Convert TF model into TFLite model content
@@ -49,30 +52,33 @@ class TfLiteKerasConverter:
             test_x (npt.NDArray | None, optional): Test dataset. Defaults to None.
             quantization (QuantizationType, optional): Quantization type. Defaults to QuantizationType.FP32.
             io_type (str | None, optional): Input/Output type. Defaults to None.
-            use_concrete (bool, optional): Use concrete function. Defaults to False.
+            mode (ConversionType, optional): Conversion mode. Defaults to ConversionType.KERAS.
             strict (bool, optional): Strict mode. Defaults to True.
 
         Returns:
             str: TFLite content
         """
         quantization = QuantizationType(quantization)
-
+        self.model._track_variable
         feat_shape = self.model.input_shape[1:]
         input_shape = (1,) + feat_shape  # Add 1 for batch dimension
         input_spec = tf.TensorSpec(shape=input_shape, dtype=self.model.input_dtype)
 
-        # Following is a workaround for bug (https://github.com/tensorflow/tflite-micro/issues/2319)
-        # Default TFLiteConverter generates equivalent graph w/ SpaceToBatchND operations but losses dilation_rate factor.
-        if use_concrete:
-            model_func = tf.function(func=self.model)
-            model_cf = model_func.get_concrete_function(input_spec)
-            converter = tf.lite.TFLiteConverter.from_concrete_functions([model_cf])
-        else:
-            self.model.export(self.tf_model_path.name, format="tf_saved_model")
-            converter = tf.lite.TFLiteConverter.from_saved_model(self.tf_model_path.name)
-            # Following is broken...hence the workaround
-            # converter = tf.lite.TFLiteConverter.from_keras_model(model=model)
-        # END IF
+        match mode:
+            case ConversionType.KERAS:
+                converter = tf.lite.TFLiteConverter.from_keras_model(model=self.model)
+            case ConversionType.SAVED_MODEL:
+                self.model.export(self.tf_model_path.name, format="tf_saved_model")
+                converter = tf.lite.TFLiteConverter.from_saved_model(self.tf_model_path.name)
+            # Following case is a workaround for bug (https://github.com/tensorflow/tflite-micro/issues/2319)
+            # Default TFLiteConverter generates equivalent graph w/ SpaceToBatchND operations but losses dilation_rate factor.
+            case ConversionType.CONCRETE:
+                model_func = tf.function(func=self.model)
+                model_cf = model_func.get_concrete_function(input_spec)
+                converter = tf.lite.TFLiteConverter.from_concrete_functions([model_cf])
+            case _:
+                raise ValueError(f"Invalid conversion mode: {mode}")
+        # END MATCH
 
         if test_x is None:
             test_x = np.random.rand(1000, *feat_shape)
