@@ -18,10 +18,12 @@ class QuantizationType(StrEnum):
     INT8 = "INT8"
     INT16X8 = "INT16X8"
 
+
 class ConversionType(StrEnum):
     KERAS = "KERAS"
     SAVED_MODEL = "SAVED_MODEL"
     CONCRETE = "CONCRETE"
+
 
 class TfLiteKerasConverter:
     def __init__(
