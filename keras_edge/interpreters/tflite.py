@@ -111,7 +111,7 @@ class TfLiteKerasInterpreter:
         Returns:
             npt.NDArray: Prepared output samples
         """
-        outputs = outputs.astype(self._output_dtype)
+        outputs = outputs.astype(np.float32)
         if self._output_scale and self._output_zero_point:
             outputs = (outputs - self._output_zero_point) * self._output_scale
         return outputs
