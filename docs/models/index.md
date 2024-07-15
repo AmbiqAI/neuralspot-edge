@@ -1,6 +1,6 @@
 # :factory: Model Factory
 
-When targeting edge devices, it is essential to have a model that is both accurate and efficient. The model should be able to run in real-time while maintaining a high level of accuracy. To achieve this, the model must be optimized for the target hardware and the specific use case. This includes optimizing the model architecture, the input data, and the training process. While there a number of off the shelf, pre-trained models, these are often too big and too slow for edge applications. Additionally, they may not be optimized for the specific use case. KerasEdge provides highly parameterized model architectures that can be easily customized to meet the specific requirements of the target hardware and use case. Most of the models are based on state-of-the-art architectures that have been modified to allow for more fine-grain customization.
+When targeting edge devices, it is essential to have a model that is both accurate and efficient. The model should be able to run in real-time while maintaining a high level of accuracy. To achieve this, the model must be optimized for the target hardware and the specific use case. This includes optimizing the model architecture, the input data, and the training process. While there a number of off the shelf, pre-trained models, these are often too big and too slow for edge applications. Additionally, they may not be optimized for the specific use case. NeuralSpot Edge provides highly parameterized model architectures that can be easily customized to meet the specific requirements of the target hardware and use case. Most of the models are based on state-of-the-art architectures that have been modified to allow for more fine-grain customization.
 
 ---
 
@@ -29,7 +29,7 @@ A model architecture can easily be instantied by providng a custom set of parame
 
     ```python
     import keras
-    from keras_edge.models import Tcn, TcnParams, TcnBlockParams
+    from neuralspot_edge.models import Tcn, TcnParams, TcnBlockParams
 
     inputs = keras.Input(shape=(800, 1))
     num_classes = 5

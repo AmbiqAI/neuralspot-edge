@@ -1,2 +1,3 @@
-# keras-edge
-KerasEdge provides modular components for training edge, IoT models via Keras
+# neuralspot-edge
+
+NeuralSPOT Edge provides modular components for training and exporting AI models to Ambiq's family of ultra-low power SoCs.

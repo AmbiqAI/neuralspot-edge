@@ -1,9 +1,9 @@
-site_name: KerasEdge
+site_name: NeuralSpotEdge
 site_dir: "site"
-site_url: "https://ambiqai.github.io/keras-edge"
-site_description: kerasEdge, Keras addon targeted towards edge devices
-repo_name: AmbiqAI/keras-edge
-repo_url: https://github.com/AmbiqAI/keras-edge
+site_url: "https://ambiqai.github.io/neuralspot-edge"
+site_description: NeuralSpotEdge, Keras addon targeted towards Ambiq edge SoCs
+repo_name: AmbiqAI/neuralspot-edge
+repo_url: https://github.com/AmbiqAI/neuralspot-edge
 copyright: Copyright &copy; 2024 Ambiq
 
 nav:

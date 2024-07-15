@@ -38,7 +38,7 @@ jobs:
       - build
     environment:
       name: pypi
-      url: https://pypi.org/p/keras-edge
+      url: https://pypi.org/p/neuralspot-edge
     permissions:
       id-token: write
     steps:

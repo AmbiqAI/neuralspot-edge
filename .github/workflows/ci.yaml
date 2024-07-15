@@ -1,4 +1,4 @@
-name: KerasEdge CI
+name: NeuralSpot Edge CI
 
 on: [push]
 
