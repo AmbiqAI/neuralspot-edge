@@ -15,7 +15,14 @@ def get_flops(model: keras.Model, batch_size: int | None = None, fpath: os.PathL
     Ignore operations used in only training mode such as Initialization.
     Use tf.profiler of tensorflow v2 api.
 
-    Known Limitations: Does not support LSTM and GRU.
+    Note:
+        Does not support LSTM and GRU.
+
+    Example:
+        >>> model = nse.models.load_model(...)
+        >>> model.build()
+        >>> flops = nse.metrics.get_flops(model, batch_size=1)
+        >>> print(f"FLOPS: {flops/1e6:.2f}M")
 
     Args:
         model (keras.Model|keras.Sequential): Model

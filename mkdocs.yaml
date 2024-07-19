@@ -9,26 +9,46 @@ copyright: Copyright &copy; 2024 Ambiq
 nav:
   - Home:
     - Home: index.md
-    - Models:
-      - models/index.md
+    - Getting Started: usage/index.md
+    - API Documentation: api/index.md
+    - Guides: guides/index.md
+    - Examples: examples/index.md
 
-  - Models:
-    - models/index.md
-    - TCN: models/tcn.md
-    - EfficientNetV2: models/efficientnet.md
-    - MobileOne: models/mobileone.md
-    - UNet: models/unet.md
-    - UNeXt: models/unext.md
-    - ResNet: models/resnet.md
-    - Conformer: models/conformer.md
-    - MetaFormer: models/metaformer.md
+  - Getting Started:
+    - usage/index.md
 
+  - API Documentation:
+    - api/index.md
+    - Converters API: api/converters.md
+    - Dataloaders API: api/dataloaders.md
+    - Interpreters API: api/interpreters.md
+    - Optimizers API: api/optimizers.md
+    - Layers API: api/layers.md
+    - Metrics API: api/metrics.md
+    - Plotting API: api/plotting.md
+    - Quantizers API: api/quantizers.md
+    - Models API:
+      - api/models/index.md
+      - TCN: api/models/tcn.md
+      - EfficientNetV2: api/models/efficientnet.md
+      - MobileOne: api/models/mobileone.md
+      - UNet: api/models/unet.md
+      - UNeXt: api/models/unext.md
+      - ResNet: api/models/resnet.md
+      - TSMixer: api/models/tsmixer.md
+      - Conformer: api/models/conformer.md
+      - MetaFormer: api/models/metaformer.md
 
+  - Guides:
+    - guides/index.md
+
+  - Examples:
+    - examples/index.md
 
 theme:
   name: material
-  favicon: assets/favicon.png
-  logo: assets/logo-white.png
+  # favicon: assets/favicon.png
+  # logo: assets/logo-white.png
   icon:
       repo: fontawesome/brands/github-alt
   font:
@@ -67,12 +87,14 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.prune
+    - navigation.path
+
     - navigation.footer
     - navigation.tracking
     - navigation.instant
     - navigation.instant.progress
     - navigation.indexes
-    - navigation.sections  # navigation.expand or navigation.sections
+    - navigation.expand  # navigation.expand or navigation.sections
     - content.tabs.link # all code tabs change simultaneously
 
 plugins:
@@ -85,9 +107,20 @@ plugins:
           - https://numpy.org/doc/stable/objects.inv
           options:
             docstring_style: google
-            docstring_section_style: list
-            line_length: 92
+            docstring_section_style: table
+            line_length: 120
             show_root_heading: true
+            heading_level: 2
+            merge_init_into_class: true
+            show_root_full_path: false
+            show_symbol_type_heading: false
+            modernize_annotations: true
+            show_signature: true
+            show_signature_annotations: false
+            separate_signature: false
+            show_source: false
+
+
 
 extra_css:
   - css/mkdocstrings.css

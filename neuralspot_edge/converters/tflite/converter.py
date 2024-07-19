@@ -48,6 +48,7 @@ class TfLiteKerasConverter:
         io_type: str | None = None,
         mode: ConversionType = ConversionType.KERAS,
         strict: bool = True,
+        verbose: int = 2
     ) -> str:
         """Convert TF model into TFLite model content
 
@@ -57,6 +58,7 @@ class TfLiteKerasConverter:
             io_type (str | None, optional): Input/Output type. Defaults to None.
             mode (ConversionType, optional): Conversion mode. Defaults to ConversionType.KERAS.
             strict (bool, optional): Strict mode. Defaults to True.
+            verbose (int, optional): Verbosity level (0,1,2). Defaults to 2.
 
         Returns:
             str: TFLite content
@@ -126,9 +128,11 @@ class TfLiteKerasConverter:
             QuantizationType.INT16X8,
         ]:
             converter.target_spec.supported_ops.append(tf.lite.OpsSet.TFLITE_BUILTINS)
+        # END IF
 
         # Convert model
         self._converter = converter
+
         self._tflite_content = converter.convert()
 
         return self._tflite_content
