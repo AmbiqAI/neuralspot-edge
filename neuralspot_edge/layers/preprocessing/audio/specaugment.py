@@ -1,5 +1,4 @@
 import keras
-import tensorflow as tf
 
 
 class SpecAugment(keras.Layer):
@@ -62,7 +61,7 @@ class SpecAugment(keras.Layer):
             keras.KerasTensor: The mel spectrogram with the frequency masks applied
         """
         mel_repeated = keras.ops.repeat(keras.ops.expand_dims(x, 0), self.n_freq_mask, axis=0)
-        masks = keras.ops.cast(tf.map_fn(elems=mel_repeated, fn=self._frequency_mask_single), dtype="bool")
+        masks = keras.ops.cast(keras.ops.map(f=self._frequency_mask_single, xs=mel_repeated), dtype="bool")
         mask = keras.ops.any(masks, 0)
         return keras.ops.where(mask, self.mask_value, x)
 
@@ -96,7 +95,7 @@ class SpecAugment(keras.Layer):
             keras.KerasTensor: The mel spectrogram with the time masks applied
         """
         mel_repeated = keras.ops.repeat(keras.ops.expand_dims(x, 0), self.n_time_mask, axis=0)
-        masks = keras.ops.cast(tf.map_fn(elems=mel_repeated, fn=self._time_mask_single), dtype="bool")
+        masks = keras.ops.cast(keras.ops.map(f=self._time_mask_single, xs=mel_repeated), dtype="bool")
         mask = keras.ops.any(masks, 0)
         return keras.ops.where(mask, self.mask_value, x)
 
@@ -125,8 +124,9 @@ class SpecAugment(keras.Layer):
         Returns:
             keras.KerasTensor: The mel spectrogram with the SpecAugment applied
         """
+
         if training:
-            inputs_masked = tf.map_fn(elems=inputs, fn=self._apply_spec_augment)
+            inputs_masked = keras.ops.map(f=self._apply_spec_augment, xs=inputs)
             return inputs_masked
         return inputs
 

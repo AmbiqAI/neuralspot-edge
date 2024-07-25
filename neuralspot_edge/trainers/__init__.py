@@ -1,4 +1,4 @@
 from . import contrastive
 from . import distiller
-from . import maskautoencoder
+from . import mask_autoencoder
 from . import simclr

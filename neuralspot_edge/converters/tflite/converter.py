@@ -48,7 +48,7 @@ class TfLiteKerasConverter:
         io_type: str | None = None,
         mode: ConversionType = ConversionType.KERAS,
         strict: bool = True,
-        verbose: int = 2
+        verbose: int = 2,
     ) -> str:
         """Convert TF model into TFLite model content
 

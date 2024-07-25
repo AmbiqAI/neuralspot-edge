@@ -133,6 +133,7 @@ def download_file(src: str, dst: os.PathLike, progress: bool = True, chunk_size:
         # END WITH
     # END WITH
 
+
 SpecType = list[npt.ArrayLike] | tuple[npt.ArrayLike] | dict[str, npt.ArrayLike] | npt.ArrayLike
 
 

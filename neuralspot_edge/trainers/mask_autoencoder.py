@@ -1,6 +1,7 @@
+from typing import Callable
+
 import keras
 import tensorflow as tf
-from typing import Callable
 
 
 class MaskedAutoencoder(keras.Model):
@@ -73,13 +74,6 @@ class MaskedAutoencoder(keras.Model):
 
         return total_loss, loss_patch, loss_output
 
-    def train_step(self, *args, **kwargs):
-        if keras.backend.backend() == "tensorflow":
-            return self._tensorflow_train_step(*args, **kwargs)
-        elif keras.backend.backend() == "jax":
-            raise NotImplementedError("JAX backend is not supported.")
-        elif keras.backend.backend() == "torch":
-            raise NotImplementedError("PyTorch backend is not supported.")
 
     def _tensorflow_train_step(self, x):
         with tf.GradientTape() as tape:
@@ -106,14 +100,6 @@ class MaskedAutoencoder(keras.Model):
             results[metric.name] = metric.result()
         return results
 
-    def test_step(self, *args, **kwargs):
-        if keras.backend.backend() == "tensorflow":
-            return self._tensorflow_test_step(*args, **kwargs)
-        elif keras.backend.backend() == "jax":
-            raise NotImplementedError("JAX backend is not supported.")
-        elif keras.backend.backend() == "torch":
-            raise NotImplementedError("PyTorch backend is not supported.")
-
     def _tensorflow_test_step(self, x):
         total_loss, loss_patch, loss_output = self.calculate_loss(x, test=True)
 
@@ -123,3 +109,19 @@ class MaskedAutoencoder(keras.Model):
             metric.update_state(loss_patch, loss_output)
             results[metric.name] = metric.result()
         return results
+
+    def train_step(self, *args, **kwargs):
+        if keras.backend.backend() == "tensorflow":
+            return self._tensorflow_train_step(*args, **kwargs)
+        elif keras.backend.backend() == "jax":
+            raise NotImplementedError("JAX backend is not supported.")
+        elif keras.backend.backend() == "torch":
+            raise NotImplementedError("PyTorch backend is not supported.")
+
+    def test_step(self, *args, **kwargs):
+        if keras.backend.backend() == "tensorflow":
+            return self._tensorflow_test_step(*args, **kwargs)
+        elif keras.backend.backend() == "jax":
+            raise NotImplementedError("JAX backend is not supported.")
+        elif keras.backend.backend() == "torch":
+            raise NotImplementedError("PyTorch backend is not supported.")

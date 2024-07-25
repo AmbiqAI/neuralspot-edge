@@ -5,3 +5,4 @@ from . import quantizers
 from . import layers
 from . import plotting
 from . import interpreters
+from . import trainers

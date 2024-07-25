@@ -13,6 +13,5 @@ from . import composer
 from . import conformer
 from . import metaformer
 from . import defines
-from . import optimizers
 
 from .utils import load_model
