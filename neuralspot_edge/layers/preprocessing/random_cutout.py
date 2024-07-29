@@ -1,0 +1,125 @@
+import keras
+import random
+
+from .utils import parse_factor
+from .base_augmentation import BaseAugmentation1D
+
+
+class RandomCutout1D(BaseAugmentation1D):
+    cutouts: tuple[int, int]
+    factor: tuple[float, float]
+    fill_mode: str
+    fill_value: float
+
+    def __init__(
+        self,
+        factor: float | tuple[float, float] = 0.1,
+        cutouts: int | tuple[int, int] = 1,
+        fill_mode="constant",
+        fill_value: float = 0.0,
+        **kwargs,
+    ):
+        """Apply random cutout to the input. This is similar to its 2D counterpart where a random portion of the input is cutout.
+        We allow providing a range for the factor and cutouts to randomly pick the values.
+
+        Args:
+            factor (float|tuple[float,float]): Factor of the duration to cutout. If tuple, factor is randomly picked between the values.
+            cutouts (int|tuple[int,int]): Number of cutouts to apply. If tuple, number of cutouts is randomly picked between the values.
+            fill_mode (str): Fill mode. "constant" or "normal".
+            fill_value (float): Fill value for the cutout.
+
+        Example:
+
+        """
+        super().__init__(**kwargs)
+
+        self.factor = parse_factor(factor, min_value=0, max_value=1, param_name="factor")
+        self.cutouts = parse_factor(cutouts, 1, None, "cutouts")
+        self.fill_mode = fill_mode
+        self.fill_value = fill_value
+        if fill_mode not in ["normal", "constant"]:
+            raise ValueError(f'`fill_mode` should be "normal" or "constant". Got `fill_mode`={fill_mode}')
+        # END IF
+
+    def batch_augment(self, inputs):
+        """Override the batch_augment method to apply multiple cutouts.
+        There might be a better way to do this but for now, we will apply cutouts one by one.
+        """
+        cutouts = random.randint(self.cutouts[0], self.cutouts[1] + 1)
+        outputs = keras.ops.fori_loop(
+            lower=0, upper=cutouts, body_fun=lambda i, x: self.augment_sample(x), init_val=inputs
+        )
+        return outputs
+
+    def get_random_transformations(self, input_shape):
+        """Generate random cutout locations, sizes, and fill values."""
+        batch_size = input_shape[0]
+        duration_size = input_shape[self.data_axis]
+
+        cut_size = keras.random.randint(
+            shape=(batch_size,),
+            minval=int(duration_size * self.factor[0]),
+            maxval=int(duration_size * self.factor[1]) + 1,
+            dtype="int32",
+            seed=self._random_generator,
+        )
+        cut_start = keras.random.randint(
+            shape=(batch_size,),
+            minval=0,
+            maxval=int(duration_size * (1 - self.factor[1]) + 1),
+            dtype="int32",
+            seed=self._random_generator,
+        )
+        if self.fill_mode == "constant":
+            fill = keras.ops.ones(input_shape) * self.fill_value
+        else:
+            fill = keras.random.normal(input_shape, mean=0, stddev=self.fill_value, seed=self._random_generator)
+
+        return {
+            "cut_start": cut_start,
+            "cut_size": cut_size,
+            "fill": fill,
+        }
+
+    def augment_sample(self, inputs) -> keras.KerasTensor:
+        """Apply cutout to the input."""
+        sample = inputs[self.SAMPLES]
+        transforms = inputs[self.TRANSFORMS]
+        cut_start = transforms["cut_start"]
+        cut_size = transforms["cut_size"]
+        fill = transforms["fill"]
+
+        duration_size = sample.shape[self.data_axis]
+        ch_size = sample.shape[self.ch_axis]
+
+        if self.data_format == "channels_first":
+            reshape_size = (1, duration_size)
+            tile_size = (ch_size, 1)
+        else:
+            reshape_size = (duration_size, 1)
+            tile_size = (1, ch_size)
+
+        mask = keras.ops.tile(
+            keras.ops.reshape(
+                keras.ops.logical_and(
+                    keras.ops.arange(duration_size) >= cut_start, keras.ops.arange(duration_size) < cut_start + cut_size
+                ),
+                reshape_size,
+            ),
+            tile_size,
+        )
+        result = keras.ops.where(mask, fill, sample)
+        return result
+
+    def get_config(self):
+        """Serialize the configuration of the layer."""
+        config = super().get_config()
+        config.update(
+            {
+                "factor": self.factor,
+                "cutouts": self.cutouts,
+                "fill_mode": self.fill_mode,
+                "fill_value": self.fill_value,
+            }
+        )
+        return config
