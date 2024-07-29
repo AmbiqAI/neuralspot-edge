@@ -1,16 +1,15 @@
 import keras
 
 from .contrastive import ContrastiveTrainer
-from ..losses.simclr import SimCLRLoss
+
 
 class SimCLRTrainer(ContrastiveTrainer):
-
     def __init__(
         self,
         encoder: keras.Model,
-        augmenter: keras.Layer|tuple[keras.Layer, keras.Layer],
-        projector: keras.Model|None = None,
-        **kwargs
+        augmenter: keras.Layer | tuple[keras.Layer, keras.Layer],
+        projector: keras.Model | None = None,
+        **kwargs,
     ):
         """Creates a SimCLRTrainer.
 
@@ -26,7 +25,7 @@ class SimCLRTrainer(ContrastiveTrainer):
         """
         if projector is None:
             projection_width = encoder.output_shape[-1]
-            projector=keras.Sequential(
+            projector = keras.Sequential(
                 [
                     keras.layers.Dense(projection_width, activation="relu"),
                     keras.layers.Dense(projection_width),
@@ -45,19 +44,19 @@ class SimCLRTrainer(ContrastiveTrainer):
     def compile(
         self,
         encoder_optimizer: keras.Optimizer,
-        encoder_loss: keras.Loss|None = None,
-        encoder_metrics: list[keras.Metric]|None = None,
-        probe_optimizer: keras.Optimizer|None = None,
-        probe_loss: keras.Loss|None = None,
-        probe_metrics: list[keras.Metric]|None = None,
+        encoder_loss: keras.Loss | None = None,
+        encoder_metrics: list[keras.Metric] | None = None,
+        probe_optimizer: keras.Optimizer | None = None,
+        probe_loss: keras.Loss | None = None,
+        probe_metrics: list[keras.Metric] | None = None,
         **kwargs,
     ):
         super().compile(
-            encoder_loss=encoder_loss or SimCLRLoss(temperature=0.5),
+            encoder_loss=encoder_loss,
             encoder_optimizer=encoder_optimizer,
             encoder_metrics=encoder_metrics,
             probe_optimizer=probe_optimizer,
             probe_loss=probe_loss,
-            probe_metrics=probe_metrics
+            probe_metrics=probe_metrics,
             **kwargs,
         )

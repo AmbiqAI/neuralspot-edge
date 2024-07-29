@@ -3,16 +3,15 @@ import tensorflow as tf
 
 
 class ContrastiveTrainer(keras.Model):
-
     encoder: keras.Model
     augmenters: tuple[keras.Layer, keras.Layer]
 
     def __init__(
         self,
         encoder: keras.Model,
-        augmenter: keras.Layer|tuple[keras.Layer, keras.Layer],
-        projector: keras.Model|tuple[keras.Model, keras.Model],
-        probe: keras.Layer|keras.Model|None = None,
+        augmenter: keras.Layer | tuple[keras.Layer, keras.Layer],
+        projector: keras.Model | tuple[keras.Model, keras.Model],
+        probe: keras.Layer | keras.Model | None = None,
     ):
         """Creates a self-supervised contrastive trainer for a model.
 
@@ -25,7 +24,7 @@ class ContrastiveTrainer(keras.Model):
         """
         super().__init__()
 
-        if encoder.output.shape.rank != 2:
+        if len(encoder.output.shape) != 2:
             raise ValueError(
                 f"`encoder` must have a flattened output. Expected "
                 f"rank(encoder.output.shape)=2, got "
@@ -43,16 +42,12 @@ class ContrastiveTrainer(keras.Model):
         self.encoder = encoder
 
         # Check to see if the projector is being shared or are distinct.
-        self._is_shared_projector = (
-            True if not isinstance(projector, tuple) else False
-        )
-        self.projectors = (
-            projector if type(projector) is tuple else (projector, projector)
-        )
+        self._is_shared_projector = True if not isinstance(projector, tuple) else False
+        self.projectors = projector if type(projector) is tuple else (projector, projector)
         self.probe = probe
 
         self.loss_metric = keras.metrics.Mean(name="loss")
-
+        self.encoder_metrics = []
         if probe is not None:
             self.probe_loss_metric = keras.metrics.Mean(name="probe_loss")
             self.probe_metrics = []
@@ -61,28 +56,24 @@ class ContrastiveTrainer(keras.Model):
         self,
         encoder_optimizer: keras.Optimizer,
         encoder_loss: keras.Loss,
-        encoder_metrics: list[keras.Metric]|None = None,
-        probe_optimizer: keras.Optimizer|None = None,
-        probe_loss: keras.Loss|None = None,
-        probe_metrics: list[keras.Metric]|None = None,
+        encoder_metrics: list[keras.Metric] | None = None,
+        probe_optimizer: keras.Optimizer | None = None,
+        probe_loss: keras.Loss | None = None,
+        probe_metrics: list[keras.Metric] | None = None,
         **kwargs,
     ):
         super().compile(
             loss=encoder_loss,
             optimizer=encoder_optimizer,
-            metrics=encoder_metrics,
+            metrics=None,
             **kwargs,
         )
 
         if self.probe and not probe_optimizer:
-            raise ValueError(
-                "`probe_optimizer` must be specified when a probe is included."
-            )
+            raise ValueError("`probe_optimizer` must be specified when a probe is included.")
 
         if self.probe and not probe_loss:
-            raise ValueError(
-                "`probe_loss` must be specified when a probe is included."
-            )
+            raise ValueError("`probe_loss` must be specified when a probe is included.")
 
         if "loss" in kwargs:
             raise ValueError(
@@ -103,7 +94,7 @@ class ContrastiveTrainer(keras.Model):
                 "ambiguous. Please specify `encoder_metrics` or "
                 "`probe_metrics`."
             )
-
+        self.encoder_metrics = encoder_metrics or []
         if self.probe:
             self.probe_loss = probe_loss
             self.probe_optimizer = probe_optimizer
@@ -111,11 +102,13 @@ class ContrastiveTrainer(keras.Model):
 
     @property
     def metrics(self):
-        metrics = [self.loss_metric,]
+        metrics = [self.loss_metric]
+        if self.encoder_metrics:
+            metrics += self.encoder_metrics
         if self.probe:
             metrics += [self.probe_loss_metric]
             metrics += self.probe_metrics
-        return super().metrics + metrics
+        return metrics
 
     def _tensorflow_train_step(self, data):
         if isinstance(data, dict):
@@ -127,11 +120,6 @@ class ContrastiveTrainer(keras.Model):
         # END IF
         augmented_samples_0 = self.augmenters[0](samples, training=True)
         augmented_samples_1 = self.augmenters[1](samples, training=True)
-
-        samples = data["data"]
-        labels = data["labels"] if "labels" in data else None
-        augmented_samples_0 = data["augmented_data_0"]
-        augmented_samples_1 = data["augmented_data_1"]
 
         with tf.GradientTape() as tape:
             features_0 = self.encoder(augmented_samples_0, training=True)
@@ -151,8 +139,7 @@ class ContrastiveTrainer(keras.Model):
         projector_weights = (
             self.projectors[0].trainable_weights
             if self._is_shared_projector
-            else self.projectors[0].trainable_weights
-            + self.projectors[1].trainable_weights
+            else self.projectors[0].trainable_weights + self.projectors[1].trainable_weights
         )
         gradients = tape.gradient(
             loss,
@@ -167,21 +154,19 @@ class ContrastiveTrainer(keras.Model):
         )
         self.loss_metric.update_state(loss)
 
+        for metric in self.encoder_metrics:
+            metric.update_state(features_0, features_1)
+            keras.metrics.CosineSimilarity
+
         if self.probe:
             if labels is None:
-                raise ValueError(
-                    "Targets must be provided when a probe is specified"
-                )
+                raise ValueError("Targets must be provided when a probe is specified")
             with tf.GradientTape() as tape:
-                features = tf.stop_gradient(
-                    self.encoder(samples, training=False)
-                )
+                features = tf.stop_gradient(self.encoder(samples, training=False))
                 class_logits = self.probe(features, training=True)
                 probe_loss = self.probe_loss(labels, class_logits)
             gradients = tape.gradient(probe_loss, self.probe.trainable_weights)
-            self.probe_optimizer.apply_gradients(
-                zip(gradients, self.probe.trainable_weights)
-            )
+            self.probe_optimizer.apply_gradients(zip(gradients, self.probe.trainable_weights))
             self.probe_loss_metric.update_state(probe_loss)
             for metric in self.probe_metrics:
                 metric.update_state(labels, class_logits)
@@ -196,9 +181,27 @@ class ContrastiveTrainer(keras.Model):
             samples = data
             labels = None
         # END IF
-        features = self.encoder(samples, training=False)
+        augmented_samples_0 = self.augmenters[0](samples, training=True)
+        augmented_samples_1 = self.augmenters[1](samples, training=True)
+
+        features_0 = self.encoder(augmented_samples_0, training=True)
+        features_1 = self.encoder(augmented_samples_1, training=True)
+
+        projections_0 = self.projectors[0](features_0, training=True)
+        projections_1 = self.projectors[1](features_1, training=True)
+
+        loss = self.compiled_loss(
+            projections_0,
+            projections_1,
+            regularization_losses=self.encoder.losses,
+        )
+
+        self.loss_metric.update_state(loss)
+        for metric in self.encoder_metrics:
+            metric.update_state(features_0, features_1)
+
         if self.probe:
-            class_logits = self.probe(features, training=False)
+            class_logits = self.probe(features_0, training=False)
             probe_loss = self.probe_loss(labels, class_logits)
             self.probe_loss_metric.update_state(probe_loss)
             for metric in self.probe_metrics:
@@ -222,10 +225,7 @@ class ContrastiveTrainer(keras.Model):
             raise NotImplementedError("PyTorch backend is not supported.")
 
     def call(self, inputs):
-        raise NotImplementedError(
-            "ContrastiveTrainer.call() is not implemented - "
-            "please call your model directly."
-        )
+        raise NotImplementedError("ContrastiveTrainer.call() is not implemented - " "please call your model directly.")
 
     @staticmethod
     def linear_probe(num_classes, **kwargs):

@@ -54,24 +54,12 @@ class SimCLRLoss(keras.losses.Loss):
         masks = keras.ops.one_hot(keras.ops.arange(batch_size), batch_size)
 
         # Compute logits
-        logits_11 = (
-            keras.ops.matmul(projections_1, keras.ops.transpose(projections_1))
-            / self.temperature
-        )
+        logits_11 = keras.ops.matmul(projections_1, keras.ops.transpose(projections_1)) / self.temperature
         logits_11 = logits_11 - keras.ops.cast(masks * LARGE_NUM, logits_11.dtype)
-        logits_22 = (
-            keras.ops.matmul(projections_2, keras.ops.transpose(projections_2))
-            / self.temperature
-        )
+        logits_22 = keras.ops.matmul(projections_2, keras.ops.transpose(projections_2)) / self.temperature
         logits_22 = logits_22 - keras.ops.cast(masks * LARGE_NUM, logits_22.dtype)
-        logits_12 = (
-            keras.ops.matmul(projections_1, keras.ops.transpose(projections_2))
-            / self.temperature
-        )
-        logits_21 = (
-            keras.ops.matmul(projections_2, keras.ops.transpose(projections_1))
-            / self.temperature
-        )
+        logits_12 = keras.ops.matmul(projections_1, keras.ops.transpose(projections_2)) / self.temperature
+        logits_21 = keras.ops.matmul(projections_2, keras.ops.transpose(projections_1)) / self.temperature
 
         loss_a = keras.losses.categorical_crossentropy(
             labels, keras.ops.concatenate([logits_12, logits_11], 1), from_logits=True

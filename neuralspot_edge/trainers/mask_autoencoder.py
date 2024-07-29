@@ -74,7 +74,6 @@ class MaskedAutoencoder(keras.Model):
 
         return total_loss, loss_patch, loss_output
 
-
     def _tensorflow_train_step(self, x):
         with tf.GradientTape() as tape:
             total_loss, loss_patch, loss_output = self.calculate_loss(x)
