@@ -6,7 +6,7 @@ from .utils import parse_factor
 class RandomGaussianNoise1D(BaseAugmentation1D):
     factor: tuple[float, float]
 
-    def __init__(self, factor: float, **kwargs):
+    def __init__(self, factor: float | tuple[float, float] = 0.1, **kwargs):
         """Apply additive zero-centered Gaussian noise.
 
         Args:

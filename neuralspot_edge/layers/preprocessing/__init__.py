@@ -4,6 +4,7 @@ from . import biquad_filter
 from . import defines
 from . import fir_filter
 from . import random_augmentation_pipeline
+from . import random_noise_distortion
 from . import random_background_noises
 from . import random_crop
 from . import random_cutout

@@ -1,5 +1,4 @@
 import keras
-import random
 
 from .utils import parse_factor
 from .base_augmentation import BaseAugmentation1D
@@ -41,15 +40,17 @@ class RandomCutout1D(BaseAugmentation1D):
             raise ValueError(f'`fill_mode` should be "normal" or "constant". Got `fill_mode`={fill_mode}')
         # END IF
 
-    def batch_augment(self, inputs):
-        """Override the batch_augment method to apply multiple cutouts.
-        There might be a better way to do this but for now, we will apply cutouts one by one.
-        """
-        cutouts = random.randint(self.cutouts[0], self.cutouts[1] + 1)
-        outputs = keras.ops.fori_loop(
-            lower=0, upper=cutouts, body_fun=lambda i, x: self.augment_sample(x), init_val=inputs
+    def call(self, inputs, training: bool = True):
+        """Override the call method to apply multiple cutouts."""
+        self.training = training
+        inputs, metadata = self._format_inputs(inputs)
+        cutouts = keras.random.randint(
+            (), self.cutouts[0], self.cutouts[1] + 1, dtype="int32", seed=self._random_generator
         )
-        return outputs
+        outputs = keras.ops.fori_loop(
+            lower=0, upper=cutouts, body_fun=lambda _, x: self.batch_augment(x), init_val=self.batch_augment(inputs)
+        )
+        return self._format_outputs(outputs, metadata)
 
     def get_random_transformations(self, input_shape):
         """Generate random cutout locations, sizes, and fill values."""

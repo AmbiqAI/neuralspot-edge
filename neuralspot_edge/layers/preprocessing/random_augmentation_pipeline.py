@@ -25,7 +25,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
     def _random_choice(self, inputs):
         """Randomly choose an augmentation layer."""
 
-        lyr_idx: int = keras.ops.random.randint(shape=(), minval=0, maxval=len(self.layers), dtype="int32")
+        lyr_idx: int = keras.random.randint(shape=(), minval=0, maxval=len(self.layers), dtype="int32")
         lyr = self.layers[lyr_idx]
         return lyr.batch_augment(inputs)
 
