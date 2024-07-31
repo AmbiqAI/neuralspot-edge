@@ -5,17 +5,17 @@ from ...utils import parse_factor
 
 class RandomBackgroundNoises1D(BaseAugmentation1D):
     amplitude: tuple[float, float]
-    num_noises: tuple[int, int]
+    num_noises: int
 
     def __init__(
-        self, noises, amplitude: float | tuple[float, float] = 0.1, num_noises: int | tuple[int, int] = 1, **kwargs
+        self, noises, amplitude: float | tuple[float, float] = 0.1, num_noises: int = 1, **kwargs
     ):
         """Apply random background noises to the input.
 
         Args:
             noises (np.ndarray): Background noises to apply.
             amplitude (float|tuple[float,float]): Amplitude of the noise. If tuple, amplitude is randomly picked between the values.
-            num_noises (int|tuple[int,int]): Number of noises to apply. If tuple, number of noises is randomly picked between the values.
+            num_noises (int|tuple[int,int]): Number of noises to apply.
 
         Example:
         ```python
@@ -33,7 +33,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
         super().__init__(**kwargs)
 
         self.amplitude = parse_factor(amplitude, min_value=0, max_value=None, param_name="amplitude")
-        self.num_noises = parse_factor(num_noises, min_value=1, max_value=None, param_name="num_noises")
+        self.num_noises = num_noises
         self.noises = self.add_weight(
             name="noises",
             shape=noises.shape,
@@ -53,32 +53,25 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
         batch_size = input_shape[0]
         duration_size = input_shape[self.data_axis]
 
-        num_noises = keras.random.randint(
-            shape=(),
-            minval=self.num_noises[0],
-            maxval=self.num_noises[1] + 1,
-            seed=self._random_generator,
-            dtype="int32",
-        )
         noise_idx = keras.random.randint(
-            shape=(batch_size, num_noises),
+            shape=(batch_size, self.num_noises),
             minval=0,
             maxval=self.noises.shape[1],
         )
         start = keras.random.randint(
-            shape=(batch_size, num_noises),
+            shape=(batch_size, self.num_noises),
             minval=0,
             maxval=self.noises.shape[0] - duration_size + 1,
             seed=self._random_generator,
             dtype="int32",
         )
         amplitude = keras.random.uniform(
-            shape=(batch_size, num_noises),
+            shape=(batch_size, self.num_noises),
             minval=self.amplitude[0],
             maxval=self.amplitude[1],
             seed=self._random_generator,
             dtype=self.compute_dtype,
-        ) / keras.ops.cast(num_noises, self.compute_dtype)
+        ) / keras.ops.cast(self.num_noises, self.compute_dtype)
 
         return {
             "noise_idx": noise_idx,
@@ -88,7 +81,6 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
 
     def augment_sample(self, inputs) -> keras.KerasTensor:
         """Augment single sample with random background noises."""
-        num_noises = inputs[self.TRANSFORMS]["noise_idx"].shape[0]
         duration_size = inputs[self.SAMPLES].shape[self.data_axis]
         ch_size = inputs[self.SAMPLES].shape[self.ch_axis]
 
@@ -110,7 +102,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
 
         if self.training:
             sample = inputs[self.SAMPLES]
-            outputs = keras.ops.fori_loop(lower=0, upper=num_noises, body_fun=random_noise, init_val=sample)
+            outputs = keras.ops.fori_loop(lower=0, upper=self.num_noises, body_fun=random_noise, init_val=sample)
         else:
             outputs = inputs[self.SAMPLES]
         return outputs

@@ -5,7 +5,7 @@ from .base_augmentation import BaseAugmentation1D
 
 
 class RandomCutout1D(BaseAugmentation1D):
-    cutouts: tuple[int, int]
+    cutouts: int
     factor: tuple[float, float]
     fill_mode: str
     fill_value: float
@@ -13,7 +13,7 @@ class RandomCutout1D(BaseAugmentation1D):
     def __init__(
         self,
         factor: float | tuple[float, float] = 0.1,
-        cutouts: int | tuple[int, int] = 1,
+        cutouts: int = 1,
         fill_mode="constant",
         fill_value: float = 0.0,
         **kwargs,
@@ -23,7 +23,7 @@ class RandomCutout1D(BaseAugmentation1D):
 
         Args:
             factor (float|tuple[float,float]): Factor of the duration to cutout. If tuple, factor is randomly picked between the values.
-            cutouts (int|tuple[int,int]): Number of cutouts to apply. If tuple, number of cutouts is randomly picked between the values.
+            cutouts (int): Number of cutouts to apply.
             fill_mode (str): Fill mode. "constant" or "normal".
             fill_value (float): Fill value for the cutout.
 
@@ -33,7 +33,7 @@ class RandomCutout1D(BaseAugmentation1D):
         super().__init__(**kwargs)
 
         self.factor = parse_factor(factor, min_value=0, max_value=1, param_name="factor")
-        self.cutouts = parse_factor(cutouts, 1, None, "cutouts")
+        self.cutouts = cutouts
         self.fill_mode = fill_mode
         self.fill_value = fill_value
         if fill_mode not in ["normal", "constant"]:
@@ -44,11 +44,11 @@ class RandomCutout1D(BaseAugmentation1D):
         """Override the call method to apply multiple cutouts."""
         self.training = training
         inputs, metadata = self._format_inputs(inputs)
-        cutouts = keras.random.randint(
-            (), self.cutouts[0], self.cutouts[1] + 1, dtype="int32", seed=self._random_generator
-        )
         outputs = keras.ops.fori_loop(
-            lower=0, upper=cutouts, body_fun=lambda _, x: self.batch_augment(x), init_val=self.batch_augment(inputs)
+            lower=0,
+            upper=self.cutouts,
+            body_fun=lambda _, x: self.batch_augment(x),
+            init_val=self.batch_augment(inputs)
         )
         return self._format_outputs(outputs, metadata)
 
