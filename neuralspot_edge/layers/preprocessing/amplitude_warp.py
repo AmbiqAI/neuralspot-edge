@@ -84,7 +84,7 @@ class AmplitudeWarp(BaseAugmentation1D):
 
         # keras.ops doesnt contain any low-level interpolate. So we leverage the
         # image module and fix height to 1 as workaround
-        noise = keras.ops.image.resize(
+        warp = keras.ops.image.resize(
             warp_pts,
             size=(1, duration_size),
             interpolation="bicubic",
@@ -92,15 +92,15 @@ class AmplitudeWarp(BaseAugmentation1D):
             data_format=self.data_format,
         )
         # Remove height dimension
-        noise = keras.ops.squeeze(noise, axis=1)
-        return {"noise": noise}
+        warp = keras.ops.squeeze(warp, axis=1)
+        return {"warp": warp}
 
     def augment_samples(self, inputs) -> keras.KerasTensor:
         """Augment all samples in the batch as it's faster."""
         samples = inputs[self.SAMPLES]
         if self.training:
-            noise = inputs[self.TRANSFORMS]["noise"]
-            return samples + noise
+            warp = inputs[self.TRANSFORMS]["warp"]
+            return samples*warp
         return samples
 
     def get_config(self):

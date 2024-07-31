@@ -52,7 +52,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
         return keras.ops.fori_loop(
             lower=0,
             upper=self.augmentations_per_sample,
-            body_fun=self.apply_random_choice,
+            body_fun=lambda _, x: self.apply_random_choice(x),
             init_val=inputs,
         )
 
