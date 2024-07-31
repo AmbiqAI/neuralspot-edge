@@ -1,6 +1,6 @@
 import keras
 from .base_augmentation import BaseAugmentation1D
-
+from .random_choice import RandomChoice
 
 class RandomAugmentation1DPipeline(BaseAugmentation1D):
     layers: list[BaseAugmentation1D]
@@ -8,7 +8,12 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
     rate: float
 
     def __init__(
-        self, layers: list[BaseAugmentation1D], augmentations_per_sample: int = 1, rate: float = 1.0, **kwargs
+        self,
+        layers: list[BaseAugmentation1D],
+        augmentations_per_sample: int = 1,
+        rate: float = 1.0,
+        batchwise: bool = False,
+        **kwargs
     ):
         """Apply N random augmentations from a list of augmentation layers to each sample.
 
@@ -16,33 +21,40 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
             layers (list[BaseAugmentation1D]): List of augmentation layers to choose from.
             augmentations_per_sample (int): Number of augmentations to apply to each sample.
             rate (float): Probability of applying the augmentation pipeline.
+            batchwise (bool): If True, apply same layer to all samples in the batch.
         """
         super().__init__(**kwargs)
         self.layers = layers
         self.augmentations_per_sample = augmentations_per_sample
         self.rate = rate
+        self.batchwise = batchwise
+        kwargs.update({"name": "random_choice"})
+        self._random_choice = RandomChoice(
+            layers=layers,
+            batchwise=batchwise,
+            **kwargs
+        )
+        if not self.layers:
+            raise ValueError("At least one layer must be provided.")
 
-    def _random_choice(self, inputs):
-        """Randomly choose an augmentation layer."""
-
-        lyr_idx: int = keras.random.randint(shape=(), minval=0, maxval=len(self.layers), dtype="int32")
-        lyr = self.layers[lyr_idx]
-        return lyr.batch_augment(inputs)
+    def apply_random_choice(self, inputs):
+        skip_augment = keras.random.uniform(
+            shape=(), minval=0.0, maxval=1.0, dtype="float32", seed=self._random_generator
+        )
+        return keras.ops.cond(
+            skip_augment > self.rate,
+            lambda: inputs,
+            lambda: self._random_choice.batch_augment(inputs),
+        )
 
     def batch_augment(self, inputs):
         """Apply N random augmentations to each"""
-        result = dict(inputs)
-        for _ in range(self.augmentations_per_sample):
-            skip_augment = keras.random.uniform(
-                shape=(), minval=0.0, maxval=1.0, dtype="float32", seed=self._random_generator
-            )
-            result = keras.ops.cond(
-                skip_augment > self.rate,
-                lambda: result,
-                lambda: self._random_choice(result),
-            )
-        # END FOR
-        return result
+        return keras.ops.fori_loop(
+            lower=0,
+            upper=self.augmentations_per_sample,
+            body_fun=self.apply_random_choice,
+            init_val=inputs,
+        )
 
     def get_config(self):
         """Serializes the configuration of the layer."""
@@ -52,6 +64,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
                 "layers": [lyr.get_config() for lyr in self.layers],
                 "augmentations_per_sample": self.augmentations_per_sample,
                 "rate": self.rate,
+                "batchwise": self.batchwise,
             }
         )
         return config

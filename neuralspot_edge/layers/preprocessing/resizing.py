@@ -2,7 +2,7 @@ import keras
 from .base_augmentation import BaseAugmentation1D
 
 
-class Resizing(BaseAugmentation1D):
+class Resizing1D(BaseAugmentation1D):
     duration: int
     data_format: str
 

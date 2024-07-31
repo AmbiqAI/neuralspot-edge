@@ -1,6 +1,6 @@
 import keras
 
-from .utils import parse_factor
+from ...utils import parse_factor
 from .base_augmentation import BaseAugmentation1D
 
 

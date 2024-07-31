@@ -1,2 +1,2 @@
 from . import preprocessing
-from . import patching
+from .patching import PatchLayer, MaskedPatchEncoder

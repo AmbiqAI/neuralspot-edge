@@ -1,7 +1,7 @@
 import keras
 
 from .base_augmentation import BaseAugmentation1D
-from .utils import parse_factor
+from ...utils import parse_factor
 
 
 class RandomNoiseDistortion1D(BaseAugmentation1D):
@@ -19,7 +19,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
         **kwargs,
     ):
         """Apply random noise distortion to the 1D input.
-        Noise points are first generated at given frequency resolutin with amplitude picked based on noise_type.
+        Noise points are first generated at given frequency resolution with amplitude picked based on noise_type.
         The noise points are then interpolated to match the input duration and added to the input.
 
         Args:
@@ -76,7 +76,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
                 shape=(), minval=self.amplitude[0], maxval=self.amplitude[1], seed=self._random_generator
             )
 
-        noise_duration = int((duration_size / self.sample_rate) * frequency + frequency)
+        noise_duration = keras.ops.cast((duration_size / self.sample_rate) * frequency + frequency, dtype="int32")
 
         if self.data_format == "channels_first":
             noise_shape = (batch_size, 1, ch_size, noise_duration)

@@ -1,6 +1,6 @@
 import keras
 from .base_augmentation import BaseAugmentation1D
-from .utils import parse_factor
+from ...utils import parse_factor
 
 
 class RandomGaussianNoise1D(BaseAugmentation1D):

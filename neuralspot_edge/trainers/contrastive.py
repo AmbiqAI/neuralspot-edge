@@ -1,6 +1,6 @@
 import keras
 import tensorflow as tf
-
+from ..utils import convert_inputs_to_tf_dataset
 
 class ContrastiveTrainer(keras.Model):
     encoder: keras.Model
@@ -110,16 +110,40 @@ class ContrastiveTrainer(keras.Model):
             metrics += self.probe_metrics
         return metrics
 
+    def fit(
+        self,
+        x=None,
+        y=None,
+        sample_weight=None,
+        batch_size=None,
+        **kwargs,
+    ):
+        dataset = convert_inputs_to_tf_dataset(
+            x=x, y=y, sample_weight=sample_weight, batch_size=batch_size
+        )
+
+        dataset = dataset.map(
+            self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
+        )
+        dataset = dataset.prefetch(tf.data.AUTOTUNE)
+
+        return super().fit(x=dataset, **kwargs)
+
+    def run_augmenters(self, x, y=None):
+        inputs = {"data": x}
+        if y is not None:
+            inputs["labels"] = y
+
+        inputs["augmented_data_0"] = self.augmenters[0](x, training=True)
+        inputs["augmented_data_1"] = self.augmenters[1](x, training=True)
+
+        return inputs
+
     def _tensorflow_train_step(self, data):
-        if isinstance(data, dict):
-            samples = data["data"]
-            labels = data["labels"] if "labels" in data else None
-        else:
-            samples = data
-            labels = None
-        # END IF
-        augmented_samples_0 = self.augmenters[0](samples, training=True)
-        augmented_samples_1 = self.augmenters[1](samples, training=True)
+        samples = data["data"]
+        labels = data["labels"] if "labels" in data else None
+        augmented_samples_0 = data["augmented_data_0"]
+        augmented_samples_1 = data["augmented_data_1"]
 
         with tf.GradientTape() as tape:
             features_0 = self.encoder(augmented_samples_0, training=True)
