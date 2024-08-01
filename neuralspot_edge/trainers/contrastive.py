@@ -144,7 +144,8 @@ class ContrastiveTrainer(keras.Model):
             self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
         )
         dataset = dataset.prefetch(tf.data.AUTOTUNE)
-        super().evaluate(x=dataset, **kwargs)
+
+        return super().evaluate(x=dataset, **kwargs)
 
     def run_augmenters(self, x, y=None):
         inputs = {"data": x}
@@ -193,11 +194,11 @@ class ContrastiveTrainer(keras.Model):
                 self.encoder.trainable_weights + projector_weights,
             )
         )
-        self.loss_metric.update_state(loss)
 
+        # Update the metrics
+        self.loss_metric.update_state(loss)
         for metric in self.encoder_metrics:
             metric.update_state(features_0, features_1)
-            keras.metrics.CosineSimilarity
 
         if self.probe:
             if labels is None:
@@ -232,6 +233,7 @@ class ContrastiveTrainer(keras.Model):
             regularization_losses=self.encoder.losses,
         )
 
+        # Update the metrics
         self.loss_metric.update_state(loss)
         for metric in self.encoder_metrics:
             metric.update_state(features_0, features_1)
