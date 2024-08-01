@@ -129,6 +129,23 @@ class ContrastiveTrainer(keras.Model):
 
         return super().fit(x=dataset, **kwargs)
 
+    def evaluate(
+        self,
+        x=None,
+        y=None,
+        sample_weight=None,
+        batch_size=None,
+        **kwargs,
+    ):
+        dataset = convert_inputs_to_tf_dataset(
+            x=x, y=y, sample_weight=sample_weight, batch_size=batch_size
+        )
+        dataset = dataset.map(
+            self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
+        )
+        dataset = dataset.prefetch(tf.data.AUTOTUNE)
+        super().evaluate(x=dataset, **kwargs)
+
     def run_augmenters(self, x, y=None):
         inputs = {"data": x}
         if y is not None:
