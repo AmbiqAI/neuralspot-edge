@@ -213,10 +213,18 @@ class ContrastiveTrainer(keras.Model):
         return {metric.name: metric.result() for metric in self.metrics}
 
     def _tensorflow_test_step(self, data):
-
-        labels = data["labels"] if "labels" in data else None
-        augmented_samples_0 = data["augmented_data_0"]
-        augmented_samples_1 = data["augmented_data_1"]
+        # Called by fit
+        if isinstance(data, dict):
+            labels = data["labels"] if "labels" in data else None
+            augmented_samples_0 = data["augmented_data_0"]
+            augmented_samples_1 = data["augmented_data_1"]
+        # Called by evaluate (need to compute augmentations)
+        else:
+            samples = data
+            augmented_samples_0 = self.augmenters[0](samples, training=True)
+            augmented_samples_1 = self.augmenters[1](samples, training=True)
+            labels = None
+        # END IF
 
         features_0 = self.encoder(augmented_samples_0, training=True)
         features_1 = self.encoder(augmented_samples_1, training=True)
