@@ -30,6 +30,15 @@ def parse_factor(
     return param[0], param[1]
 
 def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=None):
+    """Convert inputs to tf.data.Dataset."""
+
+    # Unpack if passed as tuple
+    if isinstance(x, tuple):
+        tupled = x
+        x = tupled[0]
+        y = tupled[1] if len(tupled) > 1 else None
+        sample_weight = tupled[2] if len(tupled) > 2 else None
+    # END IF
 
     if sample_weight is not None:
         raise ValueError(
@@ -57,6 +66,7 @@ def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=
     if batch_size is not None:
         dataset = dataset.batch(batch_size)
     return dataset
+
 
 
 def create_interleaved_dataset_from_generator(

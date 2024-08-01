@@ -116,36 +116,33 @@ class ContrastiveTrainer(keras.Model):
         y=None,
         sample_weight=None,
         batch_size=None,
+        validation_data=None,
         **kwargs,
     ):
-        dataset = convert_inputs_to_tf_dataset(
+        # Force training to tf.data and apply augmentations
+        train_ds = convert_inputs_to_tf_dataset(
             x=x, y=y, sample_weight=sample_weight, batch_size=batch_size
-        )
-
-        dataset = dataset.map(
+        ).map(
             self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
+        ).prefetch(
+            tf.data.AUTOTUNE
         )
-        dataset = dataset.prefetch(tf.data.AUTOTUNE)
 
-        return super().fit(x=dataset, **kwargs)
+        # If validation data is provided, apply augmentations
+        if validation_data:
+            val_ds = convert_inputs_to_tf_dataset(
+                x=validation_data,
+                batch_size=batch_size,
+            ).map(
+                self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
+            ).prefetch(
+                tf.data.AUTOTUNE
+            )
+        else:
+            val_ds = None
+        # END IF
 
-    def evaluate(
-        self,
-        x=None,
-        y=None,
-        sample_weight=None,
-        batch_size=None,
-        **kwargs,
-    ):
-        dataset = convert_inputs_to_tf_dataset(
-            x=x, y=y, sample_weight=sample_weight, batch_size=batch_size
-        )
-        dataset = dataset.map(
-            self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
-        )
-        dataset = dataset.prefetch(tf.data.AUTOTUNE)
-
-        return super().evaluate(x=dataset, **kwargs)
+        return super().fit(x=train_ds, validation_data=val_ds, **kwargs)
 
     def run_augmenters(self, x, y=None):
         inputs = {"data": x}
