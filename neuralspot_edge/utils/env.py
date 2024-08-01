@@ -5,7 +5,7 @@ from typing import Any
 from rich.logging import RichHandler
 
 
-def setup_logger(log_name: str) -> logging.Logger:
+def setup_logger(log_name: str, level: int | None = None) -> logging.Logger:
     """Setup logger with Rich
 
     Args:
@@ -14,15 +14,31 @@ def setup_logger(log_name: str) -> logging.Logger:
     Returns:
         logging.Logger: Logger
     """
-    logger = logging.getLogger(log_name)
-    if logger.handlers:
-        return logger
-    logging.basicConfig(level=logging.ERROR, force=True, handlers=[RichHandler()])
-    logger.propagate = False
-    logger.setLevel(logging.INFO)
-    logger.handlers = [RichHandler()]
-    return logger
+    new_logger = logging.getLogger(log_name)
+    needs_init = not new_logger.handlers
 
+    match level:
+        case 0:
+            log_level = logging.ERROR
+        case 1:
+            log_level = logging.INFO
+        case 2 | 3 | 4:
+            log_level = logging.DEBUG
+        case None:
+            log_level = None
+        case _:
+            log_level = logging.INFO
+    # END MATCH
+
+    if needs_init:
+        logging.basicConfig(level=log_level, force=True, handlers=[RichHandler(rich_tracebacks=True)])
+        new_logger.propagate = False
+        new_logger.handlers = [RichHandler(show_time=False)]
+
+    if log_level is not None:
+        new_logger.setLevel(log_level)
+
+    return new_logger
 
 def env_flag(env_var: str, default: bool = False) -> bool:
     """Return the specified environment variable coerced to a bool, as follows:

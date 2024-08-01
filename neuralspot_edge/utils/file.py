@@ -3,6 +3,7 @@ import os
 import hashlib
 import pickle
 from pathlib import Path
+from string import Template
 from typing import Any
 
 import requests
@@ -81,3 +82,16 @@ def save_pkl(file: str, compress: bool = True, **kwargs):
     else:
         with open(file, "wb") as fh:
             pickle.dump(kwargs, fh, protocol=4)
+
+
+def resolve_template_path(fpath: Path, **kwargs: Any) -> Path:
+    """Resolve templated path w/ supplied substitutions.
+
+    Args:
+        fpath (Path): File path
+        **kwargs (Any): Template arguments
+
+    Returns:
+        Path: Resolved file path
+    """
+    return Path(Template(str(fpath)).safe_substitute(**kwargs))
