@@ -1,6 +1,8 @@
 import gzip
 import os
+import hashlib
 import pickle
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -29,6 +31,24 @@ def download_file(src: str, dst: os.PathLike, progress: bool = True, chunk_size:
     # END WITH
 
 
+def compute_checksum(file: Path, checksum_type: str = "md5", chunk_size: int = 8192) -> str:
+    """Compute checksum of file.
+
+    Args:
+        file (Path): File path
+        checksum_type (str, optional): Checksum type. Defaults to "md5".
+        chunk_size (int, optional): Chunk size. Defaults to 8192.
+
+    Returns:
+        str: Checksum value
+    """
+    if not file.is_file():
+        raise FileNotFoundError(f"File {file} not found.")
+    hash_algo = hashlib.new(checksum_type)
+    with open(file, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            hash_algo.update(chunk)
+    return hash_algo.hexdigest()
 
 def load_pkl(file: str, compress: bool = True) -> dict[str, Any]:
     """Load pickled file.

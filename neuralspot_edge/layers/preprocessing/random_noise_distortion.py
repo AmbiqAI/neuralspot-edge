@@ -8,6 +8,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
     sample_rate: float
     frequency: tuple[float, float]
     amplitude: tuple[float, float]
+    interpolation: str
     noise_type: str
 
     def __init__(
@@ -15,6 +16,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
         sample_rate: float = 1,
         frequency: float | tuple[float, float] = 100,
         amplitude: float | tuple[float, float] = 0.1,
+        interpolation: str = "bilinear",
         noise_type: str = "normal",
         **kwargs,
     ):
@@ -26,6 +28,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
             sample_rate (float): Sample rate of the input.
             frequency (float|tuple[float,float]): Frequency of the noise in Hz. If tuple, frequency is randomly picked between the values.
             amplitude (float|tuple[float,float]): Amplitude of the noise. If tuple, amplitude is randomly picked between the values.
+            interpolation (str): Interpolation method to use. One of "nearest", "bilinear", or "bicubic".
             noise_type (str): Type of noise to generate. Currently only "normal" is supported.
 
         Example:
@@ -47,6 +50,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
         self.sample_rate = sample_rate
         self.frequency = parse_factor(frequency, min_value=None, max_value=sample_rate / 2, param_name="frequency")
         self.amplitude = parse_factor(amplitude, min_value=None, max_value=None, param_name="amplitude")
+        self.interpolation = interpolation
         self.noise_type = noise_type
 
     def get_random_transformations(self, input_shape: tuple[int, int, int]):

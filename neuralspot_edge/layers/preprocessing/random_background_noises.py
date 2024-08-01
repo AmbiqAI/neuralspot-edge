@@ -8,14 +8,17 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
     num_noises: int
 
     def __init__(
-        self, noises, amplitude: float | tuple[float, float] = 0.1, num_noises: int = 1, **kwargs
+        self,
+        noises,
+        amplitude: float | tuple[float, float] = 0.1,
+        num_noises: int = 1,
+        **kwargs
     ):
         """Apply random background noises to the input.
 
         Args:
             noises (np.ndarray): Background noises to apply.
             amplitude (float|tuple[float,float]): Amplitude of the noise. If tuple, amplitude is randomly picked between the values.
-            num_noises (int|tuple[int,int]): Number of noises to apply.
 
         Example:
         ```python
@@ -26,7 +29,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
                 np.sin(2*np.pi*f*np.arange(duration)/sample_rate)
                 for f in freqs
             ]).T
-            lyr = RandomBackgroundNoises(noises=noises, amplitude=0.2, num_noises=(1,2))
+            lyr = RandomBackgroundNoises(noises=noises, amplitude=0.2, num_noises=2)
             y = lyr(x, training=True)
         ```
         """
@@ -34,12 +37,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
 
         self.amplitude = parse_factor(amplitude, min_value=0, max_value=None, param_name="amplitude")
         self.num_noises = num_noises
-        self.noises = self.add_weight(
-            name="noises",
-            shape=noises.shape,
-            trainable=False,
-        )
-        self.noises.assign(noises)
+        self.noises = noises
 
     def get_random_transformations(self, input_shape: tuple[int, int, int]):
         """Generate noise tensor

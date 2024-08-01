@@ -48,3 +48,24 @@ def env_flag(env_var: str, default: bool = False) -> bool:
     if not environ_string:
         return default
     return environ_string in ["1", "true", "yes", "on"]
+
+
+def silence_tensorflow():
+    """Silence every unnecessary warning from tensorflow."""
+    logging.getLogger("tensorflow").setLevel(logging.ERROR)
+    os.environ["KMP_AFFINITY"] = "noverbose"
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+    os.environ["AUTOGRAPH_VERBOSITY"] = "5"
+    # We wrap this inside a try-except block
+    # because we do not want to be the one package
+    # that crashes when TensorFlow is not installed
+    # when we are the only package that requires it
+    # in a given Jupyter Notebook, such as when the
+    # package import is simply copy-pasted.
+    try:
+        import tensorflow as tf
+
+        tf.get_logger().setLevel("ERROR")
+        tf.autograph.set_verbosity(3)
+    except ModuleNotFoundError:
+        pass

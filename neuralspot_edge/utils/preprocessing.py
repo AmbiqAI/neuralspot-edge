@@ -1,7 +1,9 @@
-from typing import TypeVar
+from typing import TypeVar, Callable, Generator
 
-T = TypeVar("T")
+import tensorflow as tf
+import numpy.typing as npt
 
+T, K = TypeVar("T"), TypeVar("K")
 
 def parse_factor(
     param: T | tuple[T, T], min_value: float = 0.0, max_value: float = 1.0, param_name: str = "factor"
@@ -28,7 +30,6 @@ def parse_factor(
     return param[0], param[1]
 
 def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=None):
-    import tensorflow as tf
 
     if sample_weight is not None:
         raise ValueError(
@@ -56,3 +57,72 @@ def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=
     if batch_size is not None:
         dataset = dataset.batch(batch_size)
     return dataset
+
+
+def create_interleaved_dataset_from_generator(
+    data_generator: Callable[[Generator[T, None, None]], Generator[K, None, None]],
+    id_generator: Callable[[list[T]], Generator[T, None, None]],
+    ids: list[T],
+    spec: tuple[tf.TensorSpec, tf.TensorSpec],
+    preprocess: Callable[[K], K] | None = None,
+    num_workers: int = 4,
+) -> tf.data.Dataset:
+    """Create TF dataset pipeline by interleaving multiple workers across ids
+
+    The id_generator is used to generate ids for each worker.
+    The data_generator is used to generate data for each id.
+
+    Args:
+        data_generator (Callable[[Generator[T, None, None]], Generator[K, None, None]]): Data generator
+        id_generator (Callable[[list[T]], Generator[T, None, None]]): Id generator
+        ids (list[T]): List of ids
+        spec (tuple[tf.TensorSpec, tf.TensorSpec]): Tensor spec
+        preprocess (Callable[[K], K] | None, optional): Preprocess function. Defaults to None.
+        num_workers (int, optional): Number of workers. Defaults to 4.
+
+    Returns:
+        tf.data.Dataset: Dataset
+    """
+
+    def split_generator(split_ids: list[T]) -> tf.data.Dataset:
+        """Split generator per worker"""
+
+        def ds_gen():
+            """Worker generator routine"""
+            split_id_generator = id_generator(split_ids)
+            return map(preprocess, data_generator(split_id_generator))
+
+        return tf.data.Dataset.from_generator(
+            ds_gen,
+            output_signature=spec,
+        )
+    # END IF
+
+    num_workers = min(num_workers, len(ids))
+    split = len(ids) // num_workers
+
+    ds_splits = [split_generator(ids[i * split : (i + 1) * split]) for i in range(num_workers)]
+
+    # Create TF datasets (interleave workers)
+    ds = tf.data.Dataset.from_tensor_slices(ds_splits)
+
+    ds = ds.interleave(
+        lambda x: x,
+        cycle_length=num_workers,
+        deterministic=False,
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
+
+    return ds
+
+def create_dataset_from_data(x: npt.NDArray, y: npt.NDArray, spec: tuple[tf.TensorSpec]) -> tf.data.Dataset:
+    """Helper function to create dataset from static data
+
+    Args:
+        x (npt.NDArray): Numpy data
+        y (npt.NDArray): Numpy labels
+
+    Returns:
+        tf.data.Dataset: Dataset
+    """
+    return tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(x), tf.data.Dataset.from_tensor_slices(y)))
