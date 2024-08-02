@@ -1,4 +1,3 @@
-
 import numpy.typing as npt
 
 SpecType = list[npt.ArrayLike] | tuple[npt.ArrayLike] | dict[str, npt.ArrayLike] | npt.ArrayLike

@@ -9,6 +9,7 @@ from typing import Any
 import requests
 from tqdm import tqdm
 
+
 def download_file(src: str, dst: os.PathLike, progress: bool = True, chunk_size: int = 8192):
     """Download file from supplied url to destination streaming.
 
@@ -50,6 +51,7 @@ def compute_checksum(file: Path, checksum_type: str = "md5", chunk_size: int = 8
         for chunk in iter(lambda: f.read(chunk_size), b""):
             hash_algo.update(chunk)
     return hash_algo.hexdigest()
+
 
 def load_pkl(file: str, compress: bool = True) -> dict[str, Any]:
     """Load pickled file.

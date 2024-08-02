@@ -2,6 +2,7 @@ import keras
 from .base_augmentation import BaseAugmentation1D
 from .random_choice import RandomChoice
 
+
 class RandomAugmentation1DPipeline(BaseAugmentation1D):
     layers: list[BaseAugmentation1D]
     augmentations_per_sample: int
@@ -13,7 +14,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
         augmentations_per_sample: int = 1,
         rate: float = 1.0,
         batchwise: bool = False,
-        **kwargs
+        **kwargs,
     ):
         """Apply N random augmentations from a list of augmentation layers to each sample.
 
@@ -29,11 +30,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
         self.rate = rate
         self.batchwise = batchwise
         kwargs.update({"name": "random_choice"})
-        self._random_choice = RandomChoice(
-            layers=layers,
-            batchwise=batchwise,
-            **kwargs
-        )
+        self._random_choice = RandomChoice(layers=layers, batchwise=batchwise, **kwargs)
         if not self.layers:
             raise ValueError("At least one layer must be provided.")
 

@@ -2,6 +2,7 @@ import keras
 import tensorflow as tf
 from ..utils import convert_inputs_to_tf_dataset
 
+
 class ContrastiveTrainer(keras.Model):
     encoder: keras.Model
     augmenters: tuple[keras.Layer, keras.Layer]
@@ -120,23 +121,21 @@ class ContrastiveTrainer(keras.Model):
         **kwargs,
     ):
         # Force training to tf.data and apply augmentations
-        train_ds = convert_inputs_to_tf_dataset(
-            x=x, y=y, sample_weight=sample_weight, batch_size=batch_size
-        ).map(
-            self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
-        ).prefetch(
-            tf.data.AUTOTUNE
+        train_ds = (
+            convert_inputs_to_tf_dataset(x=x, y=y, sample_weight=sample_weight, batch_size=batch_size)
+            .map(self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE)
+            .prefetch(tf.data.AUTOTUNE)
         )
 
         # If validation data is provided, apply augmentations
         if validation_data:
-            val_ds = convert_inputs_to_tf_dataset(
-                x=validation_data,
-                batch_size=batch_size,
-            ).map(
-                self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE
-            ).prefetch(
-                tf.data.AUTOTUNE
+            val_ds = (
+                convert_inputs_to_tf_dataset(
+                    x=validation_data,
+                    batch_size=batch_size,
+                )
+                .map(self.run_augmenters, num_parallel_calls=tf.data.AUTOTUNE)
+                .prefetch(tf.data.AUTOTUNE)
             )
         else:
             val_ds = None

@@ -2,6 +2,7 @@ import random
 import numpy as np
 import keras
 
+
 def set_random_seed(seed: int | None = None) -> int:
     """Set random seed across libraries: TF, Numpy, Python
 

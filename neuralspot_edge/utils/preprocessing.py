@@ -5,6 +5,7 @@ import numpy.typing as npt
 
 T, K = TypeVar("T"), TypeVar("K")
 
+
 def parse_factor(
     param: T | tuple[T, T], min_value: float = 0.0, max_value: float = 1.0, param_name: str = "factor"
 ) -> tuple[T, T]:
@@ -29,6 +30,7 @@ def parse_factor(
 
     return param[0], param[1]
 
+
 def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=None):
     """Convert inputs to tf.data.Dataset."""
 
@@ -41,9 +43,7 @@ def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=
     # END IF
 
     if sample_weight is not None:
-        raise ValueError(
-            "Contrastive trainers do not yet support `sample_weight`."
-        )
+        raise ValueError("Contrastive trainers do not yet support `sample_weight`.")
 
     if isinstance(x, tf.data.Dataset):
         if y is not None or batch_size is not None:
@@ -66,7 +66,6 @@ def convert_inputs_to_tf_dataset(x=None, y=None, sample_weight=None, batch_size=
     if batch_size is not None:
         dataset = dataset.batch(batch_size)
     return dataset
-
 
 
 def create_interleaved_dataset_from_generator(
@@ -106,6 +105,7 @@ def create_interleaved_dataset_from_generator(
             ds_gen,
             output_signature=spec,
         )
+
     # END IF
 
     num_workers = min(num_workers, len(ids))
@@ -124,6 +124,7 @@ def create_interleaved_dataset_from_generator(
     )
 
     return ds
+
 
 def create_dataset_from_data(x: npt.NDArray, y: npt.NDArray, spec: tuple[tf.TensorSpec]) -> tf.data.Dataset:
     """Helper function to create dataset from static data

@@ -3,16 +3,10 @@ from .base_augmentation import BaseAugmentation
 
 
 class RandomChoice(BaseAugmentation):
-
     layers: list[BaseAugmentation]
     batchwise: bool
 
-    def __init__(
-        self,
-        layers: list[BaseAugmentation],
-        batchwise: bool = False,
-        **kwargs
-    ):
+    def __init__(self, layers: list[BaseAugmentation], batchwise: bool = False, **kwargs):
         """Randomly choose one augmentation layer from a list of augmentation layers.
 
         Args:
@@ -27,16 +21,11 @@ class RandomChoice(BaseAugmentation):
         """Apply random layer(s) to the batch"""
         # If batchwise, apply the same layer to all samples in the batch
         if self.batchwise:
-            lyr_idx: int = keras.random.randint(shape=(), minval=0, maxval=len(self.layers), dtype="int32", seed=self.random_generator)
-            branch_fns = [
-                lambda x: layer.call(x, training=self.training)
-                for layer in self.layers
-            ]
-            return keras.ops.switch(
-                lyr_idx,
-                branch_fns,
-                inputs
+            lyr_idx: int = keras.random.randint(
+                shape=(), minval=0, maxval=len(self.layers), dtype="int32", seed=self.random_generator
             )
+            branch_fns = [lambda x: layer.call(x, training=self.training) for layer in self.layers]
+            return keras.ops.switch(lyr_idx, branch_fns, inputs)
         raise NotImplementedError("Batchwise=False is not implemented yet")
 
     def get_config(self):

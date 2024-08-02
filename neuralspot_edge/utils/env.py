@@ -40,6 +40,7 @@ def setup_logger(log_name: str, level: int | None = None) -> logging.Logger:
 
     return new_logger
 
+
 def env_flag(env_var: str, default: bool = False) -> bool:
     """Return the specified environment variable coerced to a bool, as follows:
     - When the variable is unset, or set to the empty string, return `default`.

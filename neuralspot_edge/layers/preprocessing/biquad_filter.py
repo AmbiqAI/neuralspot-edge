@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from .base_augmentation import BaseAugmentation1D
 
+
 def get_butter_sos(
     lowcut: float | None = None,
     highcut: float | None = None,
@@ -39,6 +40,7 @@ def get_butter_sos(
     sos = scipy.signal.butter(order, freqs, btype=btype, output="sos")
     return sos
 
+
 class CascadedBiquadFilter(BaseAugmentation1D):
     def __init__(
         self,
@@ -46,7 +48,7 @@ class CascadedBiquadFilter(BaseAugmentation1D):
         highcut: float | None = None,
         sample_rate: float = 1000,
         order: int = 3,
-        **kwargs
+        **kwargs,
     ):
         """Implements a 2nd order cascaded biquad filter using direct form 1 structure.
 

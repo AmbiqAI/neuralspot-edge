@@ -13,6 +13,7 @@ from .file import compute_checksum
 
 logger = setup_logger(__name__)
 
+
 def _get_s3_client(config: Config | None = None) -> boto3.client:
     """Get S3 client
 

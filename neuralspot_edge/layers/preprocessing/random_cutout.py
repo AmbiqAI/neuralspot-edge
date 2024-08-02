@@ -48,7 +48,7 @@ class RandomCutout1D(BaseAugmentation1D):
             lower=0,
             upper=self.cutouts,
             body_fun=lambda _, x: self.batch_augment(x),
-            init_val=self.batch_augment(inputs)
+            init_val=self.batch_augment(inputs),
         )
         return self._format_outputs(outputs, metadata)
 

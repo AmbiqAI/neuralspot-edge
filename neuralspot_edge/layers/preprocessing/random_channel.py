@@ -1,15 +1,11 @@
 import keras
 from .base_augmentation import BaseAugmentation
 
-class RandomChannel(BaseAugmentation):
 
+class RandomChannel(BaseAugmentation):
     batchwise: bool
 
-    def __init__(
-        self,
-        batchwise: bool = False,
-        **kwargs
-    ):
+    def __init__(self, batchwise: bool = False, **kwargs):
         """Randomly picks a single channel from the input samples.
 
         Args:
@@ -30,9 +26,7 @@ class RandomChannel(BaseAugmentation):
 
         # Pick same channel for all samples in the batch
         if self.batchwise:
-            ch_idx = keras.random.randint(
-                shape=(), minval=0, maxval=ch_size, seed=self.random_generator, dtype="int32"
-            )
+            ch_idx = keras.random.randint(shape=(), minval=0, maxval=ch_size, seed=self.random_generator, dtype="int32")
             ch_idx = keras.ops.broadcast_to(ch_idx, [batch])
         else:
             ch_idx = keras.random.randint(

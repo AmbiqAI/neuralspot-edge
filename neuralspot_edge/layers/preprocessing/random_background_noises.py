@@ -7,13 +7,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
     amplitude: tuple[float, float]
     num_noises: int
 
-    def __init__(
-        self,
-        noises,
-        amplitude: float | tuple[float, float] = 0.1,
-        num_noises: int = 1,
-        **kwargs
-    ):
+    def __init__(self, noises, amplitude: float | tuple[float, float] = 0.1, num_noises: int = 1, **kwargs):
         """Apply random background noises to the input.
 
         Args:

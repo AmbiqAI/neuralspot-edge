@@ -1,9 +1,7 @@
-
 import keras
 import tensorflow as tf
 from keras.src.utils import backend_utils
 from keras.src.utils import tracking
-
 
 
 class TFDataLayer(keras.Layer):
@@ -14,22 +12,18 @@ class TFDataLayer(keras.Layer):
     Only supports a single input tensor argument.
     """
 
-    def __init__(self,  device: str = "cpu", **kwargs):
+    def __init__(self, device: str = "cpu", **kwargs):
         super().__init__(**kwargs)
         self.device = device
         self.backend = backend_utils.DynamicBackend()
         self._allow_non_tensor_positional_args = True
 
     def __call__(self, inputs, **kwargs):
-        if backend_utils.in_tf_graph() and not isinstance(
-            inputs, keras.KerasTensor
-        ):
+        if backend_utils.in_tf_graph() and not isinstance(inputs, keras.KerasTensor):
             # We're in a TF graph, e.g. a tf.data pipeline.
             self.backend.set_backend("tensorflow")
             inputs = keras.tree.map_structure(
-                lambda x: self.backend.convert_to_tensor(
-                    x, dtype=self.compute_dtype
-                ),
+                lambda x: self.backend.convert_to_tensor(x, dtype=self.compute_dtype),
                 inputs,
             )
             switch_convert_input_args = False
