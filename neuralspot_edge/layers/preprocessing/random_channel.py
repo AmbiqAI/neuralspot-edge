@@ -31,12 +31,12 @@ class RandomChannel(BaseAugmentation):
         # Pick same channel for all samples in the batch
         if self.batchwise:
             ch_idx = keras.random.randint(
-                shape=(), minval=0, maxval=ch_size, seed=self._random_generator, dtype="int32"
+                shape=(), minval=0, maxval=ch_size, seed=self.random_generator, dtype="int32"
             )
             ch_idx = keras.ops.broadcast_to(ch_idx, [batch])
         else:
             ch_idx = keras.random.randint(
-                shape=(batch,), minval=0, maxval=ch_size, seed=self._random_generator, dtype="int32"
+                shape=(batch,), minval=0, maxval=ch_size, seed=self.random_generator, dtype="int32"
             )
         return {"channel": ch_idx}
 

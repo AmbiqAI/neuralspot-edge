@@ -27,7 +27,7 @@ class RandomChoice(BaseAugmentation):
         """Apply random layer(s) to the batch"""
         # If batchwise, apply the same layer to all samples in the batch
         if self.batchwise:
-            lyr_idx: int = keras.random.randint(shape=(), minval=0, maxval=len(self.layers), dtype="int32", seed=self._random_generator)
+            lyr_idx: int = keras.random.randint(shape=(), minval=0, maxval=len(self.layers), dtype="int32", seed=self.random_generator)
             branch_fns = [
                 lambda x: layer.call(x, training=self.training)
                 for layer in self.layers

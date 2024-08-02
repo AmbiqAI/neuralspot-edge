@@ -62,19 +62,19 @@ class RandomCutout1D(BaseAugmentation1D):
             minval=int(duration_size * self.factor[0]),
             maxval=int(duration_size * self.factor[1]) + 1,
             dtype="int32",
-            seed=self._random_generator,
+            seed=self.random_generator,
         )
         cut_start = keras.random.randint(
             shape=(batch_size,),
             minval=0,
             maxval=int(duration_size * (1 - self.factor[1]) + 1),
             dtype="int32",
-            seed=self._random_generator,
+            seed=self.random_generator,
         )
         if self.fill_mode == "constant":
             fill = keras.ops.ones(input_shape) * self.fill_value
         else:
-            fill = keras.random.normal(input_shape, mean=0, stddev=self.fill_value, seed=self._random_generator)
+            fill = keras.random.normal(input_shape, mean=0, stddev=self.fill_value, seed=self.random_generator)
 
         return {
             "cut_start": cut_start,

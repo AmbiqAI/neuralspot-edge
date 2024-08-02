@@ -60,14 +60,14 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
             shape=(batch_size, self.num_noises),
             minval=0,
             maxval=self.noises.shape[0] - duration_size + 1,
-            seed=self._random_generator,
+            seed=self.random_generator,
             dtype="int32",
         )
         amplitude = keras.random.uniform(
             shape=(batch_size, self.num_noises),
             minval=self.amplitude[0],
             maxval=self.amplitude[1],
-            seed=self._random_generator,
+            seed=self.random_generator,
             dtype=self.compute_dtype,
         ) / keras.ops.cast(self.num_noises, self.compute_dtype)
 

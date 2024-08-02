@@ -64,7 +64,7 @@ class AmplitudeWarp(BaseAugmentation1D):
             frequency = self.frequency[0]
         else:
             frequency = keras.random.uniform(
-                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self._random_generator
+                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self.random_generator
             )
 
         warp_duration = keras.ops.cast((duration_size / self.sample_rate) * frequency + frequency, dtype="int32")
@@ -74,7 +74,7 @@ class AmplitudeWarp(BaseAugmentation1D):
         else:
             warp_shape = (batch_size, 1, warp_duration, ch_size)
 
-        warp_pts = keras.random.uniform(warp_shape, minval=self.amplitude[0], maxval=self.amplitude[1], seed=self._random_generator)
+        warp_pts = keras.random.uniform(warp_shape, minval=self.amplitude[0], maxval=self.amplitude[1], seed=self.random_generator)
 
         # keras.ops doesnt contain any low-level interpolate. So we leverage the
         # image module and fix height to 1 as workaround

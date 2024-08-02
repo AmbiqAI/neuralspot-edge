@@ -71,13 +71,13 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
             frequency = self.frequency[0]
         else:
             frequency = keras.random.uniform(
-                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self._random_generator
+                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self.random_generator
             )
         if self.amplitude[0] == self.amplitude[1]:
             amplitude = self.amplitude[0]
         else:
             amplitude = keras.random.uniform(
-                shape=(), minval=self.amplitude[0], maxval=self.amplitude[1], seed=self._random_generator
+                shape=(), minval=self.amplitude[0], maxval=self.amplitude[1], seed=self.random_generator
             )
 
         noise_duration = keras.ops.cast((duration_size / self.sample_rate) * frequency + frequency, dtype="int32")
@@ -88,7 +88,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
             noise_shape = (batch_size, 1, noise_duration, ch_size)
 
         if self.noise_type == "normal":
-            noise_pts = keras.random.normal(noise_shape, stddev=amplitude, seed=self._random_generator)
+            noise_pts = keras.random.normal(noise_shape, stddev=amplitude, seed=self.random_generator)
         else:
             raise ValueError(f"Invalid noise shape: {self.noise_type}")
 

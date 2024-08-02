@@ -39,7 +39,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
 
     def apply_random_choice(self, inputs):
         skip_augment = keras.random.uniform(
-            shape=(), minval=0.0, maxval=1.0, dtype="float32", seed=self._random_generator
+            shape=(), minval=0.0, maxval=1.0, dtype="float32", seed=self.random_generator
         )
         return keras.ops.cond(
             skip_augment > self.rate,

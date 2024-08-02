@@ -36,12 +36,12 @@ class RandomGaussianNoise1D(BaseAugmentation1D):
             shape=(),
             minval=self.factor[0],
             maxval=self.factor[1],
-            seed=self._random_generator,
+            seed=self.random_generator,
             dtype=self.compute_dtype,
         )
         return {
             "noise": keras.random.normal(
-                shape=input_shape, stddev=stddev, dtype=self.compute_dtype, seed=self._random_generator
+                shape=input_shape, stddev=stddev, dtype=self.compute_dtype, seed=self.random_generator
             )
         }
 

@@ -46,11 +46,11 @@ class RandomCrop1D(BaseAugmentation1D):
         d_diff = duration_size - self.duration
         if self.unique_batch:
             start = keras.random.randint(
-                shape=(batch_size,), minval=0, maxval=int(d_diff + 1), seed=self._random_generator, dtype="int32"
+                shape=(batch_size,), minval=0, maxval=int(d_diff + 1), seed=self.random_generator, dtype="int32"
             )
         else:
             start = keras.random.randint(
-                shape=(), minval=0, maxval=int(d_diff + 1), seed=self._random_generator, dtype="int32"
+                shape=(), minval=0, maxval=int(d_diff + 1), seed=self.random_generator, dtype="int32"
             )
             start = keras.ops.broadcast_to(start, [batch_size])
         return {"start": start}

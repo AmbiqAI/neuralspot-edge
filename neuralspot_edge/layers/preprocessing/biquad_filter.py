@@ -1,22 +1,69 @@
 import keras
+import scipy.signal
 import numpy as np
 import numpy.typing as npt
 from .base_augmentation import BaseAugmentation1D
 
+def get_butter_sos(
+    lowcut: float | None = None,
+    highcut: float | None = None,
+    sample_rate: float = 1000,
+    order: int = 3,
+) -> npt.NDArray:
+    """Compute biquad filter coefficients as SOS. This function caches.
+    For lowpass, lowcut is required and highcut is ignored.
+    For highpass, highcut is required and lowcut is ignored.
+    For bandpass, both lowcut and highcut are required.
+
+    Args:
+        lowcut (float|None): Lower cutoff in Hz. Defaults to None.
+        highcut (float|None): Upper cutoff in Hz. Defaults to None.
+        sample_rate (float): Sampling rate in Hz. Defaults to 1000 Hz.
+        order (int, optional): Filter order. Defaults to 3.
+
+    Returns:
+        npt.NDArray: SOS
+    """
+    nyq = sample_rate / 2
+    if lowcut is not None and highcut is not None:
+        freqs = [lowcut / nyq, highcut / nyq]
+        btype = "bandpass"
+    elif lowcut is not None:
+        freqs = lowcut / nyq
+        btype = "highpass"
+    elif highcut is not None:
+        freqs = highcut / nyq
+        btype = "lowpass"
+    else:
+        raise ValueError("At least one of lowcut or highcut must be specified")
+    sos = scipy.signal.butter(order, freqs, btype=btype, output="sos")
+    return sos
 
 class CascadedBiquadFilter(BaseAugmentation1D):
-    def __init__(self, sos: npt.NDArray[np.float32], **kwargs):
+    def __init__(
+        self,
+        lowcut: float | None = None,
+        highcut: float | None = None,
+        sample_rate: float = 1000,
+        order: int = 3,
+        **kwargs
+    ):
         """Implements a 2nd order cascaded biquad filter using direct form 1 structure.
 
         See [here](https://en.wikipedia.org/wiki/Digital_biquad_filter) for more information
         on the direct form 1 structure.
 
         Args:
-            sos (np.ndarray): Second order sections matrix with shape (n_sections, 6).
-                These values can be generated using physiokit.signal.get_butter_sos.
+            lowcut (float|None): Lower cutoff in Hz. Defaults to None.
+            highcut (float|None): Upper cutoff in Hz. Defaults to None.
+            sample_rate (float): Sampling rate in Hz. Defaults to 1000 Hz.
+            order (int, optional): Filter order. Defaults to 3.
         """
 
         super().__init__(**kwargs)
+
+        sos = get_butter_sos(lowcut, highcut, sample_rate, order)
+
         # These are the second order coefficients arranged as 2D tensor (n_sections x 6)
         # We remap each section from [b0, b1, b2, a0, a1, a2] to [b0, b1, b2, -a2, -a1, a0]
         sos = sos[:, [0, 1, 2, 5, 4, 3]] * [1, 1, 1, -1, -1, 1]

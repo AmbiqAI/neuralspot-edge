@@ -1,6 +1,7 @@
 from typing import Callable
 import keras
 
+from .tf_data_layer import TFDataLayer
 from .defines import NestedTensorValue
 
 
@@ -20,7 +21,7 @@ def tf_keras_map(f, xs):
     return tf.map_fn(f, xs, fn_output_signature=fn_output_signature)
 
 
-class BaseAugmentation(keras.layers.Layer):
+class BaseAugmentation(TFDataLayer):
     SAMPLES = "data"
     LABELS = "labels"
     TARGETS = "targets"
@@ -67,11 +68,21 @@ class BaseAugmentation(keras.layers.Layer):
 
         """
         super().__init__(name=name, **kwargs)
-        self._random_generator = keras.random.SeedGenerator(seed)
+
+        self.generator = keras.random.SeedGenerator(seed)
         self.data_format = data_format or keras.backend.image_data_format()
+
+        # This is needed for compatibility with tf.data.Dataset pipeline
+        self._allow_non_tensor_positional_args = True
         self.built = True
+        self._convert_input_args = False
+
         self.training = True
         self.auto_vectorize = auto_vectorize
+
+    @property
+    def random_generator(self) -> keras.random.SeedGenerator:
+        return self._get_seed_generator(self.backend._backend)
 
     def _map_fn(
         self, func: Callable[[NestedTensorValue], keras.KerasTensor], inputs: NestedTensorValue
