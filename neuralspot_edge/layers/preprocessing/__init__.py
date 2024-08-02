@@ -4,6 +4,7 @@ from .base_augmentation import BaseAugmentation, BaseAugmentation1D, BaseAugment
 from .biquad_filter import CascadedBiquadFilter
 from .defines import NestedTensorType, NestedTensorValue
 from .fir_filter import FirFilter
+from .layer_normalization import LayerNormalization1D, LayerNormalization2D
 from .random_augmentation_pipeline import RandomAugmentation1DPipeline
 from .random_background_noises import RandomBackgroundNoises1D
 from .random_channel import RandomChannel
