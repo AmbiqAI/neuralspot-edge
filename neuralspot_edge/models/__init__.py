@@ -14,4 +14,4 @@ from . import conformer
 from . import metaformer
 from . import defines
 
-from .utils import load_model
+from .utils import load_model, append_layers

@@ -101,3 +101,36 @@ def load_model(model_path: os.PathLike) -> keras.Model:
     # END MATCH
 
     return model
+
+
+def append_layers(
+    model: keras.Model,
+    layers: list[keras.Layer],
+    copy_weights: bool = True
+) -> keras.Model:
+    """Appends layers to a model by cloning it and adding the layers.
+
+    Args:
+        model (keras.Model): Model
+        layers (list[keras.layers.Layer]): Layers to append
+        copy_weights (bool, optional): Copy weights. Defaults to True.
+
+    Returns:
+        keras.Model: Model
+    """
+
+    last_layer_name = model.layers[-1].name
+
+    def call_function(layer, *args, **kwargs):
+        out = layer(*args, **kwargs)
+        if layer.name == last_layer_name:
+            for layer in layers:
+                out = layer(out)
+            out = keras.layers.Softmax()(out)
+        return out
+
+    # END DEF
+    model_clone = keras.models.clone_model(model, call_function=call_function)
+    if copy_weights:
+        model_clone.set_weights(model.get_weights())
+    return model_clone
