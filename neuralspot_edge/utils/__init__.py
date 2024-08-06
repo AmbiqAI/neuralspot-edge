@@ -7,6 +7,9 @@ from .preprocessing import (
     convert_inputs_to_tf_dataset,
     create_interleaved_dataset_from_generator,
     create_dataset_from_data,
+    get_output_signature,
+    get_output_signature_from_fn,
+    get_output_signature_from_gen,
 )
 from .rng import set_random_seed
 from .tensor import matches_spec
