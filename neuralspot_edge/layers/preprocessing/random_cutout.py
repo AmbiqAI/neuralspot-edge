@@ -43,6 +43,8 @@ class RandomCutout1D(BaseAugmentation1D):
     def call(self, inputs, training: bool = True):
         """Override the call method to apply multiple cutouts."""
         self.training = training
+        if not self.training:
+            return inputs
         inputs, metadata = self._format_inputs(inputs)
         outputs = keras.ops.fori_loop(
             lower=0,

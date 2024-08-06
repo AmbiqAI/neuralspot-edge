@@ -44,11 +44,12 @@ class AddSineWave(keras.Layer):
 
     def call(self, inputs, training=True):
         """Augment single sample with sine wave."""
+        self.training = training
         is_batched = inputs.shape.rank == 3
         if not is_batched:
             inputs = keras.ops.expand_dims(inputs, axis=0)
         # END
-        if training:
+        if self.training:
             input_shape = keras.ops.shape(inputs)
             batch_size = input_shape[0]
             duration_size = input_shape[self.duration_axis]
