@@ -13,6 +13,7 @@ from .random_crop import RandomCrop1D, RandomCrop2D
 from .random_cutout import RandomCutout1D
 from .random_gaussian_noise import RandomGaussianNoise1D
 from .random_noise_distortion import RandomNoiseDistortion1D
+from .random_sine_wave import RandomSineWave
 from .resizing import Resizing1D
 from .sine_wave import AddSineWave
 from .spec_augment import SpecAugment2D
