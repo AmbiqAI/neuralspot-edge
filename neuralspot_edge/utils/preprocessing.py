@@ -1,5 +1,6 @@
 from typing import TypeVar, Callable, Generator
 
+import keras
 import tensorflow as tf
 import numpy.typing as npt
 
@@ -137,3 +138,46 @@ def create_dataset_from_data(x: npt.NDArray, y: npt.NDArray, spec: tuple[tf.Tens
         tf.data.Dataset: Dataset
     """
     return tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(x), tf.data.Dataset.from_tensor_slices(y)))
+
+
+def get_output_signature(outputs: keras.KerasTensor|npt.NDArray|tuple[keras.KerasTensor|npt.NDArray]) -> tf.TensorSpec|tuple[tf.TensorSpec]:
+    """Get output signature from sample outputs
+
+    Args:
+        outputs: Outputs. A tensor or tuple of tensors. Either KerasTensor, tf.Tensor, or numpy array.
+
+    Returns:
+        tf.TensorSpec: Tensor spec
+    """
+    if isinstance(outputs, tuple):
+        sig = []
+        for output in outputs:
+            output = keras.ops.convert_to_tensor(output)
+            sig.append(tf.TensorSpec(shape=output.shape, dtype=output.dtype))
+        sig = tuple(sig)
+    else:
+        output = keras.ops.convert_to_tensor(outputs)
+        sig = tf.TensorSpec(shape=output.shape, dtype=output.dtype)
+    return sig
+
+def get_output_signature_from_fn(fn: Callable[..., keras.KerasTensor], *args) -> tf.TensorSpec|tuple[tf.TensorSpec]:
+    """Get output signature from a function
+
+    Args:
+        fn (Callable[..., tf.Tensor]): Function
+
+    Returns:
+        tf.TensorSpec: Tensor spec
+    """
+    return get_output_signature(outputs= fn(*args))
+
+def get_output_signature_from_gen(gen: Generator[T, None, None], *args) -> tf.TensorSpec|tuple[tf.TensorSpec]:
+    """Get output signature from a generator
+
+    Args:
+        gen (Generator[T, None, None]): Generator
+
+    Returns:
+        tf.TensorSpec: Tensor spec
+    """
+    return get_output_signature(outputs=next(gen(*args)))

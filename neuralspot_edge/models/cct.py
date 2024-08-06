@@ -3,6 +3,8 @@ from typing import Callable, cast
 import numpy as np
 import keras
 
+from ..utils import nse_export
+
 
 def cct_tokenizer_block(
     kernel_size: int = 3,
@@ -97,6 +99,7 @@ def cct_mlp(x: keras.KerasTensor, hidden_units: list[int], dropout_rate: float) 
     return x
 
 
+@nse_export(path="neuralspot_edge.models.CCT")
 def CCT(
     x: keras.KerasTensor,
     image_size: int,

@@ -1,8 +1,10 @@
 import keras
 
 from .contrastive import ContrastiveTrainer
+from ..utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.trainers.SimCLRTrainer")
 class SimCLRTrainer(ContrastiveTrainer):
     def __init__(
         self,

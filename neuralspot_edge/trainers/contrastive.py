@@ -1,8 +1,9 @@
 import keras
 import tensorflow as tf
-from ..utils import convert_inputs_to_tf_dataset
+from ..utils import convert_inputs_to_tf_dataset, nse_export
 
 
+@nse_export(path="neuralspot_edge.trainers.ContrastiveTrainer")
 class ContrastiveTrainer(keras.Model):
     encoder: keras.Model
     augmenters: tuple[keras.Layer, keras.Layer]
@@ -272,6 +273,10 @@ class ContrastiveTrainer(keras.Model):
     @staticmethod
     def linear_probe(num_classes, **kwargs):
         return keras.Sequential(keras.layers.Dense(num_classes), **kwargs)
+
+    def save(self, filepath, overwrite=True, zipped=True, **kwargs):
+        """We only save the encoder model"""
+        self.encoder.save(filepath, overwrite=overwrite, zipped=zipped, **kwargs)
 
 
 # class MomentumContrastiveTrainer(ContrastiveTrainer):

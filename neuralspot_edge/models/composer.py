@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from .blocks import batch_norm, conv2d, se_block
 from .activations import relu6
 from .utils import load_model
+from ..utils import nse_export
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class ComposerParams(BaseModel):
     name: str = Field(default="Composer", description="Model name")
 
 
+@nse_export(path="neuralspot_edge.models.Composer")
 def Composer(
     x: keras.KerasTensor,
     params: ComposerParams,

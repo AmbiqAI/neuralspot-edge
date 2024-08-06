@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from .blocks import layer_norm, batch_norm
 from .activations import swish, glu, relu
-
+from ..utils import nse_export
 
 class SubsampleBlockParams(BaseModel):
     depth: int = 256
@@ -277,6 +277,7 @@ def conformer_block(
     return layer
 
 
+@nse_export(path="neuralspot_edge.models.CCT")
 def Conformer(
     x: keras.KerasTensor,
     params: ConformerParams,

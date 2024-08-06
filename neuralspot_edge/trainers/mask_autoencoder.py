@@ -3,7 +3,10 @@ from typing import Callable
 import keras
 import tensorflow as tf
 
+from ..utils import nse_export
 
+
+@nse_export(path="neuralspot_edge.trainers.MaskedAutoencoder")
 class MaskedAutoencoder(keras.Model):
     def __init__(
         self,
