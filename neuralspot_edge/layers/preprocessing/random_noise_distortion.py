@@ -1,9 +1,10 @@
 import keras
 
 from .base_augmentation import BaseAugmentation1D
-from ...utils import parse_factor
+from ...utils import parse_factor, nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomNoiseDistortion1D")
 class RandomNoiseDistortion1D(BaseAugmentation1D):
     sample_rate: float
     frequency: tuple[float, float]

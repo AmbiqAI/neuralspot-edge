@@ -3,7 +3,10 @@ import tensorflow as tf
 from keras.src.utils import backend_utils
 from keras.src.utils import tracking
 
+from ...utils import nse_export
 
+
+@nse_export(path="neuralspot_edge.layers.preprocessing.TFDataLayer")
 class TFDataLayer(keras.Layer):
     """Layer that can safely used in a tf.data pipeline.
 

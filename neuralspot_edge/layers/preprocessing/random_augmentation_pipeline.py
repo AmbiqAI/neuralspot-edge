@@ -1,8 +1,10 @@
 import keras
 from .base_augmentation import BaseAugmentation1D
 from .random_choice import RandomChoice
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomAugmentation1DPipeline")
 class RandomAugmentation1DPipeline(BaseAugmentation1D):
     layers: list[BaseAugmentation1D]
     augmentations_per_sample: int

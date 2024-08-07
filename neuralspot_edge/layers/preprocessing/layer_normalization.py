@@ -1,7 +1,9 @@
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.LayerNormalization1D")
 class LayerNormalization1D(BaseAugmentation1D):
     def __init__(
         self,
@@ -29,6 +31,7 @@ class LayerNormalization1D(BaseAugmentation1D):
         return outputs  # (batch, duration, channels)
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.LayerNormalization2D")
 class LayerNormalization2D(BaseAugmentation2D):
     def __init__(
         self,

@@ -1,5 +1,7 @@
 import keras
 
+from ..utils import nse_export
+
 LARGE_NUM = 1e9
 
 
@@ -10,6 +12,7 @@ def l2_normalize(x, axis):
     return keras.ops.multiply(x, norm)
 
 
+@nse_export(path="neuralspot_edge.losses.SimCLRLoss")
 class SimCLRLoss(keras.losses.Loss):
     """Implements SimCLR Cosine Similarity loss.
 

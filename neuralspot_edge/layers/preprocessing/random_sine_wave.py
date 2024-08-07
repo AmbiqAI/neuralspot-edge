@@ -2,9 +2,10 @@ import keras
 import numpy as np
 
 from .base_augmentation import BaseAugmentation1D
-from ...utils import parse_factor
+from ...utils import parse_factor, nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomSineWave")
 class RandomSineWave(BaseAugmentation1D):
     sample_rate: float
     frequency: tuple[float, float]

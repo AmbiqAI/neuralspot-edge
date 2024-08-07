@@ -1,7 +1,9 @@
 import keras
 import numpy as np
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.AddSineWave")
 class AddSineWave(keras.Layer):
     sample_rate: float
     frequency: float

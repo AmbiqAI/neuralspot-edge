@@ -1,8 +1,8 @@
 import keras
 import scipy.signal
-import numpy as np
 import numpy.typing as npt
 from .base_augmentation import BaseAugmentation1D
+from ...utils import nse_export
 
 
 def get_butter_sos(
@@ -41,6 +41,7 @@ def get_butter_sos(
     return sos
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.CascadedBiquadFilter")
 class CascadedBiquadFilter(BaseAugmentation1D):
     def __init__(
         self,

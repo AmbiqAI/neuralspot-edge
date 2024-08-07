@@ -1,7 +1,9 @@
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomCrop1D")
 class RandomCrop1D(BaseAugmentation1D):
     duration: int
     unique_batch: bool
@@ -82,6 +84,7 @@ class RandomCrop1D(BaseAugmentation1D):
         return config
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomCrop2D")
 class RandomCrop2D(BaseAugmentation2D):
     height: int
     width: int

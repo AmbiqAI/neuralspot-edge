@@ -3,7 +3,10 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+from ..utils import nse_export
 
+
+@nse_export(path="neuralspot_edge.layers.PatchLayer")
 class PatchLayer(keras.layers.Layer):
     """This layer will extract patches from an image and reshape them into flattened vectors.
     Useful as preprocessing technique for patch-based self-supervised learning methods like
@@ -104,6 +107,7 @@ class PatchLayer(keras.layers.Layer):
         return reconstructed
 
 
+@nse_export(path="neuralspot_edge.layers.MaskedPatchEncoder")
 class MaskedPatchEncoder(keras.layers.Layer):
     def __init__(
         self,

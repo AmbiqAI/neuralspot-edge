@@ -1,8 +1,9 @@
 import keras
 from .base_augmentation import BaseAugmentation1D
-from ...utils import parse_factor
+from ...utils import parse_factor, nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomBackgroundNoises1D")
 class RandomBackgroundNoises1D(BaseAugmentation1D):
     amplitude: tuple[float, float]
     num_noises: int

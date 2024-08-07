@@ -2,8 +2,10 @@ import keras
 
 from ...utils import parse_factor
 from .base_augmentation import BaseAugmentation1D
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomCutout1D")
 class RandomCutout1D(BaseAugmentation1D):
     cutouts: int
     factor: tuple[float, float]

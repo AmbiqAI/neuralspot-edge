@@ -1,8 +1,9 @@
 import keras
 from .base_augmentation import BaseAugmentation1D
-from ...utils import parse_factor
+from ...utils import parse_factor, nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomGaussianNoise1D")
 class RandomGaussianNoise1D(BaseAugmentation1D):
     factor: tuple[float, float]
 

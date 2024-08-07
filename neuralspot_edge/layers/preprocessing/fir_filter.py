@@ -3,8 +3,10 @@ import numpy.typing as npt
 import keras
 
 from .base_augmentation import BaseAugmentation1D
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.FirFilter")
 class FirFilter(BaseAugmentation1D):
     def __init__(
         self,

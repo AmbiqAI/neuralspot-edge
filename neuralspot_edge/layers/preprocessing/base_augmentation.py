@@ -3,6 +3,7 @@ import keras
 
 from .tf_data_layer import TFDataLayer
 from .defines import NestedTensorValue
+from ...utils import nse_export
 
 
 def tf_keras_map(f, xs):
@@ -22,6 +23,7 @@ def tf_keras_map(f, xs):
     return tf.map_fn(f, xs, fn_output_signature=fn_output_signature)
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.BaseAugmentation")
 class BaseAugmentation(TFDataLayer):
     SAMPLES = "data"
     LABELS = "labels"
@@ -294,6 +296,7 @@ class BaseAugmentation(TFDataLayer):
         return config
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.BaseAugmentation1D")
 class BaseAugmentation1D(BaseAugmentation):
     NDIMS = 3  # (N, T, C) or (N, C, T)
 
@@ -347,6 +350,7 @@ class BaseAugmentation1D(BaseAugmentation):
         # END IF
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.BaseAugmentation2D")
 class BaseAugmentation2D(keras.layers.Layer):
     NDIMS = 4  # (N, H, W, C) or (N, C, H, W)
 

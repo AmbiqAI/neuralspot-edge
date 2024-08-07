@@ -1,7 +1,9 @@
 import keras
 from .base_augmentation import BaseAugmentation
+from ...utils import nse_export
 
 
+@nse_export(path="neuralspot_edge.layers.preprocessing.RandomChannel")
 class RandomChannel(BaseAugmentation):
     batchwise: bool
 
