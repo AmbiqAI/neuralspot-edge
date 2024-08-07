@@ -65,13 +65,16 @@ class RandomSineWave(BaseAugmentation1D):
         """Augment single sample with sine wave."""
         sample = inputs[self.SAMPLES]
         duration_size = sample.shape[self.data_axis]
+        sample_rate = keras.ops.cast(self.sample_rate, dtype=self.compute_dtype)
         if self.training:
             frequency = inputs[self.TRANSFORMS]["frequency"]
             amplitude = inputs[self.TRANSFORMS]["amplitude"]
-            ts = keras.ops.cast(keras.ops.arange(duration_size), self.compute_dtype) / self.sample_rate
+            ts = keras.ops.arange(duration_size, dtype=self.compute_dtype) / sample_rate
             sine_wave = keras.ops.sin(2 * np.pi * frequency * ts)
             sine_wave = amplitude * sine_wave
+            sine_wave = keras.ops.reshape(sine_wave, sample.shape)
             return sample + sine_wave
+        return sample
 
     def get_config(self):
         config = super().get_config()
