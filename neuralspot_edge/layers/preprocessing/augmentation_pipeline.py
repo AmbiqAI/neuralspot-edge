@@ -20,9 +20,5 @@ class AugmentationPipeline(keras.Layer):
 
     def call(self, inputs, training: bool = True, **kwargs):
         for layer in self.layers:
-            inputs = layer(
-                inputs,
-                training=training or self.force_training,
-                **kwargs
-            )
+            inputs = layer(inputs, training=training or self.force_training, **kwargs)
         return inputs

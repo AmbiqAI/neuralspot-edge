@@ -140,7 +140,9 @@ def create_dataset_from_data(x: npt.NDArray, y: npt.NDArray, spec: tuple[tf.Tens
     return tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(x), tf.data.Dataset.from_tensor_slices(y)))
 
 
-def get_output_signature(outputs: keras.KerasTensor|npt.NDArray|tuple[keras.KerasTensor|npt.NDArray]) -> tf.TensorSpec|tuple[tf.TensorSpec]:
+def get_output_signature(
+    outputs: keras.KerasTensor | npt.NDArray | tuple[keras.KerasTensor | npt.NDArray],
+) -> tf.TensorSpec | tuple[tf.TensorSpec]:
     """Get output signature from sample outputs
 
     Args:
@@ -160,7 +162,8 @@ def get_output_signature(outputs: keras.KerasTensor|npt.NDArray|tuple[keras.Kera
         sig = tf.TensorSpec(shape=output.shape, dtype=output.dtype)
     return sig
 
-def get_output_signature_from_fn(fn: Callable[..., keras.KerasTensor], *args) -> tf.TensorSpec|tuple[tf.TensorSpec]:
+
+def get_output_signature_from_fn(fn: Callable[..., keras.KerasTensor], *args) -> tf.TensorSpec | tuple[tf.TensorSpec]:
     """Get output signature from a function
 
     Args:
@@ -169,9 +172,10 @@ def get_output_signature_from_fn(fn: Callable[..., keras.KerasTensor], *args) ->
     Returns:
         tf.TensorSpec: Tensor spec
     """
-    return get_output_signature(outputs= fn(*args))
+    return get_output_signature(outputs=fn(*args))
 
-def get_output_signature_from_gen(gen: Generator[T, None, None], *args) -> tf.TensorSpec|tuple[tf.TensorSpec]:
+
+def get_output_signature_from_gen(gen: Generator[T, None, None], *args) -> tf.TensorSpec | tuple[tf.TensorSpec]:
     """Get output signature from a generator
 
     Args:

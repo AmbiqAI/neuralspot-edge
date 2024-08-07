@@ -2,6 +2,7 @@ import keras
 
 from ..utils import nse_export
 
+
 @nse_export(path="neuralspot_edge.trainers.Distiller")
 class Distiller(keras.Model):
     teacher: keras.models.Model

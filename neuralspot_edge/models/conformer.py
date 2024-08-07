@@ -7,6 +7,7 @@ from .blocks import layer_norm, batch_norm
 from .activations import swish, glu, relu
 from ..utils import nse_export
 
+
 class SubsampleBlockParams(BaseModel):
     depth: int = 256
     kernel_size: int = 3

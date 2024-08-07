@@ -103,11 +103,7 @@ def load_model(model_path: os.PathLike) -> keras.Model:
     return model
 
 
-def append_layers(
-    model: keras.Model,
-    layers: list[keras.Layer],
-    copy_weights: bool = True
-) -> keras.Model:
+def append_layers(model: keras.Model, layers: list[keras.Layer], copy_weights: bool = True) -> keras.Model:
     """Appends layers to a model by cloning it and adding the layers.
 
     Args:

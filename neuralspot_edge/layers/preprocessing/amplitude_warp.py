@@ -64,8 +64,11 @@ class AmplitudeWarp(BaseAugmentation1D):
             frequency = keras.cast(self.frequency[0], dtype=self.compute_dtype)
         else:
             frequency = keras.random.uniform(
-                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self.random_generator,
-                dtype=self.compute_dtype
+                shape=(),
+                minval=self.frequency[0],
+                maxval=self.frequency[1],
+                seed=self.random_generator,
+                dtype=self.compute_dtype,
             )
 
         duration_sec = keras.ops.cast(duration_size / self.sample_rate, dtype=self.compute_dtype)

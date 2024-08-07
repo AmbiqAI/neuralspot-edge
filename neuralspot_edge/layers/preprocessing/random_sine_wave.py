@@ -44,22 +44,13 @@ class RandomSineWave(BaseAugmentation1D):
         batch_size = input_shape[0]
 
         frequencies = keras.random.uniform(
-            shape=(batch_size,),
-            minval=self.frequency[0],
-            maxval=self.frequency[1],
-            seed=self.random_generator
+            shape=(batch_size,), minval=self.frequency[0], maxval=self.frequency[1], seed=self.random_generator
         )
         amplitudes = keras.random.uniform(
-            shape=(batch_size,),
-            minval=self.amplitude[0],
-            maxval=self.amplitude[1],
-            seed=self.random_generator
+            shape=(batch_size,), minval=self.amplitude[0], maxval=self.amplitude[1], seed=self.random_generator
         )
 
-        return {
-            "frequency": frequencies,
-            "amplitude": amplitudes
-        }
+        return {"frequency": frequencies, "amplitude": amplitudes}
 
     def augment_sample(self, inputs):
         """Augment single sample with sine wave."""

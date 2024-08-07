@@ -5,6 +5,7 @@ import keras
 
 T = TypeVar("T")
 
+
 def set_random_seed(seed: int | None = None) -> int:
     """Set random seed across libraries: TF, Numpy, Python
 
@@ -15,11 +16,12 @@ def set_random_seed(seed: int | None = None) -> int:
         int: Random seed
     """
 
-    seed = seed or random.randint(2**16)
+    seed = seed or random.randint(0, 2**16)
     random.seed(seed)
     # keras will set all backends including numpy
     keras.utils.set_random_seed(seed)
     return seed
+
 
 def uniform_id_generator(
     ids: Iterable[T],
