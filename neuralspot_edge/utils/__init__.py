@@ -11,5 +11,5 @@ from .preprocessing import (
     get_output_signature_from_fn,
     get_output_signature_from_gen,
 )
-from .rng import set_random_seed
+from .rng import set_random_seed, uniform_id_generator, random_id_generator
 from .tensor import matches_spec
