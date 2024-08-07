@@ -61,13 +61,15 @@ class AmplitudeWarp(BaseAugmentation1D):
 
         # Add one period to the noise and clip later
         if self.frequency[0] == self.frequency[1]:
-            frequency = self.frequency[0]
+            frequency = keras.cast(self.frequency[0], dtype=self.compute_dtype)
         else:
             frequency = keras.random.uniform(
-                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self.random_generator
+                shape=(), minval=self.frequency[0], maxval=self.frequency[1], seed=self.random_generator,
+                dtype=self.compute_dtype
             )
 
-        warp_duration = keras.ops.cast((duration_size / self.sample_rate) * frequency + frequency, dtype="int32")
+        duration_sec = keras.ops.cast(duration_size / self.sample_rate, dtype=self.compute_dtype)
+        warp_duration = keras.ops.cast(duration_sec * frequency + frequency, dtype="int32")
 
         if self.data_format == "channels_first":
             warp_shape = (batch_size, 1, ch_size, warp_duration)
