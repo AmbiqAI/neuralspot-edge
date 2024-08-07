@@ -5,7 +5,7 @@ from typing import Any
 from rich.logging import RichHandler
 
 
-def setup_logger(log_name: str, level: int | None = None) -> logging.Logger:
+def setup_logger(log_name: str, level: int | None = None, recursive: bool = True) -> logging.Logger:
     """Setup logger with Rich
 
     Args:
@@ -14,7 +14,8 @@ def setup_logger(log_name: str, level: int | None = None) -> logging.Logger:
     Returns:
         logging.Logger: Logger
     """
-    new_logger = logging.getLogger(log_name)
+    root_name = log_name.split(".")[0] if recursive else log_name
+    new_logger = logging.getLogger(root_name)
     needs_init = not new_logger.handlers
 
     match level:
@@ -31,7 +32,7 @@ def setup_logger(log_name: str, level: int | None = None) -> logging.Logger:
     # END MATCH
 
     if needs_init:
-        logging.basicConfig(level=log_level, force=True, handlers=[RichHandler(rich_tracebacks=True)])
+        logging.basicConfig(level=logging.INFO, force=True, handlers=[RichHandler(rich_tracebacks=True)])
         new_logger.propagate = False
         new_logger.handlers = [RichHandler(show_time=False)]
 
