@@ -14,6 +14,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
         augmentations_per_sample: int = 1,
         rate: float = 1.0,
         batchwise: bool = False,
+        force_training: bool = False,
         **kwargs,
     ):
         """Apply N random augmentations from a list of augmentation layers to each sample.
@@ -23,6 +24,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
             augmentations_per_sample (int): Number of augmentations to apply to each sample.
             rate (float): Probability of applying the augmentation pipeline.
             batchwise (bool): If True, apply same layer to all samples in the batch.
+            force_training (bool, optional): Force training mode. Defaults to False.
         """
         super().__init__(**kwargs)
         self.layers = layers
@@ -31,6 +33,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
         self.batchwise = batchwise
         kwargs.update({"name": "random_choice"})
         self._random_choice = RandomChoice(layers=layers, batchwise=batchwise, **kwargs)
+        self.force_training = force_training
         if not self.layers:
             raise ValueError("At least one layer must be provided.")
 
@@ -53,6 +56,10 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
             init_val=inputs,
         )
 
+    def call(self, inputs, training: bool = True, **kwargs):
+        self._random_choice.training = training or self.force_training
+        super().call(inputs, training=training or self.force_training, **kwargs)
+
     def get_config(self):
         """Serializes the configuration of the layer."""
         config = super().get_config()
@@ -62,6 +69,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
                 "augmentations_per_sample": self.augmentations_per_sample,
                 "rate": self.rate,
                 "batchwise": self.batchwise,
+                "force_training": self.force_training,
             }
         )
         return config

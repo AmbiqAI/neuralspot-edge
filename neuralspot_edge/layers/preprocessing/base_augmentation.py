@@ -17,6 +17,7 @@ def tf_keras_map(f, xs):
 
     # Grab single element unpacking and repacking single element
     xe = tf.nest.pack_sequence_as(xs, [y[0] for y in tf.nest.flatten(xs)])
+
     fn_output_signature = get_fn_output_signature(xe)
     return tf.map_fn(f, xs, fn_output_signature=fn_output_signature)
 
