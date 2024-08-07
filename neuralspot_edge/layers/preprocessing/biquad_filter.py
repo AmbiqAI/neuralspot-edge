@@ -48,6 +48,7 @@ class CascadedBiquadFilter(BaseAugmentation1D):
         highcut: float | None = None,
         sample_rate: float = 1000,
         order: int = 3,
+        forward_backward: bool = False,
         **kwargs,
     ):
         """Implements a 2nd order cascaded biquad filter using direct form 1 structure.
@@ -60,6 +61,7 @@ class CascadedBiquadFilter(BaseAugmentation1D):
             highcut (float|None): Upper cutoff in Hz. Defaults to None.
             sample_rate (float): Sampling rate in Hz. Defaults to 1000 Hz.
             order (int, optional): Filter order. Defaults to 3.
+            forward_backward (bool): Apply filter forward and backward.
         """
 
         super().__init__(**kwargs)
@@ -76,6 +78,7 @@ class CascadedBiquadFilter(BaseAugmentation1D):
         )
         self.sos.assign(sos)
         self.num_stages = keras.ops.shape(self.sos)[0]
+        self.forward_backward = forward_backward
 
     def _apply_sos(self, i, sample: keras.KerasTensor) -> keras.KerasTensor:
         """Applies a single section to the input sample.
@@ -147,6 +150,12 @@ class CascadedBiquadFilter(BaseAugmentation1D):
 
         # Iterate across second order sections
         samples = keras.ops.fori_loop(lower=0, upper=self.num_stages, body_fun=self._apply_sos, init_val=samples)
+
+        if self.forward_backward:
+            samples = keras.ops.flip(samples, axis=self.data_axis)
+            samples = keras.ops.fori_loop(lower=0, upper=self.num_stages, body_fun=self._apply_sos, init_val=samples)
+            samples = keras.ops.flip(samples, axis=self.data_axis)
+        # END IF
 
         # Undo the transpose if needed
         if self.data_format == "channels_first":
