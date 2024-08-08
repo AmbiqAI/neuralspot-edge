@@ -5,22 +5,27 @@ from ..utils import convert_inputs_to_tf_dataset, nse_export
 
 @nse_export(path="neuralspot_edge.trainers.ContrastiveTrainer")
 class ContrastiveTrainer(keras.Model):
+    SAMPLES = "data"
+    LABELS = "labels"
+    AUG_SAMPLES_0 = "augmented_data_0"
+    AUG_SAMPLES_1 = "augmented_data_1"
+
     encoder: keras.Model
     augmenters: tuple[keras.Layer, keras.Layer]
 
     def __init__(
         self,
         encoder: keras.Model,
-        augmenter: keras.Layer | tuple[keras.Layer, keras.Layer],
         projector: keras.Model | tuple[keras.Model, keras.Model],
+        augmenter: keras.Layer | tuple[keras.Layer, keras.Layer] | None = None,
         probe: keras.Layer | keras.Model | None = None,
     ):
         """Creates a self-supervised contrastive trainer for a model.
 
         Args:
             encoder (keras.Model): The encoder model to be trained.
-            augmenter (keras.Layer|tuple[keras.Layer, keras.Layer]): The augmenter to be used for data augmentation.
             projector (keras.Model|tuple[keras.Model, keras.Model]): The projector model to be trained.
+            augmenter (keras.Layer|tuple[keras.Layer, keras.Layer]|None): The augmenter to be used for data augmentation.
             probe (keras.Layer|keras.Model|None): The probe model to be trained. If None, no probe is used.
 
         """
@@ -39,7 +44,12 @@ class ContrastiveTrainer(keras.Model):
         if isinstance(projector, tuple) and len(projector) != 2:
             raise ValueError("`projector` must be either a single augmenter or a tuple of exactly 2 augmenters.")
 
-        self.augmenters = augmenter if isinstance(augmenter, tuple) else (augmenter, augmenter)
+        if augmenters is None:
+            self.augmenters = (keras.layers.Lambda(lambda x: x), keras.layers.Lambda(lambda x: x))
+        elif isinstance(augmenter, tuple):
+            self.augmenters = augmenter
+        else:
+            self.augmenters = (augmenter, augmenter)
 
         self.encoder = encoder
 
@@ -145,20 +155,26 @@ class ContrastiveTrainer(keras.Model):
         return super().fit(x=train_ds, validation_data=val_ds, **kwargs)
 
     def run_augmenters(self, x, y=None):
-        inputs = {"data": x}
-        if y is not None:
-            inputs["labels"] = y
+        if isinstance(x, dict):
+            inputs = x
+        else:
+            inputs = {self.SAMPLES: x}
 
-        inputs["augmented_data_0"] = self.augmenters[0](x, training=True)
-        inputs["augmented_data_1"] = self.augmenters[1](x, training=True)
+        if y is not None:
+            inputs[self.LABELS] = y
+
+        if self.AUG_SAMPLES_0 not in inputs:
+            inputs[self.AUG_SAMPLES_0] = self.augmenters[0](x, training=True)
+        if self.AUG_SAMPLES_1 not in inputs:
+            inputs[self.AUG_SAMPLES_1] = self.augmenters[1](x, training=True)
 
         return inputs
 
     def _tensorflow_train_step(self, data):
-        samples = data["data"]
-        labels = data["labels"] if "labels" in data else None
-        augmented_samples_0 = data["augmented_data_0"]
-        augmented_samples_1 = data["augmented_data_1"]
+        samples = data[self.SAMPLES]
+        labels = data[self.LABELS] if self.LABELS in data else None
+        augmented_samples_0 = data[self.AUG_SAMPLES_0]
+        augmented_samples_1 = data[self.AUG_SAMPLES_1]
 
         with tf.GradientTape() as tape:
             features_0 = self.encoder(augmented_samples_0, training=True)
@@ -215,9 +231,9 @@ class ContrastiveTrainer(keras.Model):
     def _tensorflow_test_step(self, data):
         # Called by fit
         if isinstance(data, dict):
-            labels = data["labels"] if "labels" in data else None
-            augmented_samples_0 = data["augmented_data_0"]
-            augmented_samples_1 = data["augmented_data_1"]
+            labels = data[self.LABELS] if self.LABELS in data else None
+            augmented_samples_0 = data[self.AUG_SAMPLES_0]
+            augmented_samples_1 = data[self.AUG_SAMPLES_1]
         # Called by evaluate (need to compute augmentations)
         else:
             samples = data

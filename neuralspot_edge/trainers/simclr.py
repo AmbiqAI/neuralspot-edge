@@ -22,7 +22,6 @@ class SimCLRTrainer(ContrastiveTrainer):
 
         Args:
             encoder (keras.Model): The encoder model.
-            augmenter (keras.Layer|tuple[keras.Layer, keras.Layer]): The augmenter to use.
             projector (keras.Model, optional): The projector model. Defaults to None.
         """
         if projector is None:
@@ -38,7 +37,6 @@ class SimCLRTrainer(ContrastiveTrainer):
 
         super().__init__(
             encoder=encoder,
-            augmenter=augmenter,
             projector=projector,
             **kwargs,
         )
