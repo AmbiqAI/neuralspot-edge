@@ -9,7 +9,6 @@ class SimCLRTrainer(ContrastiveTrainer):
     def __init__(
         self,
         encoder: keras.Model,
-        augmenter: keras.Layer | tuple[keras.Layer, keras.Layer],
         projector: keras.Model | None = None,
         **kwargs,
     ):
