@@ -44,7 +44,7 @@ class ContrastiveTrainer(keras.Model):
         if isinstance(projector, tuple) and len(projector) != 2:
             raise ValueError("`projector` must be either a single augmenter or a tuple of exactly 2 augmenters.")
 
-        if augmenters is None:
+        if augmenter is None:
             self.augmenters = (keras.layers.Lambda(lambda x: x), keras.layers.Lambda(lambda x: x))
         elif isinstance(augmenter, tuple):
             self.augmenters = augmenter
