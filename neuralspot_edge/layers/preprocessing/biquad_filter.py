@@ -125,7 +125,7 @@ class CascadedBiquadFilter(BaseAugmentation1D):
         indices = keras.ops.tile(indices, (1, ch_size))
 
         def tstep_fn(t, yl):
-            """Applies signle time step"""
+            """Applies single time step"""
             yy = keras.ops.slice(yl, start_indices=[t - 2, 0], shape=[3, ch_size])
             yy = keras.ops.transpose(yy, axes=[1, 0])  # (ch_size, 3)
             yy = keras.ops.dot(yy, taps)  # (ch_size, 3) x (3) = (ch_size)
