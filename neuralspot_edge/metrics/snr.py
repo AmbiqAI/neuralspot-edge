@@ -55,7 +55,7 @@ class Snr(keras.Metric):
         ratio = keras.ops.divide(self.num, self.den + keras.backend.epsilon())
         ratio = keras.ops.convert_to_tensor(ratio, dtype=self.dtype)
         snr = 10 * keras.ops.log10(ratio)
-        return snr # in dB
+        return snr  # in dB
 
     def get_config(self):
         return super().get_config()
