@@ -16,7 +16,7 @@ def compute_metrics(metrics: list[keras.Metric], y_true, y_pred) -> dict[str, fl
     """
     results = {}
     for metric in metrics:
-        metric.reset_states()
+        metric.reset_state()
         metric.update_state(y_true, y_pred)
         results[metric.name] = metric.result().numpy()
     return results
