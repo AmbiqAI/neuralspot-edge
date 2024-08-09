@@ -16,6 +16,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
             amplitude (float|tuple[float,float]): Amplitude of the noise. If tuple, amplitude is randomly picked between the values.
 
         Example:
+
         ```python
             sample_rate = 100
             duration = 2*sample_rate

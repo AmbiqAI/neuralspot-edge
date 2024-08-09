@@ -19,6 +19,37 @@ class TfLiteKerasInterpreter:
             input_name (str | None, optional): Input layer name. Defaults to None.
             output_name (str | None, optional): Output layer name. Defaults to None.
             signature_key (str | None, optional): Signature key. Defaults to None
+
+        Example:
+
+        ```python
+        # Create simple dataset
+        test_x = np.random.rand(1000, 64).astype(np.float32)
+        test_y = np.random.randint(0, 10, 1000).astype(np.int32)
+
+        # Create a dense model and train
+        model = keras.Sequential([
+            keras.layers.Dense(64, activation="relu", input_shape=(64,)),
+            keras.layers.Dense(32, activation="relu"),
+            keras.layers.Dense(10, activation="softmax"),
+        ])
+        model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+        model.fit(test_x, test_y, epochs=1, validation_split=0.2)
+
+        # Create converter and convert to TFLite w/ FP32 quantization
+        converter = nse.converters.tflite.TfLiteKerasConverter(model=model)
+        tflite_content = converter.convert(
+            test_x,
+            quantization=nse.converters.tflite.QuantizationType.FP32,
+            io_type="float32"
+        )
+        interpreter = nse.interpreters.tflite.TfLiteKerasInterpreter(model_content=tflite_content)
+        interpreter.compile()
+
+        y_pred_tfl = interpreter.predict(test_x)
+        y_pred_tf = model.predict(test_x)
+        print(np.allclose(y_pred_tf, y_pred_tfl, atol=1e-3))
+        ```
         """
         self.model_content = model_content
         self.interpreter = tf.lite.Interpreter(model_content=model_content)

@@ -15,7 +15,7 @@ poetry add neuralspot-edge
 ```
 
 !!! note
-    __neuralspot-edge__ relies heavily on [Keras 3](https://keras.io/). Since Kerassupports multiple backend frameworks, you'll need to install one of the following. By default, we assume __TensorFlow__ as a number of the data pipelines are built using TensorFlow datasets.
+    __neuralspot-edge__ relies heavily on [Keras 3](https://keras.io/). Since Keras supports multiple backend frameworks, you'll need to install one of the following. By default, we assume __TensorFlow__ as a number of the data pipelines are built using TensorFlow datasets.
 
     * [Installing JAX](https://jax.readthedocs.io/en/latest/installation.html)
     * [Installing TensorFlow](https://www.tensorflow.org/install)

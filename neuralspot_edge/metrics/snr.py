@@ -14,6 +14,7 @@ class Snr(keras.Metric):
             name (str, optional): Name of the metric. Defaults to 'snr'.
 
         Example:
+
         ```python
         # Create 4-second sine wave w/ freq=4, amplitude=1, Fs=1000Hz
         t = np.linspace(0, 4, 4 * 1000, endpoint=False)
@@ -21,7 +22,7 @@ class Snr(keras.Metric):
         # Add random noise with amplitude 0.1
         noise = np.random.normal(0, 0.1, len(t))
         y = x + noise
-        snr = Snr()
+        snr = nse.metrics.Snr()
         snr.update_state(x, y)
         print(snr.result())
         ```

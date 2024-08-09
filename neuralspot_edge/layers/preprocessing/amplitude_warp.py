@@ -28,16 +28,22 @@ class AmplitudeWarp(BaseAugmentation1D):
             amplitude (float|tuple[float,float]): Amplitude of the warping. If tuple, amplitude is randomly picked between the values.
 
         Example:
+
         ```python
-            sample_rate = 100 # Hz
-            duration = 3*sample_rate # 3 seconds
-            sig_freq = 10 # Hz
-            sig_amp = 1 # Signal amplitude
-            noise_freq = (1, 2) # Noise frequency range
-            amplitude = (0.5, 2) # Noise amplitude range
-            x = sig_amp*np.sin(2*np.pi*sig_freq*np.arange(duration)/sample_rate).reshape(-1, 1)
-            lyr = RandomNoiseDistortion1D(sample_rate=sample_rate, frequency=noise_freq, amplitude=noise_amp)
-            y = lyr(x, training=True)
+        sample_rate = 100 # Hz
+        duration = 3*sample_rate # 3 seconds
+        sig_freq = 10 # Hz
+        sig_amp = 1 # Signal amplitude
+        noise_freq = (1, 2) # Noise frequency range
+        amplitude = (0.5, 2) # Noise amplitude range
+        x = sig_amp*np.sin(2*np.pi*sig_freq*np.arange(duration)/sample_rate).reshape(-1, 1).astype(np.float32)
+        x = keras.ops.convert_to_tensor(x)
+        lyr = nse.layers.preprocessing.RandomNoiseDistortion1D(sample_rate=sample_rate, frequency=noise_freq, amplitude=amplitude)
+        y = lyr(x, training=True)
+
+        plt.plot(x.numpy())
+        plt.plot(y.numpy())
+        plt.show()
         ```
         """
 

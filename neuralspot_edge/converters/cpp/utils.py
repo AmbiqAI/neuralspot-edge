@@ -21,6 +21,21 @@ def array_dump(
         var_dtype (str | None, optional): C variable type. Defaults to None.
         row_len (int, optional): Elements to write per row. Defaults to 12.
         is_header (bool): Write as header or source C file. Defaults to source.
+
+    Example:
+
+    ```python
+    data = np.random.rand(10, 10).astype(np.float32)
+    dst_path = "test_stimulus.h"
+    nse.converters.cpp.array_dump(
+        data,
+        dst_path,
+        var_name="test_stimulus",
+        var_dtype="float32_t",
+        row_len=12,
+        is_header=True
+    )
+    ```
     """
     data = data.flatten()
 
@@ -71,6 +86,20 @@ def xxd_c_dump(
         var_name (str, optional): C variable name. Defaults to 'model'.
         chunk_len (int, optional): # of elements per row. Defaults to 12.
         is_header (bool): Write as header or source C file. Defaults to source.
+
+    Example:
+
+    ```python
+    src_path = "model.tflite"
+    dst_path = "model.h"
+    nse.converters.cpp.xxd_c_dump(
+        src_path,
+        dst_path,
+        var_name="model",
+        chunk_len=12,
+        is_header=True
+    )
+    ```
     """
     var_len = 0
     with open(src_path, "rb", encoding=None) as rfp, open(dst_path, "w", encoding="UTF-8") as wfp:

@@ -14,6 +14,7 @@ class RandomGaussianNoise1D(BaseAugmentation1D):
             stddev(float): Standard deviation of the Gaussian noise.
 
         Example:
+
         ```python
             x = np.sin(2*np.pi*10*np.arange(duration_size)/100)
             lyr = RandomGaussianNoise1D(stddev=0.1)

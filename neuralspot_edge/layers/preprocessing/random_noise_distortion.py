@@ -33,6 +33,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
             noise_type (str): Type of noise to generate. Currently only "normal" is supported.
 
         Example:
+
         ```python
             sample_rate = 100 # Hz
             duration = 3*sample_rate # 3 seconds

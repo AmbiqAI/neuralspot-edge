@@ -7,6 +7,16 @@ from ..utils import nse_export
 class MultiF1Score(keras.metrics.F1Score):
     """A basic wrapper around keras.metrics.F1Score to handle multi-dimensional data.
     This class collapses down to 2D with last dimension as classes.
+
+    Example:
+
+    ```python
+    f1 = nse.metrics.MultiF1Score(average='macro')
+    y_true = np.array([[0, 1, 0], [1, 0, 1]])
+    y_pred = np.array([[0, 1, 0], [1, 0, 0]])
+    f1.update_state(y_true, y_pred)
+    print(f1.result().numpy())
+    ```
     """
 
     def update_state(self, y_true, y_pred, sample_weight=None):

@@ -16,6 +16,7 @@ class RandomCrop1D(BaseAugmentation1D):
             unique_batch (bool): If True, each sample in the batch will have a unique crop.
 
         Example:
+
         ```python
             duration = 100
             lyr = RandomCrop1D(duration=duration)
@@ -99,6 +100,7 @@ class RandomCrop2D(BaseAugmentation2D):
             unique_batch (bool): If True, each sample in the batch will have a unique crop.
 
         Example:
+
         ```python
             height = 32
             width = 32

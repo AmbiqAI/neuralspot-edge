@@ -63,6 +63,28 @@ class CascadedBiquadFilter(BaseAugmentation1D):
             sample_rate (float): Sampling rate in Hz. Defaults to 1000 Hz.
             order (int, optional): Filter order. Defaults to 3.
             forward_backward (bool): Apply filter forward and backward.
+
+        Example:
+
+        ```python
+        # Create sine wave at 10 Hz with 1000 Hz sampling rate
+        t = np.linspace(0, 1, 1000, endpoint=False)
+        x = np.sin(2 * np.pi * 10 * t)
+        # Add noise at 100 Hz and 2 Hz
+        x_noise = x + 0.5 * np.sin(2 * np.pi * 100 * t) + 0.5 * np.sin(2 * np.pi * 2 * t)
+        x_noise = x_noise.reshape(-1, 1).astype(np.float32)
+        x_noise = keras.ops.convert_to_tensor(x_noise)
+        # Create bandpass filter
+        lyr = nse.layers.preprocessing.CascadedBiquadFilter(lowcut=5, highcut=15, sample_rate=1000, forward_backward=True)
+        y = lyr(x_noise).numpy().squeeze()
+        x_noise = x_noise.numpy().squeeze()
+        plt.plot(x, label="Original")
+        plt.plot(x_noise, label="Noisy")
+        plt.plot(y, label="Filtered")
+        plt.legend()
+        plt.show()
+        ```
+
         """
 
         super().__init__(**kwargs)

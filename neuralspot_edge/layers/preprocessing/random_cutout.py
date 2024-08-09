@@ -29,8 +29,6 @@ class RandomCutout1D(BaseAugmentation1D):
             fill_mode (str): Fill mode. "constant" or "normal".
             fill_value (float): Fill value for the cutout.
 
-        Example:
-
         """
         super().__init__(**kwargs)
 

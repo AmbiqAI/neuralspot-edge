@@ -11,36 +11,57 @@ class FirFilter(BaseAugmentation1D):
     def __init__(
         self,
         b: npt.NDArray[np.float32],
-        a: npt.NDArray[np.float32],
+        a: npt.NDArray[np.float32] | None = None,
         forward_backward: bool = False,
-        seed: int | None = None,
-        data_format: str | None = None,
-        auto_vectorize: bool = True,
-        name=None,
         **kwargs,
     ):
         """Apply FIR filter to the input.
 
         Args:
             b (np.ndarray): Numerator coefficients.
-            a (np.ndarray): Denominator coefficients.
-            forward_backward (bool): Apply filter forward and backward.
+            a (np.ndarray|None): Denominator coefficients. Defaults to None.
+            forward_backward (bool): Apply filter forward and backward. Defaults to False.
+
+        Example:
+
+        ```python
+        # Create sine wave at 10 Hz with 1000 Hz sampling rate
+        t = np.linspace(0, 1, 1000, endpoint=False)
+        x = np.sin(2 * np.pi * 10 * t)
+        # Add noise at 100 Hz and 2 Hz
+        x_noise = x + 0.5 * np.sin(2 * np.pi * 100 * t) + 0.5 * np.sin(2 * np.pi * 2 * t)
+        x_noise = x_noise.reshape(-1, 1).astype(np.float32)
+        x_noise = keras.ops.convert_to_tensor(x_noise)
+        # Create bandpass FIR taps
+        b = scipy.signal.firwin(101, [5, 15], fs=1000, pass_zero=False)
+        lyr = nse.layers.preprocessing.FirFilter(b, forward_backward=True)
+        y = lyr(x_noise).numpy().squeeze()
+        x_noise = x_noise.numpy().squeeze()
+        plt.plot(x, label="Original")
+        plt.plot(x_noise, label="Noisy")
+        plt.plot(y, label="Filtered")
+        plt.legend()
+        plt.show()
+        ```
         """
-        super().__init__(seed=seed, data_format=data_format, auto_vectorize=auto_vectorize, name=name, **kwargs)
+        super().__init__(**kwargs)
         b = b.reshape(-1, 1, 1)
-        a = a.reshape(-1, 1, 1)
         self.b = self.add_weight(
             name="b",
             shape=b.shape,
             trainable=False,
         )
         self.b.assign(b)
-        self.a = self.add_weight(
-            name="a",
-            shape=a.shape,
-            trainable=False,
-        )
-        self.a.assign(a)
+        if a is not None:
+            a = a.reshape(-1, 1, 1)
+            self.a = self.add_weight(
+                name="a",
+                shape=a.shape,
+                trainable=False,
+            )
+            self.a.assign(a)
+        else:
+            self.a = None
 
         self.forward_backward = forward_backward
 

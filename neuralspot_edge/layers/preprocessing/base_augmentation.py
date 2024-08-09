@@ -321,6 +321,7 @@ class BaseAugmentation1D(BaseAugmentation):
         Otherwise, it will use keras.ops.map which runs sequentially.
 
         Example:
+
         ```python
 
         class NormalizeLayer1D(BaseAugmentation1D):
@@ -375,6 +376,7 @@ class BaseAugmentation2D(keras.layers.Layer):
         Otherwise, it will use keras.ops.map which runs sequentially.
 
         Example:
+
         ```python
 
         class NormalizeLayer2D(BaseAugmentation2D):

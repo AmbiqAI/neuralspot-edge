@@ -1,16 +1,17 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+
 def plot_history_metrics(
     history: dict[str, list[float]],
     metrics: list[str],
-    save_path: Path|None = None,
+    save_path: Path | None = None,
     include_val: bool = True,
     figsize: tuple[int, int] = (9, 5),
     colors: tuple[str | tuple[str, str]] = ("blue", "orange"),
     stack: bool = False,
-    title: str|None = None,
-    **kwargs
+    title: str | None = None,
+    **kwargs,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot training history metrics returned by model.fit.
 
@@ -39,7 +40,12 @@ def plot_history_metrics(
         met_ax.plot(epochs, history[metric], color=primary_color, label="Train" if stack else metric, linestyle="--")
 
         if include_val:
-            met_ax.plot(epochs, history[f"val_{metric}"], color=secondary_color, label="Validation" if stack else f"val_{metric}")
+            met_ax.plot(
+                epochs,
+                history[f"val_{metric}"],
+                color=secondary_color,
+                label="Validation" if stack else f"val_{metric}",
+            )
 
         if stack:
             met_ax.set_ylabel(metric)

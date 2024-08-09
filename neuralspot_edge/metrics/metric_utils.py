@@ -1,19 +1,36 @@
+import logging
 from typing import Literal
+
 import keras
 from keras.src.metrics import metrics_utils
 
+logger = logging.getLogger(__name__)
 
-def compute_metrics(metrics: list[keras.Metric], y_true, y_pred) -> dict[str, float]:
+
+def compute_metrics(
+    metrics: list[keras.Metric], y_true: keras.KerasTensor, y_pred: keras.KerasTensor
+) -> dict[str, float]:
     """Compute set of metrics for y_true and y_pred.
 
     Args:
         metrics (list[keras.Metric]): List of metrics
-        y_true: True y labels
-        y_pred: Predicted y labels
+        y_true (keras.KerasTensor): True labels
+        y_pred (keras.KerasTensor): Predicted labels
 
     Returns:
         dict: Dictionary of metric names and values
+
+    Example:
+
+    ```python
+    metrics = [keras.metrics.Accuracy('acc'), keras.metrics.Precision(0.5, name='precision')]
+    y_true = np.array([0, 1, 1, 0])
+    y_pred = np.array([0, 1, 0, 1])
+    results = nse.metrics.compute_metrics(metrics, y_true, y_pred)
+    print(results)
+    ```
     """
+    keras.metrics.Precision
     results = {}
     for metric in metrics:
         metric.reset_state()
@@ -23,25 +40,40 @@ def compute_metrics(metrics: list[keras.Metric], y_true, y_pred) -> dict[str, fl
 
 
 def confusion_matrix(
-    labels,
-    predictions,
-    num_classes,
-    weights=None,
-    dtype="int32",
+    labels: keras.KerasTensor,
+    predictions: keras.KerasTensor,
+    num_classes: int,
+    weights: keras.KerasTensor | None = None,
+    dtype: str = "int32",
     normalize: Literal["true", "pred", "all"] | None = None,
 ) -> keras.KerasTensor:
     """Compute confusion matrix using keras w/ addition to normalize.
 
+    Normalization modes:
+        - "true": Normalize by true labels
+        - "pred": Normalize by predicted labels
+        - "all": Normalize by all labels
+
     Args:
-        labels: Ground truth values.
-        predictions: The predicted values.
-        num_classes: The number of classes.
-        weights: Sample weights.
-        dtype: Data type.
-        normalize: Normalization mode.
+        labels (keras.KerasTensor): True labels
+        predictions (keras.KerasTensor): Predicted labels
+        num_classes (int): Number of classes
+        weights (keras.KerasTensor, optional): Weights. Defaults to None.
+        dtype (str, optional): Data type. Defaults to "int32".
+        normalize (Literal["true", "pred", "all"], optional): Normalization mode. Defaults to None.
 
     Returns:
         keras.KerasTensor: Confusion matrix
+
+    Example:
+
+    ```python
+    labels = np.array([0, 1, 1, 0])
+    predictions = np.array([0, 1, 0, 1])
+    num_classes = 2
+    cm = nse.metrics.confusion_matrix(labels, predictions, num_classes, normalize='true')
+    print(cm)
+    ```
     """
     cm = metrics_utils.confusion_matrix(
         labels,

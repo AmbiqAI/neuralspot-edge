@@ -16,6 +16,21 @@ class AugmentationPipeline(keras.Layer):
         Args:
             layers (list[keras.Layer]): List of augmentation layers.
             force_training (bool, optional): Force training mode. Defaults to False.
+
+        Example:
+
+        ```python
+        layers = [
+            nse.layers.preprocessing.RandomNoiseDistortion1D(sample_rate=100, frequency=(1, 2), amplitude=(0.5, 2)),
+            nse.layers.preprocessing.AmplitudeWarp(sample_rate=100, frequency=(1, 2), amplitude=(0.5, 2)),
+        ]
+        pipeline = nse.layers.preprocessing.AugmentationPipeline(layers)
+        x = keras.random.normal((10, 100, 1), dtype="float32")
+        x_aug = pipeline(x, training=True)
+        plt.plot(x[0].numpy())
+        plt.plot(x_aug[0].numpy())
+        plt.show()
+        ```
         """
         super().__init__(name=name)
         self.layers = layers
