@@ -97,3 +97,10 @@ def silence_tensorflow():
         tf.autograph.set_verbosity(3)
     except ModuleNotFoundError:
         pass
+
+
+def disable_tensorflow_gpu():
+    """Disable TensorFlow GPU"""
+    import tensorflow as tf
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    tf.config.set_visible_devices([], 'GPU')
