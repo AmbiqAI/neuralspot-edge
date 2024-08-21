@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "neuralspot-edge"
-version = "0.1.4"
+version = "0.1.5"
 description = ""
 authors = ["Ambiq AI <support.aitg@ambiq.com>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
+python = ">=3.10,<3.13"
 h5py = "^3.10.0"
 keras = "^3.0.4"
 pydantic = "^2.6.1"
