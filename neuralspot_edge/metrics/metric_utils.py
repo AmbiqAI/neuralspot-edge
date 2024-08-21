@@ -30,7 +30,7 @@ def compute_metrics(
     print(results)
     ```
     """
-    keras.metrics.Precision
+
     results = {}
     for metric in metrics:
         metric.reset_state()

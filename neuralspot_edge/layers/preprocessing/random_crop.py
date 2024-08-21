@@ -136,18 +136,18 @@ class RandomCrop2D(BaseAugmentation2D):
         w_diff = width_size - self.width
         if self.unique_batch:
             start_h = keras.random.randint(
-                shape=(batch_size,), minval=0, maxval=int(h_diff + 1), seed=self._random_generator, dtype="int32"
+                shape=(batch_size,), minval=0, maxval=int(h_diff + 1), seed=self.random_generator, dtype="int32"
             )
             start_w = keras.random.randint(
-                shape=(batch_size,), minval=0, maxval=int(w_diff + 1), seed=self._random_generator, dtype="int32"
+                shape=(batch_size,), minval=0, maxval=int(w_diff + 1), seed=self.random_generator, dtype="int32"
             )
         else:
             start_h = keras.random.randint(
-                shape=(), minval=0, maxval=int(h_diff + 1), seed=self._random_generator, dtype="int32"
+                shape=(), minval=0, maxval=int(h_diff + 1), seed=self.random_generator, dtype="int32"
             )
             start_h = keras.ops.broadcast_to(start_h, [batch_size])
             start_w = keras.random.randint(
-                shape=(), minval=0, maxval=int(w_diff + 1), seed=self._random_generator, dtype="int32"
+                shape=(), minval=0, maxval=int(w_diff + 1), seed=self.random_generator, dtype="int32"
             )
             start_w = keras.ops.broadcast_to(start_w, [batch_size])
         return {"start_h": start_h, "start_w": start_w}

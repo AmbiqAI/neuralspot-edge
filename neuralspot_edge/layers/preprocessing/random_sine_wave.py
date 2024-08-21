@@ -33,7 +33,7 @@ class RandomSineWave(BaseAugmentation1D):
         self.frequency = parse_factor(frequency, min_value=0, max_value=sample_rate / 2, param_name="frequency")
         self.amplitude = parse_factor(amplitude, min_value=0, max_value=None, param_name="amplitude")
 
-    def get_random_transformations(self, input_shape: tuple[int, int, int]):
+    def get_random_transformations(self, input_shape: tuple[int, int, int]) -> dict:
         """Generate noise distortion tensor
 
         Args:

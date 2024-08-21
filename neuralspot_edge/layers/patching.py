@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from ..utils import nse_export
 
 
-@nse_export(path="neuralspot_edge.layers.PatchLayer")
-class PatchLayer(keras.layers.Layer):
-    """This layer will extract patches from an image and reshape them into flattened vectors.
+@nse_export(path="neuralspot_edge.layers.PatchLayer2D")
+class PatchLayer2D(keras.layers.Layer):
+    """This layer will extract patches from 2D data (e.g. image) and reshape them into flattened vectors.
     Useful as preprocessing technique for patch-based self-supervised learning methods like
     DINO and Masked Autoencoders. For in-model patching, consider using convolutional layers.
 
@@ -107,8 +107,8 @@ class PatchLayer(keras.layers.Layer):
         return reconstructed
 
 
-@nse_export(path="neuralspot_edge.layers.MaskedPatchEncoder")
-class MaskedPatchEncoder(keras.layers.Layer):
+@nse_export(path="neuralspot_edge.layers.MaskedPatchEncoder2D")
+class MaskedPatchEncoder2D(keras.layers.Layer):
     def __init__(
         self,
         patch_height: int,

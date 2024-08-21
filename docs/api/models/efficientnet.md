@@ -103,9 +103,13 @@ The following is an example of how to create a model either via CLI or within th
                 dropout=0.2,
                 drop_connect_rate=0.2,
                 model_name="efficientnetv2"
-            )
+            ),
             num_classes=num_classes,
         )
         ```
 
 ---
+
+## API
+
+::: neuralspot_edge.models.efficientnet.EfficientNetV2

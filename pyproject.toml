@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "neuralspot-edge"
-version = "0.1.3"
+version = "0.1.4"
 description = ""
 authors = ["Ambiq AI <support.aitg@ambiq.com>"]
 readme = "README.md"
@@ -26,10 +26,13 @@ boto3 = "^1.34.151"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.25.0"
+ipykernel = "^6.29.5"
+notebook = "^7.2.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
 
 
 [tool.poetry.group.docs]
@@ -41,6 +44,8 @@ mkdocs-material = "^9.5.28"
 mkdocstrings-python = "^1.10.5"
 markdown-include = "^0.8.1"
 mkdocs-exclude = "^1.0.2"
+
+
 
 
 [tool.poetry.group.ci]

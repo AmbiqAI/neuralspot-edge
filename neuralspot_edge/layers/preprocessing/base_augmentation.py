@@ -153,7 +153,7 @@ class BaseAugmentation(TFDataLayer):
             Implement this method if you need to augment labels.
 
         Args:
-            input(NestedTensorValue): Single label.
+            inputs(NestedTensorValue): Single label.
 
         Returns:
             keras.KerasTensor: Augmented label.
@@ -352,7 +352,7 @@ class BaseAugmentation1D(BaseAugmentation):
 
 
 @nse_export(path="neuralspot_edge.layers.preprocessing.BaseAugmentation2D")
-class BaseAugmentation2D(keras.layers.Layer):
+class BaseAugmentation2D(BaseAugmentation):
     NDIMS = 4  # (N, H, W, C) or (N, C, H, W)
 
     def __init__(self, **kwargs):

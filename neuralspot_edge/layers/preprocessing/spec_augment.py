@@ -113,7 +113,7 @@ class SpecAugment2D(keras.Layer):
             x = self._time_masks(x)
         return x
 
-    def call(self, inputs: keras.KerasTensor, training=None, **kwargs):
+    def call(self, inputs: keras.KerasTensor, training=None, **kwargs) -> keras.KerasTensor:
         """Applies the SpecAugment operation to the input Mel Spectrogram
 
         Args:

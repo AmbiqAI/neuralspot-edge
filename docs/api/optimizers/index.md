@@ -1,4 +1,4 @@
-# Optimizers
+# Optimizer API
 
 Model optimizers provide state-of-the-art optimization algorithms to train models. They are used to update the weights of the model in order to minimize a givenloss function.
 

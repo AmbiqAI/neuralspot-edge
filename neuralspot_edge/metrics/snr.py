@@ -55,7 +55,7 @@ class Snr(keras.Metric):
         """Computes the SNR in dB."""
         ratio = keras.ops.divide(self.num, self.den + keras.backend.epsilon())
         ratio = keras.ops.convert_to_tensor(ratio, dtype=self.dtype)
-        snr = 10 * keras.ops.log10(ratio)
+        snr = 10 * keras.ops.log10(ratio + keras.backend.epsilon())
         return snr  # in dB
 
     def get_config(self):

@@ -10,10 +10,12 @@ from .random_background_noises import RandomBackgroundNoises1D
 from .random_channel import RandomChannel
 from .random_choice import RandomChoice
 from .random_crop import RandomCrop1D, RandomCrop2D
-from .random_cutout import RandomCutout1D
+from .random_cutout import RandomCutout1D, RandomCutout2D
+from .random_flip import RandomFlip2D
 from .random_gaussian_noise import RandomGaussianNoise1D
 from .random_noise_distortion import RandomNoiseDistortion1D
 from .random_sine_wave import RandomSineWave
-from .resizing import Resizing1D
+from .resizing import Resizing1D, Resizing2D
+from .rescaling import Rescaling1D, Rescaling2D
 from .sine_wave import AddSineWave
 from .spec_augment import SpecAugment2D

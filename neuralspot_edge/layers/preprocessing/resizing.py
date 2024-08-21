@@ -1,5 +1,5 @@
 import keras
-from .base_augmentation import BaseAugmentation1D
+from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export
 
 
@@ -9,6 +9,12 @@ class Resizing1D(BaseAugmentation1D):
     data_format: str
 
     def __init__(self, duration: int, **kwargs):
+        """1D resizing layer
+
+        Args:
+            duration (int): The new duration of the samples
+
+        """
         super().__init__(**kwargs)
         self.duration = duration
 
@@ -41,5 +47,52 @@ class Resizing1D(BaseAugmentation1D):
         config.update(
             duration=self.duration,
             data_format=self.data_format,
+        )
+        return config
+
+
+@nse_export(path="neuralspot_edge.layers.preprocessing.Resizing2D")
+class Resizing2D(BaseAugmentation2D):
+
+    height: int
+    width: int
+    interpolation: str
+
+    def __init__(self,
+            height: int,
+            width: int,
+            interpolation: str = 'bicubic',
+            **kwargs
+        ):
+        """"""
+        super().__init__(**kwargs)
+        self.height = height
+        self.width = width
+
+    def augment_samples(self, inputs) -> keras.KerasTensor:
+        """Resize a batch of samples during training."""
+        samples = inputs[self.SAMPLES]
+        samples = keras.ops.image.resize(
+            samples,
+            size=(self.height, self.width),
+            interpolation="bicubic",
+            crop_to_aspect_ratio=False,
+            data_format=self.data_format,
+        )
+        return samples
+
+    def compute_output_shape(self, input_shape, *args, **kwargs):
+        """Compute output shape."""
+        output_shape = list(input_shape)
+        output_shape[self.height_axis] = self.height
+        output_shape[self.width_axis] = self.width
+        return tuple(output_shape)
+
+    def get_config(self):
+        """Serialize the configuration."""
+        config = super().get_config()
+        config.update(
+            height=self.height,
+            width=self.width,
         )
         return config

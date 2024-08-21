@@ -1,7 +1,7 @@
-site_name: NeuralSpotEdge
+site_name: neuralSPOT Edge
 site_dir: "site"
 site_url: "https://ambiqai.github.io/neuralspot-edge"
-site_description: NeuralSpotEdge, Keras addon targeted towards Ambiq edge SoCs
+site_description: NeuralSPOT Edge, Keras addon targeted towards Ambiq edge SoCs
 repo_name: AmbiqAI/neuralspot-edge
 repo_url: https://github.com/AmbiqAI/neuralspot-edge
 copyright: Copyright &copy; 2024 Ambiq
@@ -19,14 +19,45 @@ nav:
 
   - API Documentation:
     - api/index.md
-    - Converters API: api/converters.md
-    - Dataloaders API: api/dataloaders.md
-    - Interpreters API: api/interpreters.md
-    - Optimizers API: api/optimizers.md
-    - Layers API: api/layers.md
-    - Metrics API: api/metrics.md
-    - Plotting API: api/plotting.md
-    - Quantizers API: api/quantizers.md
+
+    - Callbacks API:
+      - api/callbacks/index.md
+      - TQDMProgressBar: api/callbacks/tqdm_progress_bar.md
+
+    - Converters API:
+      - api/converters/index.md
+      - C++ Converter: api/converters/cpp.md
+      - TFLite Converter: api/converters/tflite.md
+
+    - Interpreters API:
+      - api/interpreters/index.md
+      - TFLite Interpreter: api/interpreters/tflite.md
+
+    - Optimizers API:
+      - api/optimizers/index.md
+
+    - Layers API:
+      - api/layers/index.md
+
+      - Preprocessing:
+        - api/layers/preprocessing/index.md
+
+    - Metrics API:
+      - api/metrics/index.md
+      - F1Score: api/metrics/f1score.md
+      - Flops: api/metrics/flops.md
+      - SnR: api/metrics/snr.md
+      - Utils: api/metrics/utils.md
+
+    - Quantizers API:
+      - api/quantizers/index.md
+
+    - Trainers API:
+      - api/trainers/index.md
+      - Contrastive: api/trainers/contrastive.md
+      - Distiller: api/trainers/distiller.md
+      - SimCLR: api/trainers/simclr.md
+
     - Models API:
       - api/models/index.md
       - TCN: api/models/tcn.md
