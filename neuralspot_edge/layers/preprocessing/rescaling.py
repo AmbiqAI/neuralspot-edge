@@ -1,11 +1,10 @@
-
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export
 
+
 @nse_export(path="neuralspot_edge.layers.preprocessing.Rescaling1D")
 class Rescaling1D(BaseAugmentation1D):
-
     scale: float
 
     def __init__(self, scale: float, **kwargs):
@@ -35,7 +34,6 @@ class Rescaling1D(BaseAugmentation1D):
 
 @nse_export(path="neuralspot_edge.layers.preprocessing.Rescaling2D")
 class Rescaling2D(BaseAugmentation2D):
-
     scale: float
 
     def __init__(self, scale: float, **kwargs):

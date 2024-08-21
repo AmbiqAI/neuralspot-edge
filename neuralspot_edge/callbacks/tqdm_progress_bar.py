@@ -33,10 +33,8 @@ class TQDMProgressBar(keras.callbacks.Callback):
     def __init__(
         self,
         metrics_separator: str = " - ",
-        overall_bar_format: str = "{l_bar}{bar} {n_fmt}/{total_fmt} ETA: "
-        "{remaining}s,  {rate_fmt}{postfix}",
-        epoch_bar_format: str = "{n_fmt}/{total_fmt}{bar} ETA: "
-        "{remaining}s - {desc}",
+        overall_bar_format: str = "{l_bar}{bar} {n_fmt}/{total_fmt} ETA: " "{remaining}s,  {rate_fmt}{postfix}",
+        epoch_bar_format: str = "{n_fmt}/{total_fmt}{bar} ETA: " "{remaining}s - {desc}",
         metrics_format: str = "{name}: {value:0.4f}",
         update_per_second: int = 10,
         leave_epoch_progress: bool = True,
@@ -44,11 +42,10 @@ class TQDMProgressBar(keras.callbacks.Callback):
         show_epoch_progress: bool = True,
         show_overall_progress: bool = True,
     ):
-
         try:
-            import tqdm
             from tqdm.auto import tqdm
-            self.tqdm = tqdm
+
+            self.tqdm = tqdm  # noqa
         except ImportError:
             raise ImportError("Please install tqdm via pip install tqdm")
 
@@ -101,9 +98,7 @@ class TQDMProgressBar(keras.callbacks.Callback):
                     unit=self.mode,
                 )
         elif hook == "train_epoch":
-            current_epoch_description = "Epoch {epoch}/{num_epochs}".format(
-                epoch=epoch + 1, num_epochs=self.num_epochs
-            )
+            current_epoch_description = "Epoch {epoch}/{num_epochs}".format(epoch=epoch + 1, num_epochs=self.num_epochs)
             if self.show_epoch_progress:
                 print(current_epoch_description)
                 self.epoch_progress_tqdm = self.tqdm(
@@ -129,9 +124,7 @@ class TQDMProgressBar(keras.callbacks.Callback):
                 self.epoch_progress_tqdm.miniters = 0
                 self.epoch_progress_tqdm.mininterval = 0
                 # update the rest of the steps in epoch progress bar
-                self.epoch_progress_tqdm.update(
-                    self.total_steps - self.epoch_progress_tqdm.n
-                )
+                self.epoch_progress_tqdm.update(self.total_steps - self.epoch_progress_tqdm.n)
                 self.epoch_progress_tqdm.close()
 
     def _update_progbar(self, logs):
@@ -151,7 +144,6 @@ class TQDMProgressBar(keras.callbacks.Callback):
             now = time.time()
             time_diff = now - self.last_update_time
             if self.show_epoch_progress and time_diff >= self.update_interval:
-
                 # update the epoch progress bar
                 metrics = self.format_metrics(self.logs, self.num_samples_seen)
                 self.epoch_progress_tqdm.desc = metrics

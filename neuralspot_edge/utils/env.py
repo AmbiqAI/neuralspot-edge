@@ -102,5 +102,6 @@ def silence_tensorflow():
 def disable_tensorflow_gpu():
     """Disable TensorFlow GPU"""
     import tensorflow as tf
+
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    tf.config.set_visible_devices([], 'GPU')
+    tf.config.set_visible_devices([], "GPU")

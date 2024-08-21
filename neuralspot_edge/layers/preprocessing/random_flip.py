@@ -34,6 +34,7 @@ class RandomFlip2D(BaseAugmentation2D):
         **kwargs: Base layer keyword arguments, such as
             `name` and `dtype`.
     """
+
     horizontal: bool
     vertical: bool
 
@@ -48,14 +49,10 @@ class RandomFlip2D(BaseAugmentation2D):
         batch_size = input_shape[0]
 
         if self.horizontal:
-            horizontal = self.backend.random.uniform(
-                shape=(batch_size, 1, 1, 1), seed=self.random_generator
-            )
+            horizontal = self.backend.random.uniform(shape=(batch_size, 1, 1, 1), seed=self.random_generator)
             transforms["horizontal"] = horizontal
         if self.vertical:
-            vertical = self.backend.random.uniform(
-                shape=(batch_size, 1, 1, 1), seed=self.random_generator
-            )
+            vertical = self.backend.random.uniform(shape=(batch_size, 1, 1, 1), seed=self.random_generator)
             transforms["vertical"] = vertical
         return transforms
 
@@ -78,8 +75,10 @@ class RandomFlip2D(BaseAugmentation2D):
 
     def get_config(self):
         config = super().get_config()
-        config.update({
-            "horizontal": self.horizontal,
-            "vertical": self.vertical,
-        })
+        config.update(
+            {
+                "horizontal": self.horizontal,
+                "vertical": self.vertical,
+            }
+        )
         return config

@@ -53,17 +53,11 @@ class Resizing1D(BaseAugmentation1D):
 
 @nse_export(path="neuralspot_edge.layers.preprocessing.Resizing2D")
 class Resizing2D(BaseAugmentation2D):
-
     height: int
     width: int
     interpolation: str
 
-    def __init__(self,
-            height: int,
-            width: int,
-            interpolation: str = 'bicubic',
-            **kwargs
-        ):
+    def __init__(self, height: int, width: int, interpolation: str = "bicubic", **kwargs):
         """"""
         super().__init__(**kwargs)
         self.height = height
