@@ -7,7 +7,8 @@ To achieve this, the model must be optimized for the target hardware and the spe
 This includes optimizing the model architecture, the input data, and the training process.
 While there a number of off the shelf, pre-trained models, these are often too big and too slow for edge applications.
 Additionally, they may not be optimized for the specific use case.
-NeuralSpot Edge provides highly parameterized model architectures that can be easily customized to meet the specific requirements of the target hardware and use case.
+
+The `nse.models` module provides highly parameterized model architectures that can be easily customized to meet the specific requirements of the target hardware and use case.
 Most of the models are based on state-of-the-art architectures that have been modified to allow for more fine-grain customization.
 
 ## Available Models
@@ -58,6 +59,7 @@ A model architecture can easily be instantied by providng a custom set of parame
     )
     ```
 """
+
 from . import composer
 from . import conformer
 from . import convmixer

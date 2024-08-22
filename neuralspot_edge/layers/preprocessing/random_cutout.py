@@ -8,6 +8,7 @@ Classes:
     RandomCutout2D: Random cutout 2D
 
 """
+
 import keras
 
 from ...utils import parse_factor

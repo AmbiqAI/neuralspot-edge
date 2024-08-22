@@ -10,6 +10,7 @@ Classes:
     CascadedBiquadFilter: Cascaded biquad filter layer
 
 """
+
 import keras
 import scipy.signal
 import numpy.typing as npt

@@ -7,6 +7,7 @@ Classes:
     RandomSineWave: Random sine wave
 
 """
+
 import keras
 import numpy as np
 

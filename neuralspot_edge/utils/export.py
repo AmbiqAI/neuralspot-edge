@@ -7,6 +7,7 @@ Classes:
     nse_export: Decorator to register Keras models and layers for serialization
 
 """
+
 from types import FunctionType
 
 import keras

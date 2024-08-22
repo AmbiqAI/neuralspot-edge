@@ -55,9 +55,10 @@ model.summary()
 import keras
 from pydantic import BaseModel, Field
 
-from ..layers import squeeze_excite
+from ..layers import se_layer
 from ..layers.normalization import batch_normalization
 from ..layers.convolutional import conv2d
+
 
 class MobileOneBlockParams(BaseModel):
     """MobileOne block parameters
@@ -165,7 +166,7 @@ def mobileone_block(
             )(y)
             if se_ratio > 0:
                 name_se = f"{name}.se" if name else None
-                y = squeeze_excite(ratio=se_ratio, name=name_se)(y)
+                y = se_layer(ratio=se_ratio, name=name_se)(y)
             # END IF
             y = keras.layers.Activation(activation, name=f"{name}.act" if name else None)(y)
             return y
@@ -249,7 +250,7 @@ def mobileone_block(
         # Squeeze-Excite block
         if se_ratio > 0:
             name_se = f"{name}.se" if name else None
-            y = squeeze_excite(ratio=se_ratio, name=name_se)(y)
+            y = se_layer(ratio=se_ratio, name=name_se)(y)
         # END IF
         y = keras.layers.Activation(activation, name=f"{name}.act" if name else None)(y)
         return y
@@ -338,18 +339,19 @@ def mobileone_layer(
 
     return y
 
+
 class MobileOneModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: MobileOneParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: MobileOneParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = MobileOneParams(**params)
         return mobileone_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: MobileOneParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: MobileOneParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = MobileOneModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

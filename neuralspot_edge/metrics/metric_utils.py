@@ -8,6 +8,7 @@ Functions:
     confusion_matrix: Compute confusion matrix using keras w/ addition to normalize
 
 """
+
 import logging
 from typing import Literal
 

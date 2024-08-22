@@ -10,6 +10,7 @@ Functions:
     l2_normalize: Normalizes a tensor along a given axis.
 
 """
+
 import keras
 
 from ..utils import nse_export
@@ -17,7 +18,7 @@ from ..utils import nse_export
 LARGE_NUM = 1e9
 
 
-def l2_normalize(x: keras.KerasTensor, axis: int|tuple[int,...]|None = None) -> keras.KerasTensor:
+def l2_normalize(x: keras.KerasTensor, axis: int | tuple[int, ...] | None = None) -> keras.KerasTensor:
     """Performs L2 normalization on a tensor along a given axis.
 
     Args:

@@ -8,6 +8,7 @@ Functions:
     threshold_predictions: Get thresholded predictions
 
 """
+
 import numpy as np
 import numpy.typing as npt
 

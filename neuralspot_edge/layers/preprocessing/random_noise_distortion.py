@@ -7,6 +7,7 @@ Classes:
     RandomNoiseDistortion1D: Random noise distortion 1D
 
 """
+
 import keras
 
 from .base_augmentation import BaseAugmentation1D

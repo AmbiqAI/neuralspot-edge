@@ -8,6 +8,7 @@ Classes:
     ItemFactory: Item factory
 
 """
+
 from typing import TypeVar, Generic, Type
 from threading import Lock
 

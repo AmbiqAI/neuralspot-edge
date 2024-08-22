@@ -8,6 +8,7 @@ Classes:
     LayerNormalization2D: Layer normalization for 2D data
 
 """
+
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export

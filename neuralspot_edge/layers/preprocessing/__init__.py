@@ -44,6 +44,7 @@ Classes:
 
 
 """
+
 from .amplitude_warp import AmplitudeWarp
 from .augmentation_pipeline import AugmentationPipeline
 from .base_augmentation import BaseAugmentation, BaseAugmentation1D, BaseAugmentation2D

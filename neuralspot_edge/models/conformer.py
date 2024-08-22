@@ -35,6 +35,7 @@ class SubsampleBlockParams(BaseModel):
         kernel_size (int): Kernel size
         strides (int): Stride size
     """
+
     depth: int = 256
     kernel_size: int = 3
     strides: int = 2
@@ -53,6 +54,7 @@ class ConformerBlockParams(BaseModel):
         dropout (float): Dropout rate
         use_bias (bool): Use bias
     """
+
     depth: int = 256
     fc_ex_factor: float = 4
     fc_res_factor: float = 0.5
@@ -103,6 +105,7 @@ def subsampler(
     Returns:
         keras.Layer: Subsampler layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
         # Apply subsampling blocks
@@ -169,6 +172,7 @@ def fc_block(
     Returns:
         keras.Layer: Functional layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
@@ -234,6 +238,7 @@ def conv_block(
     Returns:
         keras.Layer: Functional layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
@@ -308,6 +313,7 @@ def att_block(
         keras.Layer: Functional layer
 
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
         y = layer_normalization(name=f"{name}.ln")(y)
@@ -357,6 +363,7 @@ def conformer_block(
     Returns:
         keras.Layer: Functional layer
     """
+
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
@@ -455,14 +462,14 @@ class ConformerModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: ConformerParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: ConformerParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = ConformerParams(**params)
         return conformer_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: ConformerParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: ConformerParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = ConformerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

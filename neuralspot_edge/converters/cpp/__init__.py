@@ -8,4 +8,5 @@ Functions:
     xxd_c_dump: Generate C array of values from binary file.
 
 """
+
 from .utils import array_dump, xxd_c_dump

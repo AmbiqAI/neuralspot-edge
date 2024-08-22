@@ -7,13 +7,13 @@ Classes:
     RandomFlip2D: Random flip 2D
 
 """
+
 from .base_augmentation import BaseAugmentation2D
 from ...utils import nse_export
 
 
 @nse_export(path="neuralspot_edge.layers.preprocessing.RandomFlip2D")
 class RandomFlip2D(BaseAugmentation2D):
-
     horizontal: bool
     vertical: bool
 

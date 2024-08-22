@@ -10,15 +10,17 @@ Functions:
     mbconv_block: MBConv block w/ expansion and SE
 
 """
+
 from typing import Callable
 from collections.abc import Iterable
 
 import keras
 from pydantic import BaseModel, Field
 
-from .squeeze_excite import squeeze_excite
+from .squeeze_excite import se_layer
 from .convolutional import conv2d
 from .normalization import batch_normalization
+
 
 class MBConvParams(BaseModel):
     """MBConv parameters
@@ -54,7 +56,7 @@ def mbconv_block(
     se_ratio: float = 8,
     droprate: float = 0,
     bn_momentum: float = 0.9,
-    activation: str|Callable = "relu6",
+    activation: str | Callable = "relu6",
     name: str | None = None,
 ) -> keras.Layer:
     """MBConv block w/ expansion and SE
@@ -114,7 +116,7 @@ def mbconv_block(
         # SE: wide -> wide
         if se_ratio:
             name_se = f"{name}.se" if name else None
-            y = squeeze_excite(ratio=se_ratio * expand_ratio, name=name_se)(y)
+            y = se_layer(ratio=se_ratio * expand_ratio, name=name_se)(y)
 
         # Reduce: wide -> narrow
         name_red = f"{name}.red" if name else None

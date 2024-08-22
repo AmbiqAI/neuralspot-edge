@@ -1,11 +1,12 @@
 from typing import Callable
 import keras
 
-def squeeze_excite(
+
+def se_layer(
     ratio: int = 8,
     name: str | None = None,
-    squeeze_activation: str|Callable = "relu6",
-    excite_activation: str|Callable = "hard_sigmoid",
+    squeeze_activation: str | Callable = "relu6",
+    excite_activation: str | Callable = "hard_sigmoid",
 ) -> keras.Layer:
     """Squeeze & excite functional layer
 

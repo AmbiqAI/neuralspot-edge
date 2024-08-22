@@ -12,6 +12,7 @@ the standard supervised learning paradigm. These include contrastive learning, d
 - **[SimCLRTrainer](./simclr)**: A trainer for SimCLR
 
 """
+
 from .contrastive import ContrastiveTrainer
 from .distiller import Distiller
 from .mask_autoencoder import MaskedAutoencoder

@@ -7,6 +7,7 @@ Classes:
     SimCLRTrainer: A trainer for SimCLR
 
 """
+
 import keras
 
 from .contrastive import ContrastiveTrainer

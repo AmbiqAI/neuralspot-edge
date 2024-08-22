@@ -14,11 +14,13 @@ Functions:
     cct_layer: Generate Compact Convolutional Transformer model (CCT)
 
 """
+
 from typing import Callable, cast
 
 from pydantic import BaseModel, Field
 import numpy as np
 import keras
+
 
 class CCTParams(BaseModel):
     """CCT parameters
@@ -38,6 +40,7 @@ class CCTParams(BaseModel):
     transformer_units: list[int] = Field(..., description="Number of transformer units")
     positional_emb: bool = Field(..., description="Enable positional embeddings")
     name: str = Field(default="CCT", description="Model name")
+
 
 def cct_tokenizer_block(
     kernel_size: int = 3,
@@ -176,9 +179,9 @@ def cct_layer(
         x1 = keras.layers.LayerNormalization(epsilon=1e-5)(encoded_patches)
 
         # Create a multi-head attention layer.
-        attention_output = keras.layers.MultiHeadAttention(num_heads=params.num_heads, key_dim=projection_dim, dropout=0.1)(
-            x1, x1
-        )
+        attention_output = keras.layers.MultiHeadAttention(
+            num_heads=params.num_heads, key_dim=projection_dim, dropout=0.1
+        )(x1, x1)
 
         # Skip connection 1.
         attention_output = StochasticDepth(dpr[i])(attention_output)
@@ -211,14 +214,14 @@ class CCTModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: CCTParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: CCTParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = CCTParams(**params)
         return cct_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: CCTParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: CCTParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = CCTModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

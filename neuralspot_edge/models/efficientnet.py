@@ -86,6 +86,7 @@ class EfficientNetParams(BaseModel):
         norm (Literal["batch", "layer"] | None): Normalization type
         name (str): Model name
     """
+
     blocks: list[MBConvParams] = Field(default_factory=list, description="EfficientNet blocks")
     input_filters: int = Field(default=0, description="Input filters")
     input_kernel_size: int | tuple[int, int] = Field(default=3, description="Input kernel size")
@@ -211,14 +212,14 @@ class EfficientNetV2Model:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: EfficientNetParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: EfficientNetParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = EfficientNetParams(**params)
         return efficientnetv2_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: EfficientNetParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: EfficientNetParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = EfficientNetV2Model.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

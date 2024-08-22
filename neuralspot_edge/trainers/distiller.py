@@ -7,6 +7,7 @@ Classes:
     Distiller: A trainer for distillation
 
 """
+
 import keras
 
 from ..utils import nse_export

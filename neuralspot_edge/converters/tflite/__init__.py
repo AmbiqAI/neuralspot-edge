@@ -9,4 +9,5 @@ Classes:
     ConversionType: Enum class for conversion types.
 
 """
+
 from .converter import QuantizationType, TfLiteKerasConverter, ConversionType

@@ -8,6 +8,7 @@ Functions:
     roc_auc_plot: Generate ROC plot via matplotlib/seaborn
 
 """
+
 import os
 
 import matplotlib.pyplot as plt

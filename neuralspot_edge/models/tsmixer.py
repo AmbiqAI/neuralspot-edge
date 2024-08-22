@@ -140,18 +140,19 @@ def tsmixer_layer(inputs: keras.KerasTensor, params: any, num_classes: int) -> k
 
     return y
 
+
 class TsMixerModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: TsMixerParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: TsMixerParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = TsMixerParams(**params)
         return tsmixer_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: TsMixerParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: TsMixerParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = TsMixerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

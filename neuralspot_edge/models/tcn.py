@@ -69,7 +69,7 @@ from typing import Literal
 import keras
 from pydantic import BaseModel, Field
 
-from ..layers.squeeze_excite import squeeze_excite
+from ..layers.squeeze_excite import se_layer
 
 
 class TcnBlockParams(BaseModel):
@@ -207,7 +207,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
 
             # Squeeze and excite
             if params.se_ratio > 0:
-                y = squeeze_excite(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
+                y = se_layer(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
             # END IF
 
             if params.dropout and params.dropout > 0:
@@ -280,7 +280,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
 
             # Squeeze and excite
             if params.se_ratio and y.shape[-1] // params.se_ratio > 0:
-                y = squeeze_excite(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
+                y = se_layer(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
             # END IF
 
             branches = []
@@ -392,7 +392,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
 
         # Squeeze and excite
         if y.shape[-1] // params.se_ratio > 1:
-            y = squeeze_excite(ratio=params.se_ratio, name=f"{name}.SE")(y)
+            y = se_layer(ratio=params.se_ratio, name=f"{name}.SE")(y)
         # END IF
 
         # Skip connection
@@ -439,7 +439,7 @@ def tcn_core(params: TcnParams) -> keras.Layer:
 def tcn_layer(
     x: keras.KerasTensor,
     params: TcnParams,
-    num_classes: int|None = None,
+    num_classes: int | None = None,
 ) -> keras.KerasTensor:
     """TCN functional layer
 
@@ -494,18 +494,19 @@ def tcn_layer(
 
     return y
 
+
 class TcnModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: TcnParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: TcnParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = TcnParams(**params)
         return tcn_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: TcnParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: TcnParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = TcnModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

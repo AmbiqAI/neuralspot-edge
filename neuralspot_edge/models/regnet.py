@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 
 from ..layers.normalization import batch_normalization
 from ..layers.convolutional import conv2d
-from ..layers.squeeze_excite import squeeze_excite
+from ..layers.squeeze_excite import se_layer
 
 from .utils import make_divisible
 
@@ -130,7 +130,7 @@ def yblock(
         y = keras.layers.Activation(activation)(y)
 
         if se_ratio:
-            y = squeeze_excite(ratio=se_ratio)(y)
+            y = se_layer(ratio=se_ratio)(y)
 
         y = conv2d(output_filters, kernel_size=(1, 1), strides=(1, 1))(y)
         y = batch_normalization()(y)
@@ -196,7 +196,7 @@ def zblock(
         y = keras.layers.Activation(activation)(y)
 
         if se_ratio:
-            y = squeeze_excite(ratio=se_ratio)(y)
+            y = se_layer(ratio=se_ratio)(y)
 
         y = conv2d(output_filters, kernel_size=(1, 1), strides=(1, 1))(y)
         y = batch_normalization()(y)
@@ -297,14 +297,14 @@ class RegNetModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: RegNetParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: RegNetParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = RegNetParams(**params)
         return regnet_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: RegNetParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: RegNetParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = RegNetModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

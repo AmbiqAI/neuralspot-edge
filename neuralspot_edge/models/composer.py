@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from ..layers.normalization import batch_normalization
 from ..layers.convolutional import conv2d
-from ..layers.squeeze_excite import squeeze_excite
+from ..layers.squeeze_excite import se_layer
 from ..layers.activations import relu6
 from .utils import load_model
 
@@ -83,7 +83,7 @@ def composer_layer(
             case "batch_norm":
                 y = batch_normalization(y)
             case "se_block":
-                y = squeeze_excite(y, **layer.params)
+                y = se_layer(y, **layer.params)
             case "load_model":
                 prev_model = load_model(layer.params["model_file"])
                 trainable = layer.params.get("trainable", True)
@@ -109,14 +109,14 @@ class ComposerModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: ComposerParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: ComposerParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = ComposerParams(**params)
         return composer_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: ComposerParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: ComposerParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = ComposerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

@@ -9,6 +9,7 @@ Functions:
     append_layers: Appends layers to a model by cloning it and adding the layers
 
 """
+
 import os
 import tempfile
 import itertools

@@ -13,6 +13,7 @@ Functions:
 
 Please check [Keras Activations](https://keras.io/api/layers/activations/) for additional activations.
 """
+
 import keras
 
 
@@ -38,6 +39,7 @@ def glu(dim: int = -1, hard: bool = False, name: str | None = None) -> keras.Lay
     # END DEF
 
     return layer
+
 
 def relu(name: str | None = None, truncated: bool = False, **kwargs) -> keras.Layer:
     """ReLU activation layer w/ optional truncation to ReLU6
@@ -69,6 +71,7 @@ def swish(name: str | None = None, hard: bool = False, **kwargs) -> keras.Layer:
     act = keras.activations.hard_swish if hard else keras.activations.swish
     return keras.layers.Activation(act, name=name)
 
+
 def relu6(name: str | None = None, **kwargs) -> keras.Layer:
     """Hard ReLU activation layer
 
@@ -80,6 +83,7 @@ def relu6(name: str | None = None, **kwargs) -> keras.Layer:
     """
     name = name + ".act" if name else None
     return keras.layers.Activation("relu6", name=name, **kwargs)
+
 
 def mish(name: str | None = None, **kwargs) -> keras.Layer:
     """Mish activation layer
@@ -105,6 +109,7 @@ def gelu(name: str | None = None, **kwargs) -> keras.Layer:
     """
     name = name + ".act" if name else None
     return keras.layers.Activation(keras.activations.gelu, name=name, **kwargs)
+
 
 def sigmoid(name: str | None = None, hard: bool = False, **kwargs) -> keras.Layer:
     """Sigmoid activation layer

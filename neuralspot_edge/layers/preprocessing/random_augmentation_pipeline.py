@@ -87,6 +87,7 @@ class RandomAugmentation1DPipeline(BaseAugmentation1D):
         )
         return config
 
+
 @nse_export(path="neuralspot_edge.layers.preprocessing.RandomAugmentation2DPipeline")
 class RandomAugmentation2DPipeline(RandomAugmentation1DPipeline):
     def __init__(self, *args, **kwargs):

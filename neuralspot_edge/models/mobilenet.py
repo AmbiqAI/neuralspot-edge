@@ -289,18 +289,19 @@ def mobilenetv1_layer(
 
     return y
 
+
 class MobileNetV1Model:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: MobileNetV1Params|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: MobileNetV1Params | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = MobileNetV1Params(**params)
         return mobilenetv1_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: MobileNetV1Params|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: MobileNetV1Params | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = MobileNetV1Model.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

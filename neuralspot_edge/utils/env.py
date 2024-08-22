@@ -9,6 +9,7 @@ Functions:
     silence_tensorflow: Silence every unnecessary warning from tensorflow
     disable_tensorflow_gpu: Disable TensorFlow GPU
 """
+
 import logging
 import os
 from typing import Any

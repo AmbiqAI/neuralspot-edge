@@ -9,6 +9,7 @@ Functions:
     random_id_generator: Simple generator that yields ids in a random manner
 
 """
+
 import random
 from typing import Generator, Iterable, TypeVar
 import keras

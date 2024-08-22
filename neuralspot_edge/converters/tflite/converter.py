@@ -9,6 +9,7 @@ Classes:
     ConversionType: Enum class for conversion types.
 
 """
+
 import io
 import tempfile
 from pathlib import Path
@@ -35,6 +36,7 @@ class QuantizationType(StrEnum):
         INT16X8: INT16X8 quantization
 
     """
+
     FP32 = "FP32"
     FP16 = "FP16"
     INT8 = "INT8"
@@ -49,6 +51,7 @@ class ConversionType(StrEnum):
         SAVED_MODEL: Use TF Saved model format
         CONCRETE: Lower to TF Concrete functions
     """
+
     KERAS = "KERAS"
     SAVED_MODEL = "SAVED_MODEL"
     CONCRETE = "CONCRETE"

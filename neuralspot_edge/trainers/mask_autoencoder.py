@@ -8,6 +8,7 @@ Classes:
     MaskedAutoencoder: A trainer for masked autoencoder
 
 """
+
 from typing import Callable
 
 import keras

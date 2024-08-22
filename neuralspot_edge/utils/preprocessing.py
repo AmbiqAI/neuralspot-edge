@@ -13,6 +13,7 @@ Functions:
     get_output_signature_from_gen: Get output signature from generator
 
 """
+
 from typing import TypeVar, Callable, Generator
 
 import keras

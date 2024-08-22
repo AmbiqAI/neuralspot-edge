@@ -10,12 +10,12 @@ Functions:
 
 Please check [Keras Normalization Layers](https://keras.io/api/layers/normalization_layers/) for additional layers.
 """
+
 import keras
 
+
 def layer_normalization(
-    name: str | None = None,
-    axis: int|tuple[int]|None = None,
-    scale: bool = True
+    name: str | None = None, axis: int | tuple[int] | None = None, scale: bool = True
 ) -> keras.Layer:
     """Layer normalization
 
@@ -35,16 +35,17 @@ def layer_normalization(
     """
     name = name + ".ln" if name else None
 
-    def layer(x: keras.KerasTensor) -> keras.KerasTensor:
-        """Functional layer normalization layer
+    if axis is None:
 
-        Args:
-            x (tf.Tensor): Input tensor
+        def layer(x: keras.KerasTensor) -> keras.KerasTensor:
+            """Functional layer normalization layer
 
-        Returns:
-            tf.Tensor: Output tensor
-        """
-        if _axis is None:
+            Args:
+                x (tf.Tensor): Input tensor
+
+            Returns:
+                tf.Tensor: Output tensor
+            """
             is_channels_first = keras.backend.image_data_format() == "channels_first"
             # If rank is 4 (B, H, W, C), normalize over H, W
             if x.shape.rank == 4:
@@ -56,22 +57,29 @@ def layer_normalization(
             else:
                 _axis = -1
             # END IF
-        else:
-            _axis = axis
-        # END IF
 
-        return keras.layers.LayerNormalization(
-            axis=_axis,
-            name=name,
-            scale=scale
-        )(x)
-    # END DEF
+            return keras.layers.LayerNormalization(axis=_axis, name=name, scale=scale)(x)
+
+        # END DEF
+    else:
+
+        def layer(x: keras.KerasTensor) -> keras.KerasTensor:
+            """Functional layer normalization layer
+
+            Args:
+                x (tf.Tensor): Input tensor
+
+            Returns:
+                tf.Tensor: Output tensor
+            """
+            return keras.layers.LayerNormalization(axis=axis, name=name, scale=scale)(x)
+
+        # END DEF
 
     return layer
 
 
-
-def batch_normalization(name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int|None = None) -> keras.Layer:
+def batch_normalization(name: str | None = None, momentum=0.9, epsilon=1e-3, axis: int | None = -1) -> keras.Layer:
     """Batch normalization
 
     Args:
@@ -94,15 +102,8 @@ def batch_normalization(name: str | None = None, momentum=0.9, epsilon=1e-3, axi
         Returns:
             tf.Tensor: Output tensor
         """
-        if axis is None:
-            axis = -1
+        return keras.layers.BatchNormalization(momentum=momentum, epsilon=epsilon, axis=axis, name=name)(x)
 
-        return keras.layers.BatchNormalization(
-            momentum=momentum,
-            epsilon=epsilon,
-            axis=axis,
-            name=name
-        )(x)
     # END DEF
 
     return layer

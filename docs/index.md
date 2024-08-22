@@ -1,6 +1,23 @@
 # Home
 
+<p align="center">
+  <a href="https://github.com/AmbiqAI/neuralspot-edge"><img src="./assets/nse-banner.png" alt="NSE"></a>
+</p>
+
+---
+
+**Documentation**: <a href="https://ambiqai.github.io/neuralspot-edge" target="_blank">https://ambiqai.github.io/neuralspot-edge</a>
+
+**Source Code**: <a href="https://github.com/AmbiqAI/neuralspot-edge" target="_blank">https://github.com/AmbiqAI/neuralspot-edge</a>
+
+---
+
+
+<img style="float: left; margin: 0px 15px 15px 0px;" src="./assets/nse-logo-128.png" width="96px" />
+
 neuralSPOT Edge (**NSE**) is [Keras 3](https://keras.io) add-on focused on training and deploying models on resource-constrained, edge devices. NSE relies heavily on [Keras 3](https://keras.io) leveraging it's multi-backend support and customizable architecture. This package provides a variety of additional models, layers, optimizers, quantizers, and other components to help users train and deploy models for edge devices.
+
+<br style="clear:both" />
 
 <div class="grid cards" markdown>
 

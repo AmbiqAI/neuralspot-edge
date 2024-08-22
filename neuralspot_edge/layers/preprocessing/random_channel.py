@@ -7,6 +7,7 @@ Classes:
     RandomChannel: Random channel
 
 """
+
 import keras
 
 from .base_augmentation import BaseAugmentation

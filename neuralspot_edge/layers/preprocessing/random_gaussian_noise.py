@@ -7,6 +7,7 @@ Classes:
     RandomGaussianNoise1D: Random Gaussian noise 1D
 
 """
+
 import keras
 from .base_augmentation import BaseAugmentation1D
 from ...utils import parse_factor, nse_export

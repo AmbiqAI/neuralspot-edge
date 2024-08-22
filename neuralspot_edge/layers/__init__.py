@@ -1,7 +1,7 @@
 """
 # :material-layers: Layers API
 
-The `layers` module provides classes to build neural network layers.
+The `nse.layers` module provides classes to build neural network layers.
 For example, you can use the `nse.layers.preprocessing.AmplitudeWarp` layer to apply amplitude warping to audio signals.
 
 ## Available Layers
@@ -16,6 +16,7 @@ For example, you can use the `nse.layers.preprocessing.AmplitudeWarp` layer to a
 
 
 """
+
 from . import preprocessing
 from . import activations
 from . import convolutional
@@ -29,4 +30,4 @@ from .convolutional import conv1d, conv2d
 from .mbconv import mbconv_block, MBConvParams
 from .normalization import batch_normalization, layer_normalization
 from .patching import PatchLayer2D, MaskedPatchEncoder2D
-from .squeeze_excite import squeeze_excite
+from .squeeze_excite import se_layer

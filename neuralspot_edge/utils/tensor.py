@@ -7,6 +7,7 @@ Functions:
     matches_spec: Test whether data object matches the desired spec
 
 """
+
 import numpy.typing as npt
 
 SpecType = list[npt.ArrayLike] | tuple[npt.ArrayLike] | dict[str, npt.ArrayLike] | npt.ArrayLike

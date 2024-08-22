@@ -8,6 +8,7 @@ Classes:
     MaskedPatchEncoder2D: Encodes patches and masks a proportion of them.
 
 """
+
 import keras
 import tensorflow as tf
 import numpy as np

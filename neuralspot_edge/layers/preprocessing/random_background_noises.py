@@ -8,6 +8,7 @@ Classes:
 
 
 """
+
 import keras
 
 from .base_augmentation import BaseAugmentation1D

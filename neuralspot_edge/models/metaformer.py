@@ -22,6 +22,7 @@ Functions:
     metaformer_layer: Metaformer functional layer
 
 """
+
 import keras
 from pydantic import BaseModel, Field
 
@@ -469,14 +470,14 @@ class MetaFormerModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: MetaFormerParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: MetaFormerParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = MetaFormerParams(**params)
         return metaformer_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: MetaFormerParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: MetaFormerParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = MetaFormerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)

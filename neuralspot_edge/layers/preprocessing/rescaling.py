@@ -8,6 +8,7 @@ Classes:
     Rescaling2D: Rescaling 2D
 
 """
+
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export

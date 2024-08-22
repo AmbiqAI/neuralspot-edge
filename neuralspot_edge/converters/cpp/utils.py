@@ -8,6 +8,7 @@ Functions:
     xxd_c_dump: Generate C array of values from binary file.
 
 """
+
 import os
 
 import numpy as np

@@ -6,6 +6,7 @@ This module provides classes to build SpecAugment layers.
 Classes:
     SpecAugment2D: SpecAugment 2D data
 """
+
 import keras
 
 from ...utils import nse_export

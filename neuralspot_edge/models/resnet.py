@@ -28,6 +28,7 @@ from pydantic import BaseModel, Field
 from ..layers.normalization import batch_normalization
 from ..layers.convolutional import conv2d
 
+
 class ResNetBlockParams(BaseModel):
     """ResNet block parameters
 
@@ -47,6 +48,7 @@ class ResNetBlockParams(BaseModel):
     strides: int | tuple[int, int] = Field(default=1, description="Stride size")
     bottleneck: bool = Field(default=False, description="Use bottleneck blocks")
     activation: str = Field(default="relu6", description="Activation function")
+
 
 class ResNetParams(BaseModel):
     """ResNet parameters
@@ -216,18 +218,19 @@ def resnet_layer(
 
     return y
 
+
 class ResNetModel:
     """Helper class to generate model from parameters"""
 
     @staticmethod
-    def layer_from_params(inputs: keras.Input, params: ResNetParams|dict, num_classes: int|None = None):
+    def layer_from_params(inputs: keras.Input, params: ResNetParams | dict, num_classes: int | None = None):
         """Create layer from parameters"""
         if isinstance(params, dict):
             params = ResNetParams(**params)
         return resnet_layer(x=inputs, params=params, num_classes=num_classes)
 
     @staticmethod
-    def model_from_params(inputs: keras.Input, params: ResNetParams|dict, num_classes: int|None = None):
+    def model_from_params(inputs: keras.Input, params: ResNetParams | dict, num_classes: int | None = None):
         """Create model from parameters"""
         outputs = ResNetModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
         return keras.Model(inputs=inputs, outputs=outputs)
