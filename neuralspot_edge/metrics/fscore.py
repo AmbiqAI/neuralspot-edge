@@ -1,3 +1,12 @@
+"""
+# F-Score Metrics API
+
+This module contains additional metrics for F-Score.
+
+Classes:
+    MultiF1Score: A wrapper around keras.metrics.F1Score to handle multi-dimensional data.
+
+"""
 import keras
 
 from ..utils import nse_export
@@ -5,8 +14,8 @@ from ..utils import nse_export
 
 @nse_export(path="neuralspot_edge.metrics.MultiF1Score")
 class MultiF1Score(keras.metrics.F1Score):
-    """A basic wrapper around keras.metrics.F1Score to handle multi-dimensional data.
-    This class collapses down to 2D with last dimension as classes.
+    """A wrapper around keras.metrics.F1Score to handle multi-dimensional data.
+    This class collapses down to 2D and treats last dimension as classes.
 
     Example:
 

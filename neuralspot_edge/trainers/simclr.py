@@ -1,3 +1,12 @@
+"""
+# SimCLR Trainer API
+
+This module contains the implementation of a SimCLR trainer that can be used to train a model using the SimCLR approach.
+
+Classes:
+    SimCLRTrainer: A trainer for SimCLR
+
+"""
 import keras
 
 from .contrastive import ContrastiveTrainer

@@ -1,4 +1,15 @@
+"""
+# Random Background Noises Layer API
+
+This module provides classes to build random background noises layers.
+
+Classes:
+    RandomBackgroundNoises1D: Random background noises 1D
+
+
+"""
 import keras
+
 from .base_augmentation import BaseAugmentation1D
 from ...utils import parse_factor, nse_export
 
@@ -35,7 +46,7 @@ class RandomBackgroundNoises1D(BaseAugmentation1D):
         self.num_noises = num_noises
         self.noises = noises
 
-    def get_random_transformations(self, input_shape: tuple[int, int, int]):
+    def get_random_transformations(self, input_shape: tuple[int, int, int]) -> dict:
         """Generate noise tensor
 
         Args:

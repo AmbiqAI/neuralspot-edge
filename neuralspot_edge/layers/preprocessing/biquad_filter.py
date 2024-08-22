@@ -1,6 +1,19 @@
+"""
+# Biquad Filter Layer API
+
+This module provides classes to build biquad filter layers.
+
+Functions:
+    get_butter_sos: Compute biquad filter coefficients as SOS
+
+Classes:
+    CascadedBiquadFilter: Cascaded biquad filter layer
+
+"""
 import keras
 import scipy.signal
 import numpy.typing as npt
+
 from .base_augmentation import BaseAugmentation1D
 from ...utils import nse_export
 

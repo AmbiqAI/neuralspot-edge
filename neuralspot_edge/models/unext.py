@@ -1,4 +1,29 @@
-"""UNext"""
+"""
+# U-NeXt
+
+## Overview
+
+U-NeXt is a modification of U-Net that utilizes techniques from ResNeXt and EfficientNetV2. During the encoding phase, mbconv blocks are used to efficiently process the input.
+
+Classes:
+    UNextParams: U-NeXt parameters
+    UNextModel: Helper class to generate
+
+Functions:
+    unext_block: Create U-NeXt block
+    se_block: Squeeze and excite block
+    norm_layer: Normalization layer
+    unext_core: Create U-NeXt core
+    unext_layer: Create U-NeXt layer
+
+## Additions
+
+The U-NeXt architecture has been modified to allow the following:
+
+* MBConv blocks used in the encoding phase.
+* Squeeze and excitation (SE) blocks added within blocks.
+
+"""
 
 from typing import Literal
 
@@ -7,7 +32,22 @@ from pydantic import BaseModel, Field
 
 
 class UNextBlockParams(BaseModel):
-    """UNext block parameters"""
+    """UNext block parameters
+
+    Attributes:
+        filters (int): Number of filters
+        depth (int): Layer depth
+        ddepth (int | None): Layer decoder depth
+        kernel (int | tuple[int, int]): Kernel size
+        pool (int | tuple[int, int]): Pool size
+        strides (int | tuple[int, int]): Stride size
+        skip (bool): Add skip connection
+        expand_ratio (float): Expansion ratio
+        se_ratio (float): Squeeze and excite ratio
+        dropout (float | None): Dropout rate
+        norm (Literal["batch", "layer"] | None): Normalization type
+
+    """
 
     filters: int = Field(..., description="# filters")
     depth: int = Field(default=1, description="Layer depth")
@@ -23,7 +63,17 @@ class UNextBlockParams(BaseModel):
 
 
 class UNextParams(BaseModel):
-    """UNext parameters"""
+    """UNext parameters
+
+    Attributes:
+        blocks (list[UNextBlockParams]): UNext blocks
+        include_top (bool): Include top
+        use_logits (bool): Use logits
+        output_kernel_size (int | tuple[int, int]): Output kernel size
+        output_kernel_stride (int | tuple[int, int]): Output kernel stride
+        name (str): Model name
+
+    """
 
     blocks: list[UNextBlockParams] = Field(default_factory=list, description="UNext blocks")
     include_top: bool = Field(default=True, description="Include top")
@@ -89,7 +139,7 @@ def norm_layer(norm: str, name: str) -> keras.Layer:
     return layer
 
 
-def UNext_block(
+def unext_block(
     output_filters: int,
     expand_ratio: float = 1,
     kernel_size: int | tuple[int, int] = 3,
@@ -200,7 +250,7 @@ def unext_core(
     for i, block in enumerate(params.blocks):
         name = f"ENC{i+1}"
         for d in range(block.depth):
-            y = UNext_block(
+            y = unext_block(
                 output_filters=block.filters,
                 expand_ratio=block.expand_ratio,
                 kernel_size=block.kernel,
@@ -241,7 +291,7 @@ def unext_core(
     for i, block in enumerate(reversed(params.blocks)):
         name = f"DEC{i+1}"
         for d in range(block.ddepth or block.depth):
-            y = UNext_block(
+            y = unext_block(
                 output_filters=block.filters,
                 expand_ratio=block.expand_ratio,
                 kernel_size=block.kernel,
@@ -311,7 +361,7 @@ def unext_core(
             )(y)
         # END IF
 
-        y = UNext_block(
+        y = unext_block(
             output_filters=block.filters,
             expand_ratio=block.expand_ratio,
             kernel_size=block.kernel,
@@ -326,26 +376,26 @@ def unext_core(
     return y
 
 
-def UNext(
-    x: keras.KerasTensor,
+def unext_layer(
+    inputs: keras.KerasTensor,
     params: UNextParams,
-    num_classes: int,
-) -> keras.Model:
+    num_classes: int | None = None,
+) -> keras.KerasTensor:
     """Create UNext TF functional model
 
     Args:
-        x (keras.KerasTensor): Input tensor
+        inputs (keras.KerasTensor): Input tensor
         params (UNextParams): Model parameters.
-        num_classes (int, optional): # classes.
+        num_classes (int, optional): Number of classes.
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Output tensor
     """
-    requires_reshape = len(x.shape) == 3
+    requires_reshape = len(inputs.shape) == 3
     if requires_reshape:
-        y = keras.layers.Reshape((1,) + x.shape[1:])(x)
+        y = keras.layers.Reshape((1,) + inputs.shape[1:])(inputs)
     else:
-        y = x
+        y = inputs
 
     y = unext_core(y, params)
 
@@ -368,24 +418,21 @@ def UNext(
     if requires_reshape:
         y = keras.layers.Reshape(y.shape[2:])(y)
 
-    # Define the model
-    model = keras.Model(x, y, name=params.name)
-    return model
+    return y
 
 
-def unext_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int,
-) -> keras.Model:
-    """Create model from object
+class UNextModel:
+    """Helper class to generate model from parameters"""
 
-    Args:
-        x (keras.KerasTensorkeras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: UNextParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = UNextParams(**params)
+        return unext_layer(x=inputs, params=params, num_classes=num_classes)
 
-    Returns:
-        keras.Model: Model
-    """
-    return UNext(x=x, params=UNextParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: UNextParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = UNextModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

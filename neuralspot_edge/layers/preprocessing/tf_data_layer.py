@@ -1,3 +1,12 @@
+"""
+# `tf.data.Dataset` Pipeline Layer
+
+This module provides a class to build a `tf.data.Dataset` pipeline layer.
+
+Classes:
+    TFDataLayer: Layer that can safely used in a tf.data pipeline
+
+"""
 import keras
 import tensorflow as tf
 from keras.src.utils import backend_utils
@@ -8,11 +17,13 @@ from ...utils import nse_export
 
 @nse_export(path="neuralspot_edge.layers.preprocessing.TFDataLayer")
 class TFDataLayer(keras.Layer):
-    """Layer that can safely used in a tf.data pipeline.
+    """Layer that can safely be used in a tf.data pipeline.
 
     The `call()` method must solely rely on `self.backend` ops.
 
-    Only supports a single input tensor argument.
+    !!! note
+
+        Only supports a single input tensor argument.
     """
 
     def __init__(self, device: str = "cpu", **kwargs):
@@ -22,6 +33,11 @@ class TFDataLayer(keras.Layer):
         self._allow_non_tensor_positional_args = True
 
     def __call__(self, inputs, **kwargs):
+        """When called, this layer sets the backend and device, and then calls the `call()` method.
+
+        Args:
+            inputs: The input tensor.
+        """
         if backend_utils.in_tf_graph() and not isinstance(inputs, keras.KerasTensor):
             # We're in a TF graph, e.g. a tf.data pipeline.
             self.backend.set_backend("tensorflow")

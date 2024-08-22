@@ -1,4 +1,4 @@
-# Getting Started
+# :material-rocket-launch: Getting Started
 
 ## Install neuralspot-edge
 

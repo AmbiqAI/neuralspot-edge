@@ -1,3 +1,12 @@
+"""
+# Random Noise Distortion Layer API
+
+This module provides classes to build random noise distortion layers.
+
+Classes:
+    RandomNoiseDistortion1D: Random noise distortion 1D
+
+"""
 import keras
 
 from .base_augmentation import BaseAugmentation1D
@@ -55,7 +64,7 @@ class RandomNoiseDistortion1D(BaseAugmentation1D):
         self.interpolation = interpolation
         self.noise_type = noise_type
 
-    def get_random_transformations(self, input_shape: tuple[int, int, int]):
+    def get_random_transformations(self, input_shape: tuple[int, int, int]) -> dict:
         """Generate noise distortion tensor
 
         Args:

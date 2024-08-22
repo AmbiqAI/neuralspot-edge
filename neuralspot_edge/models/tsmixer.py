@@ -1,4 +1,22 @@
-"""Implementation of TSMixer."""
+"""
+# TsMixer Model
+
+## Overview
+
+TsMixer is a fully MLP-based architecture for time series data.
+
+For more info, refer to the original paper [TsMixer: An All-MLP Architecture for Time Series](https://arxiv.org/abs/2303.06053).
+
+Classes:
+    TsMixerParams: TsMixer parameters
+    TsMixerModel: Helper class to generate model from parameters
+
+Functions:
+    ts_block: Residual block of TsMixer
+    norm_layer: Normalization layer
+    tsmixer_layer: TsMixer layer
+
+"""
 
 from typing import Literal
 
@@ -6,8 +24,15 @@ import keras
 from pydantic import BaseModel, Field
 
 
-class TsBlockParams(BaseModel):
-    """TsMixer block parameters"""
+class TsMixerBlockParams(BaseModel):
+    """TsMixer block parameters
+
+    Attributes:
+        norm (Literal["batch", "layer"]): Normalization type
+        activation (Literal["relu", "gelu"]): Activation type
+        dropout (float): Dropout rate
+        ff_dim (int): Feed forward dimension
+    """
 
     norm: Literal["batch", "layer"] | None = Field(default="layer", description="Normalization type")
     activation: Literal["relu", "gelu"] | None = Field(default="relu", description="Activation type")
@@ -16,9 +41,14 @@ class TsBlockParams(BaseModel):
 
 
 class TsMixerParams(BaseModel):
-    """TsMixer parameters"""
+    """TsMixer parameters
 
-    blocks: list[TsBlockParams] = Field(default_factory=list, description="UNext blocks")
+    Attributes:
+        blocks (list[TsBlockParams]): TsMixer blocks
+        name (str): Model name
+    """
+
+    blocks: list[TsMixerBlockParams] = Field(default_factory=list, description="UNext blocks")
     name: str = Field(default="TsMixer", description="Model name")
 
 
@@ -51,8 +81,16 @@ def norm_layer(norm: str, name: str) -> keras.Layer:
     return layer
 
 
-def ts_block(params: TsBlockParams, name: str) -> keras.Layer:
-    """Residual block of TSMixer."""
+def ts_block(params: TsMixerBlockParams, name: str) -> keras.Layer:
+    """Residual block of TSMixer.
+
+    Args:
+        params (TsBlockParams): Block parameters
+        name (str): Name
+
+    Returns:
+        keras.Layer: Layer
+    """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         # Temporal Linear
@@ -78,8 +116,18 @@ def ts_block(params: TsBlockParams, name: str) -> keras.Layer:
     return layer
 
 
-def TsMixer(x: keras.KerasTensor, params: any, num_classes: int):
-    y = x
+def tsmixer_layer(inputs: keras.KerasTensor, params: any, num_classes: int) -> keras.KerasTensor:
+    """TsMixer layer
+
+    Args:
+        inputs (keras.KerasTensor): Input tensor
+        params (any): Model parameters
+        num_classes (int): Number of classes
+
+    Returns:
+        keras.KerasTensor: Output tensor
+    """
+    y = inputs
     for block in range(params.blocks):
         y = ts_block(block)(y)
 
@@ -90,24 +138,20 @@ def TsMixer(x: keras.KerasTensor, params: any, num_classes: int):
     y = keras.layers.Dense(num_classes)(y)  # [Batch, Channel, Output Length]
     y = keras.ops.transpose(y, axes=[0, 2, 1])  # [Batch, Output Length, Channel])
 
-    # Define the model
-    model = keras.Model(x, y, name=params.name)
-    return model
+    return y
 
+class TsMixerModel:
+    """Helper class to generate model from parameters"""
 
-def tsmixer_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int,
-) -> keras.Model:
-    """Create model from object
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: TsMixerParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = TsMixerParams(**params)
+        return tsmixer_layer(x=inputs, params=params, num_classes=num_classes)
 
-    Args:
-        x (keras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
-
-    Returns:
-        keras.Model: Model
-    """
-    return TsMixer(x=x, params=TsMixerParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: TsMixerParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = TsMixerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

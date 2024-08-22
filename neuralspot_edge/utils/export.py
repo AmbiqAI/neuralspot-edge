@@ -1,3 +1,12 @@
+"""
+# NSE Keras Registration API
+
+This module provides a decorator to register Keras models and layers for serialization.
+
+Classes:
+    nse_export: Decorator to register Keras models and layers for serialization
+
+"""
 from types import FunctionType
 
 import keras

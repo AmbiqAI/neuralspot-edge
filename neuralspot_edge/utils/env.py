@@ -1,3 +1,14 @@
+"""
+# Environment Utility API
+
+This module provides utility functions to interact with the environment.
+
+Functions:
+    setup_logger: Setup logger with Rich
+    env_flag: Return the specified environment variable coerced to a bool
+    silence_tensorflow: Silence every unnecessary warning from tensorflow
+    disable_tensorflow_gpu: Disable TensorFlow GPU
+"""
 import logging
 import os
 from typing import Any

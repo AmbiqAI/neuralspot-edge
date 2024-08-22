@@ -1,3 +1,15 @@
+"""
+# SimCLR Loss
+
+This module implements the SimCLR loss function for contrastive self-supervised learning.
+
+Classes:
+    SimCLRLoss: Implements SimCLR Cosine Similarity loss.
+
+Functions:
+    l2_normalize: Normalizes a tensor along a given axis.
+
+"""
 import keras
 
 from ..utils import nse_export
@@ -5,7 +17,16 @@ from ..utils import nse_export
 LARGE_NUM = 1e9
 
 
-def l2_normalize(x, axis):
+def l2_normalize(x: keras.KerasTensor, axis: int|tuple[int,...]|None = None) -> keras.KerasTensor:
+    """Performs L2 normalization on a tensor along a given axis.
+
+    Args:
+        x (tf.Tensor): Input tensor
+        axis (int | tuple[int], optional): Axis. Defaults to None.
+
+    Returns:
+        tf.Tensor: Normalized tensor
+    """
     epsilon = keras.backend.epsilon()
     power_sum = keras.ops.sum(keras.ops.square(x), axis=axis, keepdims=True)
     norm = keras.ops.reciprocal(keras.ops.sqrt(keras.ops.maximum(power_sum, epsilon)))
@@ -19,18 +40,17 @@ class SimCLRLoss(keras.losses.Loss):
     SimCLR loss is used for contrastive self-supervised learning.
 
     Args:
-        temperature: a float value between 0 and 1, used as a scaling factor for
-            cosine similarity.
+        temperature (float): A scaling factor for cosine similarity b/w [0, 1].
 
     References:
         - [SimCLR paper](https://arxiv.org/pdf/2002.05709)
     """
 
-    def __init__(self, temperature, **kwargs):
+    def __init__(self, temperature: float, **kwargs):
         super().__init__(**kwargs)
         self.temperature = temperature
 
-    def call(self, projections_1, projections_2):
+    def call(self, projections_1: keras.KerasTensor, projections_2: keras.KerasTensor) -> keras.KerasTensor:
         """Computes SimCLR loss for a pair of projections in a contrastive
         learning trainer.
 
@@ -39,13 +59,13 @@ class SimCLRLoss(keras.losses.Loss):
         be treated as a normal loss function.
 
         Args:
-            projections_1: a tensor with the output of the first projection
+            projections_1 (keras.KerasTensor): a tensor with the output of the first projection
                 model in a contrastive learning trainer
-            projections_2: a tensor with the output of the second projection
+            projections_2 (keras.KerasTensor): a tensor with the output of the second projection
                 model in a contrastive learning trainer
 
         Returns:
-            A tensor with the SimCLR loss computed from the input projections
+            keras.KerasTensor: A tensor with the SimCLR loss computed from the input projections
         """
         # Normalize the projections
         projections_1 = l2_normalize(projections_1, axis=1)

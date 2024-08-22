@@ -1,3 +1,13 @@
+"""
+# Rescaling Layer API
+
+This module provides classes to build rescaling layers.
+
+Classes:
+    Rescaling1D: Rescaling 1D
+    Rescaling2D: Rescaling 2D
+
+"""
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export

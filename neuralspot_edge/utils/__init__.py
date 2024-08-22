@@ -1,3 +1,20 @@
+"""
+# Utils API
+
+The `utils` module provides utility functions to help with common tasks such as downloading files, setting random seeds, and exporting data.
+
+## Available Utilities
+
+- **[AWS](aws.md)**: Provides functions to download files from AWS S3.
+- **[Environment](env.md)**: Provides functions to set up the environment and logging.
+- **[Export](export.md)**: Provides functions to export data.
+- **[Factory](factory.md)**: Provides functions to create objects.
+- **[File](file.md)**: Provides functions to download and save files.
+- **[Preprocessing](preprocessing.md)**: Provides functions to preprocess data.
+- **[RNG](rng.md)**: Provides functions to set random seeds.
+- **[Tensor](tensor.md)**: Provides functions to work with tensors.
+
+"""
 from .aws import download_s3_file, download_s3_object, download_s3_objects
 from .env import env_flag, setup_logger, silence_tensorflow
 from .export import nse_export

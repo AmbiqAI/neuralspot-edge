@@ -1,3 +1,13 @@
+"""
+# Random Crop Layers API
+
+This module provides classes to build random crop layers.
+
+Classes:
+    RandomCrop1D: Random crop 1D
+    RandomCrop2D: Random crop 2D
+
+"""
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export

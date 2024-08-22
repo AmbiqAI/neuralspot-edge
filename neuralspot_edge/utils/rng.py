@@ -1,3 +1,14 @@
+"""
+# Random Number Generator API
+
+This module provides utility functions to set random seed and create random id generators.
+
+Functions:
+    set_random_seed: Set random seed across libraries: TF, Numpy, Python
+    uniform_id_generator: Simple generator that yields ids in a uniform manner
+    random_id_generator: Simple generator that yields ids in a random manner
+
+"""
 import random
 from typing import Generator, Iterable, TypeVar
 import keras

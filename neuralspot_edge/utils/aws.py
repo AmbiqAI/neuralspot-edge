@@ -1,3 +1,14 @@
+"""AWS Cloud Utility API
+
+This module provides utility functions to interact with AWS services.
+
+Functions:
+    download_s3_file: Download a file from S3
+    download_s3_object: Download an object from S3
+    download_s3_objects: Download all objects in a S3 bucket with a given prefix
+
+
+"""
 import os
 import functools
 from pathlib import Path
@@ -87,7 +98,7 @@ def download_s3_object(
     """Download an object from S3
 
     Args:
-        object (dict[str, str]): Object metadata
+        item (dict[str, str]): Object metadata
         dst (Path): Destination path
         bucket (str): Bucket name
         client (boto3.client): S3 client

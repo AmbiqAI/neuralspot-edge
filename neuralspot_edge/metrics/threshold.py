@@ -1,3 +1,13 @@
+"""
+# Thresholding Metrics API
+
+This module provides utility functions to threshold model predictions.
+
+Functions:
+    get_predicted_threshold_indices: Get prediction indices that are above threshold (confidence level)
+    threshold_predictions: Get thresholded predictions
+
+"""
 import numpy as np
 import numpy.typing as npt
 

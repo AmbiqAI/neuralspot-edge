@@ -1,3 +1,14 @@
+"""
+# Confusion Matrix Plotting API
+
+This module provides utility functions to plot confusion matrices.
+
+Functions:
+    multilabel_confusion_matrix_plot: Generate multilabel confusion matrix plot via matplotlib/seaborn
+    confusion_matrix_plot: Generate confusion matrix plot via matplotlib/seaborn
+    px_plot_confusion_matrix: Generate confusion matrix plot via plotly
+
+"""
 import os
 from typing import Literal
 
@@ -6,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
 import seaborn as sns
 from sklearn.metrics import (
     confusion_matrix,
@@ -133,7 +145,7 @@ def px_plot_confusion_matrix(
     width: int | None = None,
     height: int | None = 400,
     bg_color: str = "rgba(38,42,50,1.0)",
-):
+) -> go.Figure:
     """Generate confusion matrix plot via plotly
 
     Args:
@@ -148,7 +160,7 @@ def px_plot_confusion_matrix(
         bg_color (str): Background color. Defaults to "rgba(38,42,50,1.0)".
 
     Returns:
-        plotly.graph_objs.Figure: Plotly figure
+        go.Figure: Plotly figure
     """
 
     cm = confusion_matrix(y_true, y_pred)

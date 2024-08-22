@@ -1,3 +1,13 @@
+"""
+# Masked Autoencoder Trainer API
+
+This module contains the implementation of a masked autoencoder trainer that
+can be used to train a model using the masked autoencoder approach.
+
+Classes:
+    MaskedAutoencoder: A trainer for masked autoencoder
+
+"""
 from typing import Callable
 
 import keras

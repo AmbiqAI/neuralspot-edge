@@ -1,3 +1,13 @@
+"""
+# Random Choice Layer API
+
+This module provides classes to build random choice layers.
+
+Classes:
+    RandomChoice: Random choice
+
+"""
+
 import keras
 from .base_augmentation import BaseAugmentation
 from ...utils import nse_export

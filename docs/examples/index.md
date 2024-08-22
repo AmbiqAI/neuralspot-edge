@@ -1,1 +1,1 @@
-# Examples
+# :simple-docsdotrs: Examples

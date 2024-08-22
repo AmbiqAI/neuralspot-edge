@@ -1,3 +1,13 @@
+"""
+# Patching Layers API
+
+This module provides classes to extract patches from 2D data and mask a proportion of them.
+
+Classes:
+    PatchLayer2D: Extracts patches from 2D data.
+    MaskedPatchEncoder2D: Encodes patches and masks a proportion of them.
+
+"""
 import keras
 import tensorflow as tf
 import numpy as np
@@ -8,18 +18,6 @@ from ..utils import nse_export
 
 @nse_export(path="neuralspot_edge.layers.PatchLayer2D")
 class PatchLayer2D(keras.layers.Layer):
-    """This layer will extract patches from 2D data (e.g. image) and reshape them into flattened vectors.
-    Useful as preprocessing technique for patch-based self-supervised learning methods like
-    DINO and Masked Autoencoders. For in-model patching, consider using convolutional layers.
-
-    Args:
-        row_size (int): The height of the image.
-        col_size (int): The width of the image.
-        ch_size (int): The number of channels in the image.
-        patch_row_size (int): The height of the patch.
-        patch_col_size (int): The width of the patch.
-    """
-
     def __init__(
         self,
         height: int,
@@ -29,6 +27,17 @@ class PatchLayer2D(keras.layers.Layer):
         patch_width: int,
         **kwargs,
     ):
+        """This layer will extract patches from 2D data (e.g. image) and reshape them into flattened vectors.
+        Useful as preprocessing technique for patch-based self-supervised learning methods like
+        DINO and Masked Autoencoders. For in-model patching, consider using convolutional layers.
+
+        Args:
+            height (int): The height of the data.
+            width (int): The width of the data.
+            ch (int): The number of channels in the data.
+            patch_height (int): The height of the patch.
+            patch_width (int): The width of the patch.
+        """
         super().__init__(**kwargs)
         self.height = height
         self.width = width
@@ -52,7 +61,7 @@ class PatchLayer2D(keras.layers.Layer):
         patches = self.resize(patches)
         return patches
 
-    def show_patched_image(self, images: keras.KerasTensor, patches: keras.KerasTensor):
+    def show_patched_image(self, images: keras.KerasTensor, patches: keras.KerasTensor) -> int:
         """Utility function which accepts a batch of images and its
         corresponding patches and help visualize one image and its patches
         side by side.
@@ -85,7 +94,7 @@ class PatchLayer2D(keras.layers.Layer):
 
         return idx
 
-    def reconstruct_from_patch(self, patch: keras.KerasTensor):
+    def reconstruct_from_patch(self, patch: keras.KerasTensor) -> keras.KerasTensor:
         """Takes a patch from a *single* image and reconstructs it back into the image.
 
         NOTE: Assumes patch size is divisible by the image size.

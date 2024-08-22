@@ -1,20 +1,58 @@
-"""Fast Conformer"""
+"""
+# Conformer Model
+
+Conformer model implementation in Keras.
+
+Classes:
+    SubsampleBlockParams: Subsample block parameters
+    ConformerBlockParams: Conformer block parameters
+    ConformerParams: Conformer parameters
+    ConformerModel: Helper class to generate model from parameters
+
+Functions:
+    subsampler: Subsampler block
+    fc_block: Fully connected block
+    conv_block: Convolutional block
+    att_block: Attention block
+    conformer_block: Conformer block
+    conformer_layer: Conformer functional layer
+
+"""
 
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import layer_norm, batch_norm
-from .activations import swish, glu, relu
+from ..layers.normalization import layer_normalization, batch_normalization
+from ..layers.activations import swish, glu, relu
 from ..utils import nse_export
 
 
 class SubsampleBlockParams(BaseModel):
+    """Subsample block parameters
+
+    Attributes:
+        depth (int): Depth
+        kernel_size (int): Kernel size
+        strides (int): Stride size
+    """
     depth: int = 256
     kernel_size: int = 3
     strides: int = 2
 
 
 class ConformerBlockParams(BaseModel):
+    """Conformer block parameters
+
+    Attributes:
+        depth (int): Depth
+        fc_ex_factor (float): FC expansion factor
+        fc_res_factor (float): FC residual factor
+        embedding (str): Embedding type
+        num_heads (int): Number of heads
+        kernel_size (int): Kernel size
+        dropout (float): Dropout rate
+        use_bias (bool): Use bias
+    """
     depth: int = 256
     fc_ex_factor: float = 4
     fc_res_factor: float = 0.5
@@ -26,7 +64,16 @@ class ConformerBlockParams(BaseModel):
 
 
 class ConformerParams(BaseModel):
-    """Conformer parameters"""
+    """Conformer parameters
+
+    Attributes:
+        subsamples (list[SubsampleBlockParams]): Subsample blocks
+        blocks (list[ConformerBlockParams]): Conformer blocks
+        output_activation (str | None): Output activation
+        include_top (bool): Include top
+        name (str): Model name
+
+    """
 
     subsamples: list[SubsampleBlockParams] = Field(default_factory=list, description="Subsample blocks")
     blocks: list[ConformerBlockParams] = Field(default_factory=list, description="Conformer blocks")
@@ -42,7 +89,20 @@ def subsampler(
     kernel_regularizer=None,
     bias_regularizer=None,
     name: str | None = None,
-):
+) -> keras.Layer:
+    """Subsampler block
+
+    Args:
+        blocks (SubsampleBlockParams): Subsample block parameters
+        kernel_initializer (str, optional): Kernel initializer. Defaults to "glorot_uniform".
+        bias_initializer (str, optional): Bias initializer. Defaults to "zeros".
+        kernel_regularizer ([type], optional): Kernel regularizer. Defaults to None.
+        bias_regularizer ([type], optional): Bias regularizer. Defaults to None.
+        name (str, optional): Name. Defaults to None.
+
+    Returns:
+        keras.Layer: Subsampler layer
+    """
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
         # Apply subsampling blocks
@@ -91,11 +151,28 @@ def fc_block(
     kernel_regularizer=None,
     bias_regularizer=None,
     name: str = "fc_block",
-):
+) -> keras.Layer:
+    """Fully connected block
+
+    Args:
+        depth (int): Depth
+        ex_factor (int, optional): Expansion factor. Defaults to 4.
+        residual_factor (float, optional): Residual factor. Defaults to 0.5.
+        dropout (float, optional): Dropout rate. Defaults to 0.
+        use_bias (bool, optional): Use bias. Defaults to True.
+        kernel_initializer (str, optional): Kernel initializer. Defaults to "glorot_uniform".
+        bias_initializer (str, optional): Bias initializer. Defaults to "zeros".
+        kernel_regularizer ([type], optional): Kernel regularizer. Defaults to None.
+        bias_regularizer ([type], optional): Bias regularizer. Defaults to None.
+        name (str, optional): Name. Defaults to "fc_block".
+
+    Returns:
+        keras.Layer: Functional layer
+    """
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
-        y = layer_norm(name=f"{name}.ln")(y)
+        y = layer_normalization(name=f"{name}.ln")(y)
 
         y = keras.layers.Dense(
             int(ex_factor * depth),
@@ -139,11 +216,28 @@ def conv_block(
     kernel_regularizer=None,
     bias_regularizer=None,
     name: str = "conv_module",
-):
+) -> keras.Layer:
+    """Convolutional block
+
+    Args:
+        depth (int): Depth
+        kernel_size (int, optional): Kernel size. Defaults to 9.
+        dropout (float, optional): Dropout rate. Defaults to 0.0.
+        padding (str, optional): Padding. Defaults to "same".
+        scale_factor (int, optional): Scale factor. Defaults to 2.
+        kernel_initializer (str, optional): Kernel initializer. Defaults to "glorot_uniform".
+        bias_initializer (str, optional): Bias initializer. Defaults to "zeros".
+        kernel_regularizer ([type], optional): Kernel regularizer. Defaults to None.
+        bias_regularizer ([type], optional): Bias regularizer. Defaults to None.
+        name (str, optional): Name. Defaults to "conv_module".
+
+    Returns:
+        keras.Layer: Functional layer
+    """
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
-        y = layer_norm(name=f"{name}.ln")(y)
+        y = layer_normalization(name=f"{name}.ln")(y)
 
         y = keras.layers.Conv1D(
             filters=scale_factor * depth,
@@ -168,7 +262,7 @@ def conv_block(
             bias_regularizer=bias_regularizer,
             name=f"{name}.dw_conv",
         )(y)
-        y = batch_norm(name=f"{name}.bn")(y)
+        y = batch_normalization(name=f"{name}.bn")(y)
 
         y = swish(name=f"{name}.swish")(y)
 
@@ -200,10 +294,23 @@ def att_block(
     num_heads: int = 4,
     dropout: float = 0.1,
     name: str = "att_block",
-):
+) -> keras.Layer:
+    """Attention block
+
+    Args:
+        depth (int): Depth
+        embedding (str, optional): Embedding type. Defaults to "rel".
+        num_heads (int, optional): Number of heads. Defaults to 4.
+        dropout (float, optional): Dropout rate. Defaults to 0.1.
+        name (str, optional): Name. Defaults to "att_block".
+
+    Returns:
+        keras.Layer: Functional layer
+
+    """
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
-        y = layer_norm(name=f"{name}.ln")(y)
+        y = layer_normalization(name=f"{name}.ln")(y)
 
         # Att type: rel, abs, none
         y = keras.layers.MultiHeadAttention(
@@ -233,7 +340,23 @@ def conformer_block(
     dropout: float = 0.1,
     use_bias: bool = True,
     name: str = "cf_block",
-):
+) -> keras.Layer:
+    """Conformer block
+
+    Args:
+        depth (int): Depth
+        fc_ex_factor (int, optional): FC expansion factor. Defaults to 4.
+        fc_res_factor (int, optional): FC residual factor. Defaults to 0.5.
+        embedding (str, optional): Embedding type. Defaults to "relative".
+        num_heads (int, optional): Number of heads. Defaults to 4.
+        kernel_size (int, optional): Kernel size. Defaults to 9.
+        dropout (float, optional): Dropout rate. Defaults to 0.1.
+        use_bias (bool, optional): Use bias. Defaults to True.
+        name (str, optional): Name. Defaults to "cf_block".
+
+    Returns:
+        keras.Layer: Functional layer
+    """
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         y = x
 
@@ -270,7 +393,7 @@ def conformer_block(
         )(y)
 
         # Output Layer Norm
-        y = layer_norm(name=f"{name}.out.ln")(y)
+        y = layer_normalization(name=f"{name}.out.ln")(y)
 
         return y
 
@@ -278,21 +401,20 @@ def conformer_block(
     return layer
 
 
-@nse_export(path="neuralspot_edge.models.CCT")
-def Conformer(
+def conformer_layer(
     x: keras.KerasTensor,
     params: ConformerParams,
     num_classes: int | None = None,
-) -> keras.Model:
-    """MetaFormer model
+) -> keras.KerasTensor:
+    """Conformer functional layer
 
     Args:
         x (keras.KerasTensor): Input tensor
-        params (MetaFormerParams): Model parameters.
-        num_classes (int, optional): # classes.
+        params (ConformerParams): Model parameters.
+        num_classes (int, optional): Number of classes.
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Output tensor
     """
     y = x
 
@@ -326,23 +448,21 @@ def Conformer(
             y = keras.layers.Activation(params.output_activation)(y)
     # END IF
 
-    model = keras.Model(x, y, name=params.name)
-    return model
+    return y
 
 
-def conformer_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int | None = None,
-) -> keras.Model:
-    """Create model from object
+class ConformerModel:
+    """Helper class to generate model from parameters"""
 
-    Args:
-        x (keras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: ConformerParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = ConformerParams(**params)
+        return conformer_layer(x=inputs, params=params, num_classes=num_classes)
 
-    Returns:
-        keras.Model: Model
-    """
-    return Conformer(x=x, params=ConformerParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: ConformerParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = ConformerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

@@ -1,3 +1,13 @@
+"""
+# TFLite Interpreter API
+
+This module handles interpreting TensorFlow Lite models.
+
+Classes:
+    TfLiteKerasInterpreter: Interprets TensorFlow Lite models converted from Keras.
+
+"""
+
 import numpy as np
 import numpy.typing as npt
 

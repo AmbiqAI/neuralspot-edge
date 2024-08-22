@@ -1,4 +1,14 @@
+"""
+# Random Channel Layer API
+
+This module provides classes to build random channel layers.
+
+Classes:
+    RandomChannel: Random channel
+
+"""
 import keras
+
 from .base_augmentation import BaseAugmentation
 from ...utils import nse_export
 

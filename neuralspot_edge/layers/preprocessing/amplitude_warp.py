@@ -1,3 +1,9 @@
+"""
+# Amplitude Warp Layer
+
+Classes:
+    AmplitudeWarp: Amplitude warping layer
+"""
 import keras
 
 from .base_augmentation import BaseAugmentation1D

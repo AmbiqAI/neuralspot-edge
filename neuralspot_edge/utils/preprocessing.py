@@ -1,3 +1,18 @@
+"""
+# Preprocessing Utility API
+
+This module provides utility functions for preprocessing data.
+
+Functions:
+    parse_factor: Parse factor
+    convert_inputs_to_tf_dataset: Convert inputs to tf.data.Dataset
+    create_interleaved_dataset_from_generator: Create interleaved dataset from generator
+    create_dataset_from_data: Create dataset from data
+    get_output_signature: Get output signature
+    get_output_signature_from_fn: Get output signature from function
+    get_output_signature_from_gen: Get output signature from generator
+
+"""
 from typing import TypeVar, Callable, Generator
 
 import keras

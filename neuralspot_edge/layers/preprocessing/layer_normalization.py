@@ -1,3 +1,13 @@
+"""
+# Layer Normalization Layer API
+
+This module provides classes to build layer normalization layers.
+
+Classes:
+    LayerNormalization1D: Layer normalization for 1D data
+    LayerNormalization2D: Layer normalization for 2D data
+
+"""
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export

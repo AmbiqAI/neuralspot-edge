@@ -1,3 +1,13 @@
+"""
+
+# ROC Plotting API
+
+This module provides utility functions to plot ROC curves.
+
+Functions:
+    roc_auc_plot: Generate ROC plot via matplotlib/seaborn
+
+"""
 import os
 
 import matplotlib.pyplot as plt

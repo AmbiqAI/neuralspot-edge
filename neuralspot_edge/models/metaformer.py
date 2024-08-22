@@ -1,16 +1,54 @@
+"""
+# MetaFormer: Meta-Learning with Transformers
+
+## Overview
+
+MetaFormer is a transformer-based model that incorporates both spatial mixing and channel mixing blocks.
+The architecture is designed to learn from few examples and generalize to new tasks.
+
+For more info, refer to the original paper [MetaFormer: Meta-Learning with Transformers](https://arxiv.org/abs/2110.11605).
+
+Classes:
+    MetaFormerParams: MetaFormer parameters
+    MetaFormerModel: Helper class to generate model from parameters
+
+Functions:
+    patch_embedding: Patch embedding layer
+    pool_token_mixer: Token mixer using average pooling
+    conv_token_mixer: Token mixer using separable convolution
+    attention_token_mixer: Token mixer using multi-head attention
+    mlp_channel_mixer: Channel mixer using MLP via 1x1 convolutions
+    metaformer_block: Metaformer block
+    metaformer_layer: Metaformer functional layer
+
+"""
 import keras
 from pydantic import BaseModel, Field
 
 
 class NameArgs(BaseModel):
-    """Name and arguments"""
+    """Name and arguments
+
+    Attributes:
+        name (str): Name
+        args (dict): Arguments
+
+    """
 
     name: str = Field(default="conv", description="Name")
     args: dict = Field(default_factory=dict, description="Arguments")
 
 
 class MetaFormerBlockParams(BaseModel):
-    """MetaFormer block parameters"""
+    """MetaFormer block parameters
+
+    Attributes:
+        layers (int): Number of layers
+        patch_embed (dict): Patch embedding
+        token_mixer (NameArgs): Token mixer
+        channel_mixer (NameArgs): Channel mixer
+
+    """
 
     layers: int = Field(default=2, description="Number of layers")
     patch_embed: dict = Field(default_factory=dict, description="Patch embedding")
@@ -19,7 +57,18 @@ class MetaFormerBlockParams(BaseModel):
 
 
 class MetaFormerParams(BaseModel):
-    """MetaFormer parameters"""
+    """MetaFormer parameters
+
+    Attributes:
+        blocks (list[MetaFormerBlockParams]): MetaFormer blocks
+        output_filters (int): Output filters
+        output_activation (str | None): Output activation
+        include_top (bool): Include top
+        dropout (float): Dropout rate
+        drop_connect_rate (float): Drop connect rate
+        name (str): Model name
+
+    """
 
     blocks: list[MetaFormerBlockParams] = Field(default_factory=list, description="MetaFormer blocks")
     output_filters: int = Field(default=0, description="Output filters")
@@ -36,7 +85,15 @@ def patch_embedding(
     stride_shape: tuple[int, int] | None = None,
     padding: str = "same",
 ) -> keras.layers.Layer:
-    """Patch embedding layer using 2D convolution"""
+    """Patch embedding layer using 2D convolution
+
+    Args:
+        embed_dim (int): Embedding dimension
+        patch_shape (tuple[int, int]): Patch shape
+        stride_shape (tuple[int, int], optional): Stride shape. Defaults to None.
+        padding (str, optional): Padding. Defaults to 'same'.
+
+    """
     # SHAPE (B, F, T, C) -> (B, F//S, T//S, E)
     # SHAPE (B, H, W, C) -> (B, H//S, W//S, E
     return keras.layers.Conv2D(
@@ -80,7 +137,7 @@ def conv_token_mixer(
     embed_dim: int,
     kernel_size: tuple[int, int] = (3, 3),
     strides: tuple[int, int] = (1, 1),
-):
+) -> keras.Layer:
     """Token mixer using separable convolution
 
     Args:
@@ -148,7 +205,7 @@ def mlp_channel_mixer(
     ratio: int = 4,
     activation: str = "gelu",
     dropout: float = 0,
-):
+) -> keras.Layer:
     """Channel mixer using MLP via 1x1 convolutions
 
     Args:
@@ -234,20 +291,20 @@ def metaformer_block(
     return layer
 
 
-def MetaFormer(
+def metaformer_layer(
     x: keras.KerasTensor,
     params: MetaFormerParams,
     num_classes: int | None = None,
-) -> keras.Model:
-    """MetaFormer model
+) -> keras.KerasTensor:
+    """MetaFormer functional layer
 
     Args:
         x (keras.KerasTensor): Input tensor
         params (MetaFormerParams): Model parameters.
-        num_classes (int, optional): # classes.
+        num_classes (int, optional): Number of classes.
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Output tensor
     """
     y = x
 
@@ -287,144 +344,139 @@ def MetaFormer(
             y = keras.layers.Activation(params.output_activation)(y)
     # END IF
 
-    model = keras.Model(x, y, name=params.name)
-    return model
+
+# def ccaa_metaformer(
+#     x: keras.KerasTensor,
+#     num_classes: int | None = None,
+# ) -> keras.Model:
+#     """CCAA Metaformer model"""
+
+#     params = MetaFormerParams(
+#         blocks=[
+#             MetaFormerBlockParams(
+#                 layers=2,
+#                 patch_embed=dict(
+#                     embed_dim=32,
+#                     patch_shape=(7, 7),
+#                     stride_shape=(4, 4),
+#                 ),
+#                 token_mixer=dict(
+#                     name="conv",
+#                     args=dict(
+#                         embed_dim=32,
+#                         kernel_size=(3, 3),
+#                         strides=(1, 1),
+#                     ),
+#                 ),
+#                 channel_mixer=dict(
+#                     name="mlp",
+#                     args=dict(
+#                         embed_dim=32,
+#                         ratio=4,
+#                         activation="gelu",
+#                         dropout=0.1,
+#                     ),
+#                 ),
+#             ),
+#             MetaFormerBlockParams(
+#                 layers=2,
+#                 patch_embed=dict(
+#                     embed_dim=64,
+#                     patch_shape=(3, 3),
+#                     stride_shape=(2, 2),
+#                 ),
+#                 token_mixer=dict(
+#                     name="conv",
+#                     args=dict(
+#                         embed_dim=64,
+#                         kernel_size=(3, 3),
+#                         strides=(1, 1),
+#                     ),
+#                 ),
+#                 channel_mixer=dict(
+#                     name="mlp",
+#                     args=dict(
+#                         embed_dim=64,
+#                         ratio=4,
+#                         activation="gelu",
+#                         dropout=0.1,
+#                     ),
+#                 ),
+#             ),
+#             MetaFormerBlockParams(
+#                 layers=2,
+#                 patch_embed=dict(
+#                     embed_dim=128,
+#                     patch_shape=(3, 3),
+#                     stride_shape=(2, 2),
+#                 ),
+#                 token_mixer=dict(
+#                     name="conv",
+#                     args=dict(
+#                         embed_dim=128,
+#                         kernel_size=(3, 3),
+#                         strides=(1, 1),
+#                     ),
+#                 ),
+#                 channel_mixer=dict(
+#                     name="mlp",
+#                     args=dict(
+#                         embed_dim=128,
+#                         ratio=4,
+#                         activation="gelu",
+#                         dropout=0.1,
+#                     ),
+#                 ),
+#             ),
+#             MetaFormerBlockParams(
+#                 layers=2,
+#                 patch_embed=dict(
+#                     embed_dim=256,
+#                     patch_shape=(3, 2),
+#                     stride_shape=(3, 2),
+#                 ),
+#                 token_mixer=dict(
+#                     name="conv",
+#                     args=dict(
+#                         embed_dim=256,
+#                         kernel_size=(3, 3),
+#                         strides=(1, 1),
+#                     ),
+#                 ),
+#                 channel_mixer=dict(
+#                     name="mlp",
+#                     args=dict(
+#                         embed_dim=256,
+#                         ratio=4,
+#                         activation="gelu",
+#                         dropout=0.1,
+#                     ),
+#                 ),
+#             ),
+#         ],
+#         include_top=True,
+#         output_activation="softmax",
+#     )
+
+#     return metaformer_layer(
+#         x=x,
+#         params=params,
+#         num_classes=num_classes,
+#     )
 
 
-def ccaa_metaformer(
-    x: keras.KerasTensor,
-    num_classes: int | None = None,
-) -> keras.Model:
-    """CCAA Metaformer model"""
+class MetaFormerModel:
+    """Helper class to generate model from parameters"""
 
-    params = MetaFormerParams(
-        blocks=[
-            MetaFormerBlockParams(
-                layers=2,
-                patch_embed=dict(
-                    embed_dim=32,
-                    patch_shape=(7, 7),
-                    stride_shape=(4, 4),
-                ),
-                token_mixer=dict(
-                    name="conv",
-                    args=dict(
-                        embed_dim=32,
-                        kernel_size=(3, 3),
-                        strides=(1, 1),
-                    ),
-                ),
-                channel_mixer=dict(
-                    name="mlp",
-                    args=dict(
-                        embed_dim=32,
-                        ratio=4,
-                        activation="gelu",
-                        dropout=0.1,
-                    ),
-                ),
-            ),
-            MetaFormerBlockParams(
-                layers=2,
-                patch_embed=dict(
-                    embed_dim=64,
-                    patch_shape=(3, 3),
-                    stride_shape=(2, 2),
-                ),
-                token_mixer=dict(
-                    name="conv",
-                    args=dict(
-                        embed_dim=64,
-                        kernel_size=(3, 3),
-                        strides=(1, 1),
-                    ),
-                ),
-                channel_mixer=dict(
-                    name="mlp",
-                    args=dict(
-                        embed_dim=64,
-                        ratio=4,
-                        activation="gelu",
-                        dropout=0.1,
-                    ),
-                ),
-            ),
-            MetaFormerBlockParams(
-                layers=2,
-                patch_embed=dict(
-                    embed_dim=128,
-                    patch_shape=(3, 3),
-                    stride_shape=(2, 2),
-                ),
-                token_mixer=dict(
-                    name="conv",
-                    args=dict(
-                        embed_dim=128,
-                        kernel_size=(3, 3),
-                        strides=(1, 1),
-                    ),
-                ),
-                channel_mixer=dict(
-                    name="mlp",
-                    args=dict(
-                        embed_dim=128,
-                        ratio=4,
-                        activation="gelu",
-                        dropout=0.1,
-                    ),
-                ),
-            ),
-            MetaFormerBlockParams(
-                layers=2,
-                patch_embed=dict(
-                    embed_dim=256,
-                    patch_shape=(3, 2),
-                    stride_shape=(3, 2),
-                ),
-                token_mixer=dict(
-                    name="conv",
-                    args=dict(
-                        embed_dim=256,
-                        kernel_size=(3, 3),
-                        strides=(1, 1),
-                    ),
-                ),
-                channel_mixer=dict(
-                    name="mlp",
-                    args=dict(
-                        embed_dim=256,
-                        ratio=4,
-                        activation="gelu",
-                        dropout=0.1,
-                    ),
-                ),
-            ),
-        ],
-        include_top=True,
-        output_activation="softmax",
-    )
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: MetaFormerParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = MetaFormerParams(**params)
+        return metaformer_layer(x=inputs, params=params, num_classes=num_classes)
 
-    return MetaFormer(
-        x=x,
-        params=params,
-        num_classes=num_classes,
-    )
-
-
-def metaformer_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int | None = None,
-) -> keras.Model:
-    """Create model from object
-
-    Args:
-        x (keras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
-
-    Returns:
-        keras.Model: Model
-    """
-
-    return MetaFormer(x=x, params=MetaFormerParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: MetaFormerParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = MetaFormerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

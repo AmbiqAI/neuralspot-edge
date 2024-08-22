@@ -1,17 +1,47 @@
-"""RegNet https://arxiv.org/abs/2101.00590"""
+"""
+# RegNet Model API
 
-from typing import Callable, Literal, cast
+This module provides utility functions to generate RegNet models.
+
+Fore more information, please refer to the following paper: https://arxiv.org/abs/2101.00590
+
+Classes:
+    RegNetBlockParam: RegNet block parameters
+    RegNetParams: RegNet parameters
+    RegNetModel: Helper class to generate RegNet models
+
+Functions:
+    regnet_core: RegNet core
+    regnet_layer: Generate RegNet model
+
+"""
+
+from typing import Callable, Literal
 
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm, conv2d, se_block
-from .activations import relu6
+from ..layers.normalization import batch_normalization
+from ..layers.convolutional import conv2d
+from ..layers.squeeze_excite import squeeze_excite
+
 from .utils import make_divisible
 
 
 class RegNetBlockParam(BaseModel):
-    """RegNet block parameters"""
+    """RegNet block parameters
+
+    Attributes:
+        filters (int): Number of filters
+        depth (int): Layer depth
+        group_width (int): Group width
+        kernel_size (int | tuple[int, int]): Kernel size
+        strides (int | tuple[int, int]): Stride size
+        se_ratio (float): Squeeze Excite ratio
+        droprate (float): Drop rate
+        activation (str): Activation function
+
+    """
 
     filters: int = Field(..., description="# filters")
     depth: int = Field(default=1, description="Layer depth")
@@ -20,14 +50,31 @@ class RegNetBlockParam(BaseModel):
     strides: int | tuple[int, int] = Field(default=1, description="Stride size")
     se_ratio: float = Field(default=8, description="Squeeze Excite ratio")
     droprate: float = Field(default=0, description="Drop rate")
+    activation: str = Field(default="relu6", description="Activation function")
 
 
 class RegNetParams(BaseModel):
-    """RegNet parameters"""
+    """RegNet parameters
+
+    Attributes:
+
+        blocks (list[RegNetBlockParam]): RegNet blocks
+        input_filters (int): Input filters
+        input_strides (int | tuple[int, int]): Input stride
+        input_activation (str): Input activation
+        output_filters (int): Output filters
+        block_style (Literal["y", "z"]): Block style
+        include_top (bool): Include top
+        output_activation (str | None): Output activation
+        dropout (float): Dropout rate
+        name (str): Model name
+
+    """
 
     blocks: list[RegNetBlockParam] = Field(default_factory=list, description="RegNet blocks")
     input_filters: int = Field(default=0, description="Input filters")
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
+    input_activation: str = Field(default="relu6", description="Input activation")
     output_filters: int = Field(default=0, description="Output filters")
     block_style: Literal["y", "z"] = Field(default="y", description="Block style")
     include_top: bool = Field(default=True, description="Include top")
@@ -42,16 +89,18 @@ def yblock(
     kernel_size: int | tuple[int, int] = 3,
     strides: int | tuple[int, int] = 1,
     se_ratio: float = 4,
+    activation: str = "relu6",
     name: str | None = None,
 ) -> Callable[[keras.KerasTensor], keras.KerasTensor]:
     """RegNet Y-Block
 
     Args:
-        output_filters (int, optional): # output filters. Defaults to 0.
+        output_filters (int, optional): Number of output filters. Defaults to 0.
         group_width (int, optional): Group width. Defaults to 0.
         kernel_size (int | tuple[int, int], optional): Kernel size. Defaults to 3.
         strides (int | tuple[int, int], optional): Stride length. Defaults to 1.
         se_ratio (float, optional): SE ratio. Defaults to 4.
+        activation (str, optional): Activation function. Defaults to "relu6".
         name (str|None, optional): Block name. Defaults to None.
 
     Returns:
@@ -65,37 +114,34 @@ def yblock(
 
         name_ex = f"{name}.exp" if name else None
         y = conv2d(output_filters, kernel_size=(1, 1), name=name_ex)(x)
-        y = batch_norm(name=name_ex)(y)
-        y = relu6(name=name_ex)(y)
+        y = batch_normalization(name=name_ex)(y)
+        y = keras.layers.Activation(activation, name=f"{name_ex}.act")(y)
 
-        y = cast(
-            keras.KerasTensor,
-            keras.layers.Conv2D(
-                output_filters,
-                kernel_size=kernel_size,
-                strides=strides,
-                groups=groups,
-                padding="same",
-                use_bias=False,
-                kernel_initializer=keras.initializers.VarianceScaling(),  # type: ignore
-            )(y),
-        )
-        y = batch_norm()(y)
-        y = relu6()(y)
+        y = keras.layers.Conv2D(
+            output_filters,
+            kernel_size=kernel_size,
+            strides=strides,
+            groups=groups,
+            padding="same",
+            use_bias=False,
+            kernel_initializer=keras.initializers.VarianceScaling(),  # type: ignore
+        )(y)
+        y = batch_normalization()(y)
+        y = keras.layers.Activation(activation)(y)
 
         if se_ratio:
-            y = se_block(ratio=se_ratio)(y)
+            y = squeeze_excite(ratio=se_ratio)(y)
 
         y = conv2d(output_filters, kernel_size=(1, 1), strides=(1, 1))(y)
-        y = batch_norm()(y)
-        y = relu6()(y)
+        y = batch_normalization()(y)
+        y = keras.layers.Activation(activation)(y)
 
         if use_skip:
             x = conv2d(output_filters, kernel_size=(1, 1), strides=strides)(x)
-            x = batch_norm()(x)
+            x = batch_normalization()(x)
 
-        y = cast(keras.KerasTensor, keras.layers.add([y, x]))
-        y = relu6()(y)
+        y = keras.layers.Add()([y, x])
+        y = keras.layers.Activation(activation)(y)
         return y
 
     return layer
@@ -107,16 +153,18 @@ def zblock(
     kernel_size: int | tuple[int, int] = 3,
     strides: int | tuple[int, int] = 1,
     se_ratio: float = 4,
+    activation: str = "relu6",
     name: str | None = None,
 ) -> Callable[[keras.KerasTensor], keras.KerasTensor]:
     """RegNet X-Block
 
     Args:
-        output_filters (int, optional): # output filters. Defaults to 0.
+        output_filters (int, optional): Number of output filters. Defaults to 0.
         group_width (int, optional): Group width. Defaults to 0.
         kernel_size (int | tuple[int, int], optional): Kernel size. Defaults to 3.
         strides (int | tuple[int, int], optional): Stride length. Defaults to 1.
         se_ratio (float, optional): SE ratio. Defaults to 4.
+        activation (str, optional): Activation function. Defaults to "relu6".
         name (str|None, optional): Block name. Defaults to None.
 
     Returns:
@@ -132,32 +180,29 @@ def zblock(
         name_ex = f"{name}.exp" if name else None
         filters = input_filters * expand_ratio
         y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), name=name_ex)(x)
-        y = batch_norm(name=name_ex)(y)
-        y = relu6(name=name_ex)(y)
+        y = batch_normalization(name=name_ex)(y)
+        y = keras.layers.Activation(activation, name=f"{name_ex}.act")(y)
 
-        y = cast(
-            keras.KerasTensor,
-            keras.layers.Conv2D(
-                filters,
-                kernel_size=kernel_size,
-                strides=strides,
-                groups=groups,
-                padding="same",
-                use_bias=False,
-                kernel_initializer=keras.initializers.VarianceScaling(),  # type: ignore
-            )(y),
-        )
-        y = batch_norm()(y)
-        y = relu6()(y)
+        y = keras.layers.Conv2D(
+            filters,
+            kernel_size=kernel_size,
+            strides=strides,
+            groups=groups,
+            padding="same",
+            use_bias=False,
+            kernel_initializer=keras.initializers.VarianceScaling(),  # type: ignore
+        )(y)
+        y = batch_normalization()(y)
+        y = keras.layers.Activation(activation)(y)
 
         if se_ratio:
-            y = se_block(ratio=se_ratio)(y)
+            y = squeeze_excite(ratio=se_ratio)(y)
 
         y = conv2d(output_filters, kernel_size=(1, 1), strides=(1, 1))(y)
-        y = batch_norm()(y)
+        y = batch_normalization()(y)
 
         if use_add:
-            y = cast(keras.KerasTensor, keras.layers.add([y, x]))
+            y = keras.layers.Add()([y, x])
 
         return y
 
@@ -190,6 +235,7 @@ def regnet_core(
                     kernel_size=block.kernel_size,
                     strides=block.strides,
                     se_ratio=block.se_ratio,
+                    activation=block.activation,
                     name=name,
                 )(x)
             # END FOR
@@ -199,30 +245,30 @@ def regnet_core(
     return layer
 
 
-def RegNet(
-    x: keras.KerasTensor,
+def regnet_layer(
+    inputs: keras.KerasTensor,
     params: RegNetParams,
     num_classes: int | None = None,
-):
+) -> keras.KerasTensor:
     """Create RegNet TF functional model
 
     Args:
-        x (keras.KerasTensor): Input tensor
+        inputs (keras.KerasTensor): Input tensor
         params (RegNetParams): Model parameters.
-        num_classes (int, optional): # classes.
+        num_classes (int, optional): Number of classes.
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Output tensor
     """
     # Stem
     if params.input_filters > 0:
         name = "stem"
         filters = make_divisible(params.input_filters, 8)
-        y = conv2d(filters, kernel_size=(3, 3), strides=params.input_strides, name=name)(x)
-        y = batch_norm(name=name)(y)
-        y = cast(keras.KerasTensor, relu6(name=name)(y))
+        y = conv2d(filters, kernel_size=(3, 3), strides=params.input_strides, name=name)(inputs)
+        y = batch_normalization(name=name)(y)
+        y = keras.layers.Activation(params.input_activation, name=f"{name}.act")(y)
     else:
-        y = x
+        y = inputs
 
     y = regnet_core(blocks=params.blocks, block_style=params.block_style)(y)
 
@@ -230,8 +276,8 @@ def RegNet(
         name = "neck"
         filters = make_divisible(params.output_filters, 8)
         y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), padding="valid", name=name)(y)
-        y = batch_norm(name=name)(y)
-        y = relu6(name=name)(y)
+        y = batch_normalization(name=name)(y)
+        y = keras.layers.Activation(params.output_activation, name=f"{name}.act")(y)
 
     if params.include_top:
         name = "top"
@@ -244,23 +290,21 @@ def RegNet(
         if params.output_activation:
             y = keras.layers.Activation(params.output_activation)(y)
 
-    model = keras.Model(x, y, name=params.name)
-    return model
+    return y
 
 
-def regnet_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int | None = None,
-) -> keras.Model:
-    """Create model from object
+class RegNetModel:
+    """Helper class to generate model from parameters"""
 
-    Args:
-        x (keras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: RegNetParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = RegNetParams(**params)
+        return regnet_layer(x=inputs, params=params, num_classes=num_classes)
 
-    Returns:
-        keras.Model: Model
-    """
-    return RegNet(x=x, params=RegNetParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: RegNetParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = RegNetModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

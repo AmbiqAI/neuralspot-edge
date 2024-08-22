@@ -1,3 +1,12 @@
+"""
+# Distiller Trainer API
+
+This module contains the implementation of a distiller trainer that can be used to train a student model
+
+Classes:
+    Distiller: A trainer for distillation
+
+"""
 import keras
 
 from ..utils import nse_export

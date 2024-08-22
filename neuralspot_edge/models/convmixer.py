@@ -1,16 +1,39 @@
-"""ConvMixer https://arxiv.org/abs/2201.09792"""
+"""
+# ConvMixer
+
+For more info, refer to the original paper [ConvMixer: Revisiting Convolution in Vision](https://arxiv.org/abs/2201.09792).
+
+Classes:
+    ConvMixerParams: ConvMixer parameters
+    ConvMixerModel: Helper class to generate model from parameters
+
+Functions:
+    conv_mixer_block: ConvMixer block
+    conv_mixer_layer: ConvMixer layer
+
+"""
 
 from typing import Callable
 
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import batch_norm
-from .activations import gelu
+from ..layers.normalization import batch_normalization
 
 
 class ConvMixerParams(BaseModel):
-    """ConvMixer parameters"""
+    """ConvMixer parameters
+
+    Attributes:
+        filters (int): Number of filters per layer
+        depth (int): Network depth
+        kernel_size (int): Filter size
+        patch_size (int): Patch size
+        include_top (bool): Include top
+        output_activation (str | None): Output activation
+        name (str): Model name
+
+    """
 
     filters: int = Field(default=256, description="# filters per layer")
     depth: int = Field(default=8, description="Network depth")
@@ -25,7 +48,7 @@ def conv_mixer_block(filters: int, kernel_size: int) -> Callable[[keras.KerasTen
     """ConvMixer block
 
     Args:
-        filters (int): # filters
+        filters (int): Number of filters
         kernel_size (int): Kernel size
     """
 
@@ -33,34 +56,34 @@ def conv_mixer_block(filters: int, kernel_size: int) -> Callable[[keras.KerasTen
         # Depthwise convolution.
         x0 = x
         x = keras.layers.DepthwiseConv2D(kernel_size=kernel_size, padding="same")(x)
-        x = gelu()(x)
-        x = batch_norm()(x)
+        x = keras.layers.Activation("gelu")(x)
+        x = batch_normalization()(x)
         # Residual
         x = keras.layers.Add()([x, x0])
 
         # Pointwise convolution.
         x = keras.layers.Conv2D(filters, kernel_size=1)(x)
-        x = gelu()(x)
-        x = batch_norm()(x)
+        x = keras.layers.Activation("gelu")(x)
+        x = batch_normalization()(x)
         return x
 
     return layer
 
 
-def ConvMixer(
+def conv_mixer_layer(
     x: keras.KerasTensor,
     params: ConvMixerParams,
     num_classes: int | None = None,
-):
+) -> keras.KerasTensor:
     """ConvMixer: https://openreview.net/pdf?id=TVHS5Y4dNvM.
 
     Args:
         x (keras.KerasTensor): Input tensor
         params (ConvMixerParams): Model parameters.
-        num_classes (int, optional): # classes.
+        num_classes (int, optional): Number of classes.
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Model output
     """
     # Extract patch embeddings
     y = keras.layers.Conv2D(
@@ -70,8 +93,8 @@ def ConvMixer(
         padding="same",
         use_bias=True,
     )(x)
-    y = gelu()(y)
-    y = batch_norm()(y)
+    y = keras.layers.Activation("gelu")(y)
+    y = batch_normalization()(y)
 
     # ConvMixer blocks
     for _ in range(params.depth):
@@ -85,23 +108,21 @@ def ConvMixer(
         if params.output_activation:
             y = keras.layers.Activation(params.output_activation)(y)
 
-    model = keras.Model(x, y)
-    return model
+    return y
 
 
-def convmixer_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int | None = None,
-) -> keras.Model:
-    """Create model from object
+class ConvMixerModel:
+    """Helper class to generate model from parameters"""
 
-    Args:
-        x (keras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: ConvMixerParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = ConvMixerParams(**params)
+        return conv_mixer_layer(x=inputs, params=params, num_classes=num_classes)
 
-    Returns:
-        keras.Model: Model
-    """
-    return ConvMixer(x=x, params=ConvMixerParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: ConvMixerParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = ConvMixerModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

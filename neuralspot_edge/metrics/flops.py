@@ -1,4 +1,13 @@
-"""FLOPS calculation for keras.Model or keras.Sequential."""
+"""
+# FLOPs Metrics API
+
+FLOPS calculation for keras.Model or keras.Sequential.
+
+Functions:
+    get_flops: Calculate FLOPS for keras.Model or keras.Sequential
+
+
+"""
 
 import os
 import keras

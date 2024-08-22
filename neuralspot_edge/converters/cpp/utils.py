@@ -1,3 +1,13 @@
+"""
+# C++ Converter Utilities
+
+This module provides utility functions to convert numpy arrays and binary files to C++ format.
+
+Functions:
+    array_dump: Generate C array of values from flattened numpy array.
+    xxd_c_dump: Generate C array of values from binary file.
+
+"""
 import os
 
 import numpy as np
@@ -84,7 +94,7 @@ def xxd_c_dump(
         src_path (PathLike): Binary file source path
         dst_path (PathLike): C file destination path
         var_name (str, optional): C variable name. Defaults to 'model'.
-        chunk_len (int, optional): # of elements per row. Defaults to 12.
+        chunk_len (int, optional): Number of elements per row. Defaults to 12.
         is_header (bool): Write as header or source C file. Defaults to source.
 
     Example:

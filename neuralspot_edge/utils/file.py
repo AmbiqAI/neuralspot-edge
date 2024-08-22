@@ -1,3 +1,15 @@
+"""
+# File Utility API
+
+This module provides utility functions to interact with files.
+
+Functions:
+    download_file: Download file from supplied url to destination streaming
+    compute_checksum: Compute checksum of file
+    load_pkl: Load pickled file
+    save_pkl: Save python objects into pickle file
+    resolve_template_path: Resolve templated path w/ supplied substitutions
+"""
 import gzip
 import os
 import hashlib

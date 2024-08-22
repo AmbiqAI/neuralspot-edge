@@ -1,35 +1,18 @@
+"""
+# TQDMProgressBar
+
+"""
 import time
 from collections import defaultdict
 
 import keras
+from tqdm import tqdm
 
 from ..utils import nse_export
 
 
 @nse_export(path="neuralspot_edge.callbacks.tqdm_progress_bar.TQDMProgressBar")
 class TQDMProgressBar(keras.callbacks.Callback):
-    """TQDM Progress Bar for Tensorflow Keras.
-
-    Args:
-        metrics_separator: Custom separator between metrics.
-            Defaults to ' - '.
-        overall_bar_format: Custom bar format for overall
-            (outer) progress bar, see https://github.com/tqdm/tqdm#parameters
-            for more detail.
-        epoch_bar_format: Custom bar format for epoch
-            (inner) progress bar, see https://github.com/tqdm/tqdm#parameters
-            for more detail.
-        update_per_second: Maximum number of updates in the epochs bar
-            per second, this is to prevent small batches from slowing down
-            training. Defaults to 10.
-        metrics_format: Custom format for how metrics are formatted.
-            See https://github.com/tqdm/tqdm#parameters for more detail.
-        leave_epoch_progress: `True` to leave epoch progress bars.
-        leave_overall_progress: `True` to leave overall progress bar.
-        show_epoch_progress: `False` to hide epoch progress bars.
-        show_overall_progress: `False` to hide overall progress bar.
-    """
-
     def __init__(
         self,
         metrics_separator: str = " - ",
@@ -42,12 +25,61 @@ class TQDMProgressBar(keras.callbacks.Callback):
         show_epoch_progress: bool = True,
         show_overall_progress: bool = True,
     ):
-        try:
-            from tqdm.auto import tqdm
+        """TQDM Progress Bar callback.
 
-            self.tqdm = tqdm  # noqa
-        except ImportError:
-            raise ImportError("Please install tqdm via pip install tqdm")
+        Args:
+            metrics_separator (str, optional): Custom separator between metrics.
+                Defaults to ' - '.
+            overall_bar_format (str, optional): Custom bar format for overall
+                (outer) progress bar, see https://github.com/tqdm/tqdm#parameters
+                for more detail.
+            epoch_bar_format (str, optional): Custom bar format for epoch
+                (inner) progress bar, see https://github.com/tqdm/tqdm#parameters
+                for more detail.
+            update_per_second (int, optional): Maximum number of updates in the epochs bar
+                per second, this is to prevent small batches from slowing down
+                training. Defaults to 10.
+            metrics_format (str, optional): Custom format for how metrics are formatted.
+                See https://github.com/tqdm/tqdm#parameters for more detail.
+            leave_epoch_progress (bool, optional): `True` to leave epoch progress bars.
+            leave_overall_progress: `True` to leave overall progress bar.
+            show_epoch_progress (bool, optional): `False` to hide epoch progress bars.
+            show_overall_progress (bool, optional): `False` to hide overall progress bar.
+
+        Example:
+
+        ```python
+
+        import time
+        import neuralspot_edge as nse
+
+        # Create a TQDM progress bar
+        pb_callback = nse.callbacks.TQDMProgressBar(
+            overall_bar_format="{l_bar}{bar} {n_fmt}/{total_fmt},  {rate_fmt}{postfix}",
+            epoch_bar_format="{n_fmt}/{total_fmt}{bar} - {desc}",
+            metrics_format="{name}: {value:0.4f}",
+            update_per_second=10,
+            leave_epoch_progress=True,
+        )
+
+        # Simulate training
+        epochs = 10
+        steps = 5
+        pb_callback.set_params(dict(epochs=epochs, steps=steps))
+        pb_callback.on_train_begin()
+        loss = 1.0
+        accuracy = 0.0
+        for epoch in range(epochs):
+            pb_callback.on_epoch_begin(epoch)
+            for step in range(steps):
+                loss -= epoch * step / (epochs * steps)
+                accuracy += epoch * step / (epochs * steps)
+                pb_callback.on_batch_end(step, {"loss": loss, "accuracy": accuracy})
+                time.sleep(0.1)
+            pb_callback.on_epoch_end(epoch, {"loss": loss, "accuracy": accuracy})
+        pb_callback.on_train_end()
+        ```
+        """
 
         self.metrics_separator = metrics_separator
         self.overall_bar_format = overall_bar_format
@@ -79,7 +111,7 @@ class TQDMProgressBar(keras.callbacks.Callback):
         self.total_steps = self.params["steps"]
         if hook == "train_overall":
             if self.show_overall_progress:
-                self.overall_progress_tqdm = self.tqdm(
+                self.overall_progress_tqdm = tqdm(
                     desc="Training",
                     total=self.num_epochs,
                     bar_format=self.overall_bar_format,
@@ -89,7 +121,7 @@ class TQDMProgressBar(keras.callbacks.Callback):
                 )
         elif hook == "test":
             if self.show_epoch_progress:
-                self.epoch_progress_tqdm = self.tqdm(
+                self.epoch_progress_tqdm = tqdm(
                     total=self.total_steps,
                     desc="Evaluating",
                     bar_format=self.epoch_bar_format,
@@ -101,7 +133,7 @@ class TQDMProgressBar(keras.callbacks.Callback):
             current_epoch_description = "Epoch {epoch}/{num_epochs}".format(epoch=epoch + 1, num_epochs=self.num_epochs)
             if self.show_epoch_progress:
                 print(current_epoch_description)
-                self.epoch_progress_tqdm = self.tqdm(
+                self.epoch_progress_tqdm = tqdm(
                     total=self.total_steps,
                     bar_format=self.epoch_bar_format,
                     leave=self.leave_epoch_progress,
@@ -186,11 +218,11 @@ class TQDMProgressBar(keras.callbacks.Callback):
     def on_batch_end(self, batch, logs={}):
         self._update_progbar(logs)
 
-    def format_metrics(self, logs={}, factor=1):
+    def format_metrics(self, logs: dict = {}, factor=1) -> str:
         """Format metrics in logs into a string.
 
         Args:
-            logs: dictionary of metrics and their values. Defaults to
+            logs (dict): dictionary of metrics and their values. Defaults to
                 empty dictionary.
             factor (int): The factor we want to divide the metrics in logs
                 by, useful when we are computing the logs after each batch.

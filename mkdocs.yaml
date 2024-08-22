@@ -10,65 +10,14 @@ nav:
   - Home:
     - Home: index.md
     - Getting Started: usage/index.md
-    - API Documentation: api/index.md
+    - API Documentation: api/
     - Guides: guides/index.md
     - Examples: examples/index.md
 
   - Getting Started:
     - usage/index.md
 
-  - API Documentation:
-    - api/index.md
-
-    - Callbacks API:
-      - api/callbacks/index.md
-      - TQDMProgressBar: api/callbacks/tqdm_progress_bar.md
-
-    - Converters API:
-      - api/converters/index.md
-      - C++ Converter: api/converters/cpp.md
-      - TFLite Converter: api/converters/tflite.md
-
-    - Interpreters API:
-      - api/interpreters/index.md
-      - TFLite Interpreter: api/interpreters/tflite.md
-
-    - Optimizers API:
-      - api/optimizers/index.md
-
-    - Layers API:
-      - api/layers/index.md
-
-      - Preprocessing:
-        - api/layers/preprocessing/index.md
-
-    - Metrics API:
-      - api/metrics/index.md
-      - F1Score: api/metrics/f1score.md
-      - Flops: api/metrics/flops.md
-      - SnR: api/metrics/snr.md
-      - Utils: api/metrics/utils.md
-
-    - Quantizers API:
-      - api/quantizers/index.md
-
-    - Trainers API:
-      - api/trainers/index.md
-      - Contrastive: api/trainers/contrastive.md
-      - Distiller: api/trainers/distiller.md
-      - SimCLR: api/trainers/simclr.md
-
-    - Models API:
-      - api/models/index.md
-      - TCN: api/models/tcn.md
-      - EfficientNetV2: api/models/efficientnet.md
-      - MobileOne: api/models/mobileone.md
-      - UNet: api/models/unet.md
-      - UNeXt: api/models/unext.md
-      - ResNet: api/models/resnet.md
-      - TSMixer: api/models/tsmixer.md
-      - Conformer: api/models/conformer.md
-      - MetaFormer: api/models/metaformer.md
+  - API Documentation: api/
 
   - Guides:
     - guides/index.md
@@ -130,6 +79,11 @@ theme:
 
 plugins:
   - search
+  - gen-files:
+      scripts:
+      - scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: summary.md
   - mkdocstrings:
       handlers:
         python:
@@ -137,21 +91,26 @@ plugins:
           - https://docs.python.org/3/objects.inv
           - https://numpy.org/doc/stable/objects.inv
           options:
+            show_bases: false
             docstring_style: google
-            docstring_section_style: table
+            docstring_section_style: list
             line_length: 120
-            show_root_heading: true
-            heading_level: 3
+            show_root_heading: false
+            heading_level: 2
             merge_init_into_class: true
             show_root_full_path: false
-            show_symbol_type_heading: false
+            parameter_headings: true
+            show_symbol_type_heading: true
+            group_by_category: true
+            show_category_heading: true
             modernize_annotations: true
+            members_order: source
+            filters: ["!^_", "^__init__$"]
+            separate_signature: true
             show_signature: true
-            show_signature_annotations: false
-            separate_signature: false
-            show_source: false
-
-
+            show_signature_annotations: true
+            show_docstring_attributes: true
+            show_source: true
 
 extra_css:
   - css/mkdocstrings.css
@@ -185,3 +144,5 @@ markdown_extensions:
   - tables
   - md_in_html
   - sane_lists
+  - pymdownx.tasklist:
+      custom_checkbox: true

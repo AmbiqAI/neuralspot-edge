@@ -1,3 +1,14 @@
+"""
+# Model utilities API
+
+This module provides utility functions to work with Keras models.
+
+Functions:
+    make_divisible: Ensure layer has # channels divisble by divisor
+    load_model: Loads a Keras model stored either remotely or locally
+    append_layers: Appends layers to a model by cloning it and adding the layers
+
+"""
 import os
 import tempfile
 import itertools
@@ -13,12 +24,12 @@ def make_divisible(v: int, divisor: int = 4, min_value: int | None = None) -> in
        https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/mobilenet.py
 
     Args:
-        v (int): # channels
+        v (int): Number of channels
         divisor (int, optional): Divisor. Defaults to 4.
         min_value (int | None, optional): Min # channels. Defaults to None.
 
     Returns:
-        int: # channels
+        int: Number of channels
     """
     if min_value is None:
         min_value = divisor

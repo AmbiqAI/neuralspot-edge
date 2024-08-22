@@ -1,3 +1,13 @@
+"""
+# Metrics Utils API
+
+This module provides utility functions to compute metrics for classification tasks.
+
+Functions:
+    compute_metrics: Compute set of metrics for y_true and y_pred
+    confusion_matrix: Compute confusion matrix using keras w/ addition to normalize
+
+"""
 import logging
 from typing import Literal
 

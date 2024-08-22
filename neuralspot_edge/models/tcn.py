@@ -1,15 +1,92 @@
-"""TCN"""
+"""
+# Temporal Convolutional Network (TCN)
+
+## Overview
+
+Temporal convolutional network (TCN) is a type of convolutional neural network (CNN) that is commonly used for sequence modeling tasks such as speech recognition, text generation, and video classification. TCN is a fully convolutional network that consists of a series of dilated causal convolutional layers. The dilated convolutional layers allow TCN to have a large receptive field while maintaining a small number of parameters. TCN is also fully parallelizable, which allows for faster training and inference times.
+
+For more info, refer to the original paper [Temporal Convolutional Networks: A Unified Approach to Action Segmentation](https://doi.org/10.48550/arXiv.1608.08242).
+
+Classes:
+    TcnParams: TCN parameters
+    TcnBlockParams: TCN block parameters
+    TcnModel: Helper class to generate model from parameters
+
+Functions:
+    normalization: Normalization layer
+    tcn_block_lg: TCN large block
+    tcn_block_mb: TCN mbconv block
+    tcn_block_sm: TCN small block
+    tcn_core: TCN core
+    tcn_layer: TCN functional layer
+
+## Additions
+
+The TCN architecture has been modified to allow the following:
+
+* Convolutional pairs can be factorized into depthwise separable convolutions.
+* Squeeze and excitation (SE) blocks can be added between convolutional pairs.
+* Normalization can be set between batch normalization and layer normalization.
+* ReLU is replaced with the approximated ReLU6.
+
+## Usage
+
+The following example demonstrates how to create a TCN model using the `Tcn` class. The model is defined using a set of parameters defined in the `TcnParams` and `TcnBlockParams` classes.
+
+```python
+import keras
+import neuralspot_edge as nse
+
+inputs = keras.Input(shape=(800, 1), name="inputs")
+num_classes = 5
+
+params = nse.models.TcnParams(
+    input_kernel=(1, 3),
+    input_norm="batch",
+    blocks=[
+        nse.models.TcnBlockParams(filters=8, kernel=(1, 3), dilation=(1, 1), dropout=0.1, ex_ratio=1, se_ratio=0, norm="batch"),
+        nse.models.TcnBlockParams(filters=16, kernel=(1, 3), dilation=(1, 2), dropout=0.1, ex_ratio=1, se_ratio=0, norm="batch"),
+        nse.models.TcnBlockParams(filters=24, kernel=(1, 3), dilation=(1, 4), dropout=0.1, ex_ratio=1, se_ratio=4, norm="batch"),
+        nse.models.TcnBlockParams(filters=32, kernel=(1, 3), dilation=(1, 8), dropout=0.1, ex_ratio=1, se_ratio=4, norm="batch"),
+    ],
+    output_kernel=(1, 3),
+    include_top=True,
+    use_logits=True,
+    model_name="tcn",
+)
+
+model = nse.models.TcnModel.model_from_params(
+    inputs=inputs,
+    params=params,
+    num_classes=num_classes,
+)
+```
+
+"""
 
 from typing import Literal
 
 import keras
 from pydantic import BaseModel, Field
 
-from .blocks import se_block
+from ..layers.squeeze_excite import squeeze_excite
 
 
 class TcnBlockParams(BaseModel):
-    """TCN block parameters"""
+    """TCN block parameters
+
+    Attributes:
+        depth (int): Layer depth
+        branch (int): Number of branches
+        filters (int): Number of filters
+        kernel (int | tuple[int, int]): Kernel size
+        dilation (int | tuple[int, int]): Dilation rate
+        ex_ratio (float): Expansion ratio
+        se_ratio (float): Squeeze and excite ratio
+        dropout (float | None): Dropout rate
+        norm (Literal["batch", "layer"] | None): Normalization type
+        activation (str): Activation function
+    """
 
     depth: int = Field(default=1, description="Layer depth")
     branch: int = Field(default=1, description="Number of branches")
@@ -24,7 +101,19 @@ class TcnBlockParams(BaseModel):
 
 
 class TcnParams(BaseModel):
-    """TCN parameters"""
+    """TCN parameters
+
+    Attributes:
+        input_kernel (int | tuple[int, int] | None): Input kernel size
+        input_norm (Literal["batch", "layer"] | None): Input normalization type
+        block_type (Literal["lg", "mb", "sm"]): Block type
+        blocks (list[TcnBlockParams]): TCN blocks
+        output_kernel (int | tuple[int, int]): Output kernel size
+        include_top (bool): Include top
+        use_logits (bool): Use logits
+        output_activation (str | None): Output activation
+        name (str): Model name
+    """
 
     input_kernel: int | tuple[int, int] | None = Field(default=None, description="Input kernel size")
     input_norm: Literal["batch", "layer"] | None = Field(default="layer", description="Input normalization type")
@@ -37,7 +126,7 @@ class TcnParams(BaseModel):
     name: str = Field(default="TCN", description="Model name")
 
 
-def norm_layer(norm: str, name: str) -> keras.Layer:
+def normalization(norm: str, name: str) -> keras.Layer:
     """Normalization layer
 
     Args:
@@ -96,7 +185,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
                 kernel_regularizer=keras.regularizers.L2(1e-3),
                 name=f"{lcl_name}.CN1",
             )(y)
-            y = norm_layer(params.norm, f"{lcl_name}.CN1")(y)
+            y = normalization(params.norm, f"{lcl_name}.CN1")(y)
 
             y = keras.layers.Conv2D(
                 filters=params.filters,
@@ -109,7 +198,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
                 kernel_regularizer=keras.regularizers.L2(1e-3),
                 name=f"{lcl_name}.CN2",
             )(y)
-            y = norm_layer(params.norm, f"{lcl_name}.CN2")(y)
+            y = normalization(params.norm, f"{lcl_name}.CN2")(y)
 
             if y_skip.shape[-1] == y.shape[-1]:
                 y = keras.layers.Add(name=f"{lcl_name}.ADD")([y, y_skip])
@@ -118,7 +207,7 @@ def tcn_block_lg(params: TcnBlockParams, name: str) -> keras.Layer:
 
             # Squeeze and excite
             if params.se_ratio > 0:
-                y = se_block(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
+                y = squeeze_excite(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
             # END IF
 
             if params.dropout and params.dropout > 0:
@@ -160,7 +249,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
                     kernel_regularizer=keras.regularizers.L2(1e-3),
                     name=f"{lcl_name}.EX.CN",
                 )(y)
-                y = norm_layer(params.norm, f"{lcl_name}.EX")(y)
+                y = normalization(params.norm, f"{lcl_name}.EX")(y)
                 y = keras.layers.Activation(params.activation, name=f"{lcl_name}.EX.ACT")(y)
             # END IF
 
@@ -177,7 +266,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
                     depthwise_regularizer=keras.regularizers.L2(1e-3),
                     name=f"{lcl_name}.DW.B{b+1}.CN",
                 )(yb)
-                yb = norm_layer(params.norm, f"{lcl_name}.DW.B{b+1}")(yb)
+                yb = normalization(params.norm, f"{lcl_name}.DW.B{b+1}")(yb)
                 branches.append(yb)
             # END FOR
 
@@ -191,7 +280,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
 
             # Squeeze and excite
             if params.se_ratio and y.shape[-1] // params.se_ratio > 0:
-                y = se_block(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
+                y = squeeze_excite(ratio=params.se_ratio, name=f"{lcl_name}.SE")(y)
             # END IF
 
             branches = []
@@ -207,7 +296,7 @@ def tcn_block_mb(params: TcnBlockParams, name: str) -> keras.Layer:
                     kernel_regularizer=keras.regularizers.L2(1e-3),
                     name=f"{lcl_name}.PW.B{b+1}.CN",
                 )(yb)
-                yb = norm_layer(params.norm, f"{lcl_name}.PW.B{b+1}")(yb)
+                yb = normalization(params.norm, f"{lcl_name}.PW.B{b+1}")(yb)
                 branches.append(yb)
             # END FOR
 
@@ -262,7 +351,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
                     depthwise_regularizer=keras.regularizers.L2(1e-3),
                     name=f"{lcl_name}.DW.B{b+1}.CN",
                 )(yb)
-                yb = norm_layer(params.norm, f"{lcl_name}.DW.B{b+1}")(yb)
+                yb = normalization(params.norm, f"{lcl_name}.DW.B{b+1}")(yb)
                 branches.append(yb)
             # END FOR
 
@@ -288,7 +377,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
                     kernel_regularizer=keras.regularizers.L2(1e-3),
                     name=f"{lcl_name}.PW.B{b+1}.CN",
                 )(yb)
-                yb = norm_layer(params.norm, f"{lcl_name}.PW.B{b+1}")(yb)
+                yb = normalization(params.norm, f"{lcl_name}.PW.B{b+1}")(yb)
                 branches.append(yb)
             # END FOR
 
@@ -303,7 +392,7 @@ def tcn_block_sm(params: TcnBlockParams, name: str) -> keras.Layer:
 
         # Squeeze and excite
         if y.shape[-1] // params.se_ratio > 1:
-            y = se_block(ratio=params.se_ratio, name=f"{name}.SE")(y)
+            y = squeeze_excite(ratio=params.se_ratio, name=f"{name}.SE")(y)
         # END IF
 
         # Skip connection
@@ -347,12 +436,12 @@ def tcn_core(params: TcnParams) -> keras.Layer:
     return layer
 
 
-def Tcn(
+def tcn_layer(
     x: keras.KerasTensor,
     params: TcnParams,
-    num_classes: int,
-) -> keras.Model:
-    """TCN model
+    num_classes: int|None = None,
+) -> keras.KerasTensor:
+    """TCN functional layer
 
     Args:
         x (keras.KerasTensor): Input tensor
@@ -360,7 +449,7 @@ def Tcn(
         num_classes (int): Number of classes
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Output tensor
     """
     requires_reshape = len(x.shape) == 3
     if requires_reshape:
@@ -368,6 +457,7 @@ def Tcn(
     else:
         y = x
 
+    ### Input layer
     # Encode each channel separately
     if params.input_kernel:
         y = keras.layers.DepthwiseConv2D(
@@ -376,11 +466,13 @@ def Tcn(
             name="ENC.CN",
             padding="same",
         )(y)
-        y = norm_layer(params.input_norm, "ENC")(y)
+        y = normalization(params.input_norm, "ENC")(y)
     # END IF
 
+    ### Core layers
     y = tcn_core(params)(y)
 
+    ### Output layer
     if params.include_top:
         # Add a per-point classification layer
         y = keras.layers.Conv2D(
@@ -400,24 +492,20 @@ def Tcn(
     if requires_reshape:
         y = keras.layers.Reshape(y.shape[2:])(y)
 
-    # Define the model
-    model = keras.Model(x, y, name=params.name)
-    return model
+    return y
 
+class TcnModel:
+    """Helper class to generate model from parameters"""
 
-def tcn_from_object(
-    x: keras.KerasTensor,
-    params: dict,
-    num_classes: int | None = None,
-) -> keras.Model:
-    """Create model from object
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: TcnParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = TcnParams(**params)
+        return tcn_layer(x=inputs, params=params, num_classes=num_classes)
 
-    Args:
-        x (keras.KerasTensor): Input tensor
-        params (dict): Model parameters.
-        num_classes (int, optional): # classes.
-
-    Returns:
-        keras.Model: Model
-    """
-    return Tcn(x=x, params=TcnParams(**params), num_classes=num_classes)
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: TcnParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = TcnModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

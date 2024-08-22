@@ -1,3 +1,11 @@
+"""
+# Sine Wave Layer API
+
+This module provides classes to build sine wave layers.
+
+Classes:
+    AddSineWave: Add sine wave to the input
+"""
 import keras
 import numpy as np
 from ...utils import nse_export

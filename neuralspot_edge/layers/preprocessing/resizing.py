@@ -1,3 +1,12 @@
+"""
+# Resizing layers API
+
+This module provides classes to build resizing layers.
+
+Classes:
+    Resizing1D: Resize 1D samples
+    Resizing2D: Resize 2D samples
+"""
 import keras
 from .base_augmentation import BaseAugmentation1D, BaseAugmentation2D
 from ...utils import nse_export

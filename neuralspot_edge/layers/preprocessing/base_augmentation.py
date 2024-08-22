@@ -1,3 +1,14 @@
+"""
+# Base Augmentation API
+
+Classes:
+    BaseAugmentation: Base augmentation
+    BaseAugmentation1D: Base 1D augmentation
+    BaseAugmentation2D: Base 2D augmentation
+
+Functions:
+    tf_keras_map: Map function for TensorFlow Keras
+"""
 from typing import Callable
 import keras
 
@@ -138,7 +149,7 @@ class BaseAugmentation(TFDataLayer):
         """Augment a batch of samples during training.
 
         Args:
-            input(NestedTensorValue): Batch of samples.
+            inputs (NestedTensorValue): Batch of samples.
 
         Returns:
             KerasTensor: Augmented batch of samples.
@@ -153,7 +164,7 @@ class BaseAugmentation(TFDataLayer):
             Implement this method if you need to augment labels.
 
         Args:
-            inputs(NestedTensorValue): Single label.
+            inputs (NestedTensorValue): Single label.
 
         Returns:
             keras.KerasTensor: Augmented label.
@@ -164,7 +175,7 @@ class BaseAugmentation(TFDataLayer):
         """Augment a batch of labels during training.
 
         Args:
-            inputs(NestedTensorValue): Batch of labels.
+            inputs (NestedTensorValue): Batch of labels.
 
         Returns:
             keras.KerasTensor: Augmented batch of labels.
@@ -269,14 +280,14 @@ class BaseAugmentation(TFDataLayer):
             del output[self.LABELS]
         return output
 
-    def compute_output_shape(self, input_shape, *args, **kwargs):
+    def compute_output_shape(self, input_shape: tuple[int, ...], *args, **kwargs) -> tuple[int, ...]:
         """By default assumes the shape of the input is the same as the output.
 
         Args:
-            input_shape: Shape of the input.
+            input_shape (tuple[int,...]): Input shape.
 
         Returns:
-            tuple: Shape of the output
+            tuple[int,...]: Output shape.
 
         !!! note
                 This method should be implemented by the subclass if the output shape is different from the input shape.

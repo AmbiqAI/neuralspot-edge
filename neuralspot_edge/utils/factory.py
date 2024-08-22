@@ -1,3 +1,13 @@
+"""
+# Factory Utility API
+
+This module provides a thread-safe singleton factory to register, create, and list items.
+
+Classes:
+    SingletonMeta: Thread-safe singleton metaclass
+    ItemFactory: Item factory
+
+"""
 from typing import TypeVar, Generic, Type
 from threading import Lock
 
@@ -36,7 +46,7 @@ class ItemFactory(Generic[T], metaclass=SingletonMeta):
         return super().__call__(*args, **kwargs)
 
     @classmethod
-    def shared(cls, factory: str):
+    def shared(cls, factory: str) -> "ItemFactory":
         """Get the shared instance of the factory
 
         Returns:

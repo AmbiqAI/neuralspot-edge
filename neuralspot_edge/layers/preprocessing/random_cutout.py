@@ -1,3 +1,13 @@
+"""
+# Random Cutout Layer API
+
+This module provides classes to build random cutout layers.
+
+Classes:
+    RandomCutout1D: Random cutout 1D
+    RandomCutout2D: Random cutout 2D
+
+"""
 import keras
 
 from ...utils import parse_factor

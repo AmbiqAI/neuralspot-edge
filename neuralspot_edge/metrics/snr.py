@@ -1,3 +1,11 @@
+"""
+# SNR Metrics API
+
+Signal-to-Noise Ratio (SNR) metric where y_true: signal, y_pred: signal + noise
+
+Classes:
+    Snr: Computes the Signal-to-Noise Ratio (SNR) in dB.
+"""
 import keras
 
 from ..utils import nse_export

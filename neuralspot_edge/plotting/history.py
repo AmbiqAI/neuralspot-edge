@@ -1,3 +1,12 @@
+"""
+# Training History Plotting API
+
+This module provides utility functions to plot training history metrics.
+
+Functions:
+    plot_history_metrics: Plot training history metrics
+
+"""
 from pathlib import Path
 import matplotlib.pyplot as plt
 

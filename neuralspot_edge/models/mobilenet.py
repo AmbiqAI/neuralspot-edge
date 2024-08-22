@@ -1,4 +1,16 @@
-""" " MobileNet"""
+"""
+# MobileNet Models API
+
+This module provides utility functions to generate MobileNet models.
+
+Classes:
+    MobileNetV1Params: MobileNetV1 parameters
+    MobileNetV1Model: Helper class to generate model from parameters
+
+Functions:
+    mobilenetv1_layer: Modified MobileNetV1 layer
+
+"""
 
 from typing import cast
 
@@ -7,7 +19,15 @@ from pydantic import BaseModel, Field
 
 
 class MobileNetV1Params(BaseModel):
-    """MobileNetV1 parameters"""
+    """MobileNetV1 parameters
+
+    Attributes:
+        input_filters (int): Input filters
+        input_strides (int | tuple[int, int]): Input stride
+        include_top (bool): Include top
+        output_activation (str | None): Output activation
+        name (str): Model name
+    """
 
     input_filters: int = Field(default=8, description="Input filters")
     input_strides: int | tuple[int, int] = Field(default=2, description="Input stride")
@@ -16,22 +36,22 @@ class MobileNetV1Params(BaseModel):
     name: str = Field(default="RegNet", description="Model name")
 
 
-def MobileNetV1(  # pylint: disable=too-many-statements
+def mobilenetv1_layer(
     x: keras.KerasTensor,
     num_classes: int,
     params: MobileNetV1Params,
-) -> keras.Model:
+) -> keras.KerasTensor:
     """Modified MobileNetV1
     MLPerf Tiny model for VWW:
     https://github.com/SiliconLabs/platform_ml_models/blob/master/eembc/Person_detection/mobilenet_v1_eembc.py
 
     Args:
         x (keras.KerasTensor): Model input
-        num_classes (int): # classes.
+        num_classes (int): Number of classes.
         params (MobileNetV1Params): Model parameters
 
     Returns:
-        keras.Model: Model
+        keras.KerasTensor: Model output
     """
     num_filters = params.input_filters
 
@@ -266,5 +286,21 @@ def MobileNetV1(  # pylint: disable=too-many-statements
     if params.include_top:
         y = keras.layers.Flatten()(y)
         y = keras.layers.Dense(num_classes)(y)
-    model = keras.Model(x, y, name="model")
-    return model
+
+    return y
+
+class MobileNetV1Model:
+    """Helper class to generate model from parameters"""
+
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: MobileNetV1Params|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = MobileNetV1Params(**params)
+        return mobilenetv1_layer(x=inputs, params=params, num_classes=num_classes)
+
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: MobileNetV1Params|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = MobileNetV1Model.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)

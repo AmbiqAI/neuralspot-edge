@@ -1,3 +1,12 @@
+"""
+# Contrastive Trainer API
+
+This module provides a trainer for contrastive learning.
+
+Classes:
+    ContrastiveTrainer: Trainer for contrastive learning
+
+"""
 import keras
 import tensorflow as tf
 from ..utils import convert_inputs_to_tf_dataset, nse_export

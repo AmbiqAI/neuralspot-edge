@@ -1,5 +1,17 @@
+"""
+# TFLite Converter API
+
+This module handles converting models to TensorFlow Lite format.
+
+Classes:
+    QuantizationType: Enum class for quantization types.
+    TfLiteKerasConverter: TensorFlow Lite model converter.
+    ConversionType: Enum class for conversion types.
+
+"""
 import io
 import tempfile
+from pathlib import Path
 from enum import StrEnum
 
 import keras
@@ -10,9 +22,19 @@ import pandas as pd
 import tensorflow as tf
 
 from ..cpp import xxd_c_dump
+from ...models import load_model
 
 
 class QuantizationType(StrEnum):
+    """Supported quantization formats
+
+    Attributes:
+        FP32: FP32 quantization
+        FP16: FP16 quantization
+        INT8: INT8 quantization
+        INT16X8: INT16X8 quantization
+
+    """
     FP32 = "FP32"
     FP16 = "FP16"
     INT8 = "INT8"
@@ -20,6 +42,13 @@ class QuantizationType(StrEnum):
 
 
 class ConversionType(StrEnum):
+    """Supported conversion types
+
+    Attributes:
+        KERAS: Use Keras model directly
+        SAVED_MODEL: Use TF Saved model format
+        CONCRETE: Lower to TF Concrete functions
+    """
     KERAS = "KERAS"
     SAVED_MODEL = "SAVED_MODEL"
     CONCRETE = "CONCRETE"
@@ -30,7 +59,7 @@ class TfLiteKerasConverter:
         self,
         model: keras.Model,
     ):
-        """TFLite Keras model converter that handles conversion, evaluation, and prediction.
+        """Converts Keras model to TFLite model.
 
         Args:
             model (keras.Model): Keras model
@@ -68,6 +97,18 @@ class TfLiteKerasConverter:
         self._converter: tf.lite.TFLiteConverter | None = None
         self._tflite_content: str | None = None
         self.tf_model_path = tempfile.TemporaryDirectory()
+
+    @classmethod
+    def from_saved_model(cls, model_path: Path) -> "TfLiteKerasConverter":
+        """Create converter from saved keras model
+
+        Args:
+            model_path (Path): Path to saved model
+
+        Returns:
+            TfLiteKerasConverter: Converter
+        """
+        return cls(model=load_model(model_path))
 
     def convert(
         self,

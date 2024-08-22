@@ -34,7 +34,6 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
-
 [tool.poetry.group.docs]
 optional = true
 
@@ -44,9 +43,9 @@ mkdocs-material = "^9.5.28"
 mkdocstrings-python = "^1.10.5"
 markdown-include = "^0.8.1"
 mkdocs-exclude = "^1.0.2"
-
-
-
+mkdocs-gen-files = "^0.5.0"
+mkdocs-section-index = "^0.3.9"
+mkdocs-literate-nav = "^0.6.1"
 
 [tool.poetry.group.ci]
 optional = true

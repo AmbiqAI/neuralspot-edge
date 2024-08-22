@@ -1,3 +1,12 @@
+"""
+# Random Sine Wave Layer API
+
+This module provides classes to build random sine wave layers.
+
+Classes:
+    RandomSineWave: Random sine wave
+
+"""
 import keras
 import numpy as np
 

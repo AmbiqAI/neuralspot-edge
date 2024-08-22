@@ -1,3 +1,9 @@
+"""
+# Augmentation Pipeline API
+
+Classes:
+    AugmentationPipeline: Pipeline of augmentation layers
+"""
 import keras
 
 from ...utils import nse_export

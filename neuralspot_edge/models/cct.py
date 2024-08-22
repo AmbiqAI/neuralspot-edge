@@ -1,10 +1,43 @@
+"""
+# CCT Model API
+
+This module provides utility functions to generate Compact Convolutional Transformer (CCT) models.
+
+Classes:
+    CCTParams: CCT parameters
+    CCTModel: Helper class to generate model from parameters
+    StochasticDepth: StochasticDepth
+
+Functions:
+    cct_tokenizer_block: CCT tokenizer block
+    cct_mlp: CCT MPL block
+    cct_layer: Generate Compact Convolutional Transformer model (CCT)
+
+"""
 from typing import Callable, cast
 
+from pydantic import BaseModel, Field
 import numpy as np
 import keras
 
-from ..utils import nse_export
+class CCTParams(BaseModel):
+    """CCT parameters
 
+    Attributes:
+        image_size (int): Image size
+        num_heads (int): Number of heads
+        projection_dim (int): Projection dimension
+        transformer_units (list[int]): Number of transformer units
+        positional_emb (bool): Enable positional embeddings
+        name (str): Model name
+    """
+
+    image_size: int = Field(..., description="Image size")
+    num_heads: int = Field(..., description="Number of heads")
+    projection_dim: int = Field(..., description="Projection dimension")
+    transformer_units: list[int] = Field(..., description="Number of transformer units")
+    positional_emb: bool = Field(..., description="Enable positional embeddings")
+    name: str = Field(default="CCT", description="Model name")
 
 def cct_tokenizer_block(
     kernel_size: int = 3,
@@ -23,8 +56,8 @@ def cct_tokenizer_block(
         padding (int, optional): Padding. Defaults to 1.
         pooling_kernel_size (int, optional): Pooling kernel size. Defaults to 3.
         pooling_stride (int, optional): Pooling stride. Defaults to 2.
-        num_conv_layers (int, optional): # conv layers. Defaults to 2.
-        filter_sizes (tuple[int], optional): # filters per layer. Defaults to (64, 128).
+        num_conv_layers (int, optional): Number of conv layers. Defaults to 2.
+        filter_sizes (tuple[int], optional): Number of filters per layer. Defaults to (64, 128).
     """
 
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
@@ -63,12 +96,11 @@ class StochasticDepth(keras.layers.Layer):
         super().__init__(**kwargs)
         self.drop_prob = drop_prop
 
-    def call(self, inputs, *args, **kwargs):
+    def call(self, inputs, *args, **kwargs) -> keras.KerasTensor:
         """Forward pass
 
         Args:
-            x (keras.KerasTensor): Input tensor
-            training (bool, optional): If training mode. Defaults to None.
+            inputs (keras.KerasTensor): Input tensor
 
         Returns:
             keras.KerasTensor: Output tensor
@@ -87,7 +119,7 @@ def cct_mlp(x: keras.KerasTensor, hidden_units: list[int], dropout_rate: float) 
 
     Args:
         x (keras.KerasTensor): Input tensor
-        hidden_units (list[int]): # hidden units
+        hidden_units (list[int]): Number of hidden units
         dropout_rate (float): Dropout rate
 
     Returns:
@@ -99,29 +131,20 @@ def cct_mlp(x: keras.KerasTensor, hidden_units: list[int], dropout_rate: float) 
     return x
 
 
-@nse_export(path="neuralspot_edge.models.CCT")
-def CCT(
+def cct_layer(
     x: keras.KerasTensor,
-    image_size: int,
-    num_heads: int,
-    projection_dim: int,
-    transformer_units: list[int],
-    positional_emb: bool,
+    params: CCTParams,
     num_classes: int,
-) -> keras.Model:
+) -> keras.KerasTensor:
     """Generate Compact Convolutional Transformer model (CCT)
 
     Args:
         x (keras.KerasTensor): Input tensor
-        image_size (int): Image size
-        num_heads (int): # of heads
-        projection_dim (int): Projection dimension
-        transformer_units (list[int]): # transformer units
-        positional_emb (bool): Enable positional embeddings
-        num_classes (int): # classes
+        params (CCTParams): Model parameters
+        num_classes (int): Number of classes
 
     Returns:
-        keras.Model: CCT model
+        keras.KerasTensor: Output tensor
     """
     transformer_layers = 2
     stochastic_depth_rate = 0.1
@@ -130,8 +153,8 @@ def CCT(
     encoded_patches = cct_tokenizer_block()(x)
 
     # Apply positional embedding.
-    if positional_emb:
-        dummy_outputs = cct_tokenizer_block()(keras.ops.zeros((1, image_size, image_size, 3)))
+    if params.positional_emb:
+        dummy_outputs = cct_tokenizer_block()(keras.ops.zeros((1, params.image_size, params.image_size, 3)))
         seq_length = dummy_outputs.shape[1]
         projection_dim = dummy_outputs.shape[-1]
 
@@ -153,7 +176,7 @@ def CCT(
         x1 = keras.layers.LayerNormalization(epsilon=1e-5)(encoded_patches)
 
         # Create a multi-head attention layer.
-        attention_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=projection_dim, dropout=0.1)(
+        attention_output = keras.layers.MultiHeadAttention(num_heads=params.num_heads, key_dim=projection_dim, dropout=0.1)(
             x1, x1
         )
 
@@ -165,7 +188,7 @@ def CCT(
         x3 = cast(keras.KerasTensor, keras.layers.LayerNormalization(epsilon=1e-5)(x2))
 
         # MLP.
-        x3 = cct_mlp(x3, hidden_units=transformer_units, dropout_rate=0.1)
+        x3 = cct_mlp(x3, hidden_units=params.transformer_units, dropout_rate=0.1)
 
         # Skip connection 2.
         x3 = StochasticDepth(dpr[i])(x3)
@@ -179,8 +202,23 @@ def CCT(
     weighted_representation = keras.ops.squeeze(weighted_representation, -2)
 
     # Classify outputs.
-    logits = keras.layers.Dense(num_classes)(weighted_representation)
+    y = keras.layers.Dense(num_classes)(weighted_representation)
 
-    # Create the Keras model.
-    model = keras.Model(inputs=x, outputs=logits)
-    return model
+    return y
+
+
+class CCTModel:
+    """Helper class to generate model from parameters"""
+
+    @staticmethod
+    def layer_from_params(inputs: keras.Input, params: CCTParams|dict, num_classes: int|None = None):
+        """Create layer from parameters"""
+        if isinstance(params, dict):
+            params = CCTParams(**params)
+        return cct_layer(x=inputs, params=params, num_classes=num_classes)
+
+    @staticmethod
+    def model_from_params(inputs: keras.Input, params: CCTParams|dict, num_classes: int|None = None):
+        """Create model from parameters"""
+        outputs = CCTModel.layer_from_params(inputs=inputs, params=params, num_classes=num_classes)
+        return keras.Model(inputs=inputs, outputs=outputs)
