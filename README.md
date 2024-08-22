@@ -10,8 +10,6 @@
 
 # NeuralSPOT Edge (NSE)
 
-NeuralSPOT Edge provides modular components for training and exporting AI models to Ambiq's family of ultra-low power SoCs.
-
 <img style="float: left; margin: 0px 15px 15px 0px;" src="./docs/assets/nse-logo-128.png" width="96px" />
 
 neuralSPOT Edge (**NSE**) is [Keras 3](https://keras.io) add-on focused on training and deploying models on resource-constrained, edge devices. NSE relies heavily on [Keras 3](https://keras.io) leveraging it's multi-backend support and customizable architecture. This package provides a variety of additional models, layers, optimizers, quantizers, and other components to help users train and deploy models for edge devices.
