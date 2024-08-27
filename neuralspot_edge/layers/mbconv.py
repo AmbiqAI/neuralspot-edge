@@ -89,15 +89,19 @@ def mbconv_block(
         # Expand: narrow -> wide
         if expand_ratio != 1:
             name_ex = f"{name}.exp" if name else None
+            name_ex_bn = f"{name}.exp.bn" if name else None
+            name_ex_act = f"{name}.exp.act" if name else None
             filters = int(input_filters * expand_ratio)
             y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), name=name_ex)(x)
-            y = batch_normalization(name=name_ex)(y)
-            y = keras.layers.Activation(activation, name=name_ex)(y)
+            y = batch_normalization(name=name_ex_bn)(y)
+            y = keras.layers.Activation(activation, name=name_ex_act)(y)
         else:
             y = x
 
         # Apply: wide -> wide
         name_dp = f"{name}.dp" if name else None
+        name_dp_bn = f"{name}.dp.bn" if name else None
+        name_dp_act = f"{name}.dp.act" if name else None
         y = keras.layers.DepthwiseConv2D(
             kernel_size=kernel_size,
             strides=strides if is_symmetric else (1, 1),
@@ -106,8 +110,8 @@ def mbconv_block(
             depthwise_initializer="he_normal",
             name=name_dp,
         )(y)
-        y = batch_normalization(name=name_dp, momentum=bn_momentum)(y)
-        y = keras.layers.Activation(activation, name=name_dp)(y)
+        y = batch_normalization(name=name_dp_bn, momentum=bn_momentum)(y)
+        y = keras.layers.Activation(activation, name=name_dp_act)(y)
         # NOTE: DepthwiseConv2D only supports equal size stride -> use maxpooling as needed
         if is_downsample:
             y = keras.layers.MaxPool2D(pool_size=strides, padding="same")(y)
@@ -119,22 +123,24 @@ def mbconv_block(
             y = se_layer(ratio=se_ratio * expand_ratio, name=name_se)(y)
 
         # Reduce: wide -> narrow
-        name_red = f"{name}.red" if name else None
+        name_rd = f"{name}.red" if name else None
+        name_rd_bn = f"{name}.red.bn" if name else None
         y = conv2d(
             output_filters,
             kernel_size=(1, 1),
             strides=(1, 1),
             padding="same",
-            name=name_red,
+            name=name_rd,
         )(y)
-        y = batch_normalization(name=name_red, momentum=bn_momentum)(y)
+        y = batch_normalization(name=name_rd_bn, momentum=bn_momentum)(y)
 
         # No activation
 
         if add_residual:
             name_res = f"{name}.res" if name else None
+            name_res_dp = f"{name}.res.dp" if name else None
             if droprate > 0:
-                y = keras.layers.Dropout(droprate, noise_shape=(None, 1, 1, 1))(y)
+                y = keras.layers.Dropout(droprate, noise_shape=(None, 1, 1, 1), name=name_res_dp)(y)
             y = keras.layers.add([x, y], name=name_res)
         return y
 
