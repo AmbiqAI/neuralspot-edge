@@ -201,8 +201,8 @@ def efficientnetv2_layer(
             y = keras.layers.Activation(params.output_activation)(y)
         elif not params.use_logits:
             y = keras.layers.Softmax()(y)
-
-    if requires_reshape:
+    # Only reshape if required
+    elif requires_reshape:
         y = keras.layers.Reshape(y.shape[2:])(y)
 
     return y

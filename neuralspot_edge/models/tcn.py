@@ -489,6 +489,7 @@ def tcn_layer(
         # END IF
     # END IF
 
+    # Always reshape back to original shape
     if requires_reshape:
         y = keras.layers.Reshape(y.shape[2:])(y)
 

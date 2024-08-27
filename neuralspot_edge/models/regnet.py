@@ -246,29 +246,36 @@ def regnet_core(
 
 
 def regnet_layer(
-    inputs: keras.KerasTensor,
+    x: keras.KerasTensor,
     params: RegNetParams,
     num_classes: int | None = None,
 ) -> keras.KerasTensor:
     """Create RegNet TF functional model
 
     Args:
-        inputs (keras.KerasTensor): Input tensor
+        x (keras.KerasTensor): Input tensor
         params (RegNetParams): Model parameters.
         num_classes (int, optional): Number of classes.
 
     Returns:
         keras.KerasTensor: Output tensor
     """
+    requires_reshape = len(x.shape) == 3
+    if requires_reshape:
+        y = keras.layers.Reshape((1,) + x.shape[1:])(x)
+    else:
+        y = x
+    # END IF
+
     # Stem
     if params.input_filters > 0:
         name = "stem"
         filters = make_divisible(params.input_filters, 8)
-        y = conv2d(filters, kernel_size=(3, 3), strides=params.input_strides, name=name)(inputs)
+        y = conv2d(filters, kernel_size=(3, 3), strides=params.input_strides, name=name)(y)
         y = batch_normalization(name=name)(y)
         y = keras.layers.Activation(params.input_activation, name=f"{name}.act")(y)
     else:
-        y = inputs
+        y = x
 
     y = regnet_core(blocks=params.blocks, block_style=params.block_style)(y)
 
@@ -289,6 +296,10 @@ def regnet_layer(
             y = keras.layers.Dense(num_classes, name=name)(y)
         if params.output_activation:
             y = keras.layers.Activation(params.output_activation)(y)
+
+    # Only reshape if needed
+    elif requires_reshape:
+        y = keras.layers.Reshape(y.shape[2:])(y)
 
     return y
 

@@ -213,7 +213,8 @@ def resnet_layer(
         if params.output_activation:
             y = keras.layers.Activation(params.output_activation)(y)
 
-    if requires_reshape:
+    # Only reshape if needed
+    elif requires_reshape:
         y = keras.layers.Reshape(y.shape[2:])(y)
 
     return y
