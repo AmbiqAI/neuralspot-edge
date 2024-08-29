@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "neuralspot-edge"
-version = "0.2.1"
-description = ""
+version = "0.2.2"
+description = "NSE is a Keras add-on targeting edge devices."
 authors = ["Ambiq AI <support.aitg@ambiq.com>"]
 readme = "README.md"
 packages = [
@@ -34,6 +34,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
+
 [tool.poetry.group.docs]
 optional = true
 
@@ -46,6 +47,8 @@ mkdocs-exclude = "^1.0.2"
 mkdocs-gen-files = "^0.5.0"
 mkdocs-section-index = "^0.3.9"
 mkdocs-literate-nav = "^0.6.1"
+mkdocs-jupyter = "^0.24.8"
+
 
 [tool.poetry.group.ci]
 optional = true
@@ -57,4 +60,7 @@ ruff = "^0.4.9"
 line-length = 120
 
 [tool.ruff.lint]
-ignore = ["F401"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]

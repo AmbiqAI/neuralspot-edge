@@ -132,9 +132,10 @@ def append_layers(model: keras.Model, layers: list[keras.Layer], copy_weights: b
     def call_function(layer, *args, **kwargs):
         out = layer(*args, **kwargs)
         if layer.name == last_layer_name:
-            for layer in layers:
-                out = layer(out)
-            out = keras.layers.Softmax()(out)
+            for new_layer in layers:
+                out = new_layer(out)
+            # END FOR
+        # END IF
         return out
 
     # END DEF

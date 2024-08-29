@@ -32,9 +32,9 @@ if ! command -v nvcc &> /dev/null; then
     cudnn_dev_pkg="libcudnn8-dev=${CUDNN_VERSION}"
     sudo apt install -yq "$cudnn_dev_pkg"
 
-    # Install  NVTX
-    nvtx_pkg="cuda-nvtx-${CUDA_VERSION/./-}"
-    sudo apt install -yq "$nvtx_pkg"
+    # # Install  NVTX
+    # nvtx_pkg="cuda-nvtx-${CUDA_VERSION/./-}"
+    # sudo apt install -yq "$nvtx_pkg"
 
     # Install CUDA Toolkit
     toolkit_pkg="cuda-toolkit-${CUDA_VERSION/./-}"

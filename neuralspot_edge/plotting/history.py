@@ -37,6 +37,19 @@ def plot_history_metrics(
 
     Returns:
         tuple[plt.Figure, plt.Axes]: Figure and axes handles
+
+    Example:
+    ```python
+
+    history = dict(
+        loss=[0.1, 0.2, 0.3, 0.4],
+        accuracy=[0.9, 0.8, 0.7, 0.6],
+        val_loss=[0.1, 0.2, 0.3, 0.4],
+        val_accuracy=[0.9, 0.8, 0.7, 0.6],
+    )
+
+    fig, ax = nse.plotting.plot_history_metrics(history, metrics=["loss", "accuracy"], include_val=True, stack=False)
+
     """
     num_axes = len(metrics) if stack else 1
     fig, ax = plt.subplots(num_axes, 1, figsize=figsize, **kwargs)

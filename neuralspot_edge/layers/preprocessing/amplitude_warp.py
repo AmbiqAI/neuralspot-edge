@@ -45,9 +45,8 @@ class AmplitudeWarp(BaseAugmentation1D):
         amplitude = (0.5, 2) # Noise amplitude range
         x = sig_amp*np.sin(2*np.pi*sig_freq*np.arange(duration)/sample_rate).reshape(-1, 1).astype(np.float32)
         x = keras.ops.convert_to_tensor(x)
-        lyr = nse.layers.preprocessing.RandomNoiseDistortion1D(sample_rate=sample_rate, frequency=noise_freq, amplitude=amplitude)
-        y = lyr(x, training=True)
-
+        lyr = nse.layers.preprocessing.AmplitudeWarp(sample_rate=sample_rate, frequency=noise_freq, amplitude=amplitude)
+        y = lyr(x)
         plt.plot(x.numpy())
         plt.plot(y.numpy())
         plt.show()

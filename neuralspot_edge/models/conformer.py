@@ -24,7 +24,6 @@ from pydantic import BaseModel, Field
 
 from ..layers.normalization import layer_normalization, batch_normalization
 from ..layers.activations import swish, glu, relu
-from ..utils import nse_export
 
 
 class SubsampleBlockParams(BaseModel):

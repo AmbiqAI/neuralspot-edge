@@ -3,7 +3,8 @@
 
 ## Overview
 
-EfficientNetV2 is an improvement to EfficientNet that incorporates additional optimizations to reduce both computation and memory. In particular, the architecture leverages both fused and non-fused MBConv blocks, non-uniform layer scaling, and training-aware NAS.
+EfficientNetV2 is an improvement to EfficientNet that incorporates additional optimizations to reduce both computation and memory.
+In particular, the architecture leverages both fused and non-fused MBConv blocks, non-uniform layer scaling, and training-aware NAS.
 
 For more info, refer to the original paper [EfficientNetV2: Smaller Models and Faster Training](https://arxiv.org/abs/2104.00298).
 

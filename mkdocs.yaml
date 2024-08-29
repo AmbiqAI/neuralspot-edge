@@ -10,20 +10,18 @@ nav:
   - Home:
     - Home: index.md
     - Getting Started: usage/index.md
-    - API Documentation: api/
+    - API: api/
     - Guides: guides/index.md
-    - Examples: examples/index.md
 
   - Getting Started:
     - usage/index.md
 
-  - API Documentation: api/
+  - API: api/
 
   - Guides:
     - guides/index.md
-
-  - Examples:
-    - examples/index.md
+    - Custom Model Architecture: ./guides/custom-model-architecture.ipynb
+    - Train CIFAR10 Model: ./guides/train-cifar-model.ipynb
 
 theme:
   name: material
@@ -112,6 +110,10 @@ plugins:
             show_docstring_attributes: true
             show_source: true
 
+  - mkdocs-jupyter:
+      include_requirejs: true
+      include_source: true
+
 extra_css:
   - css/mkdocstrings.css
   - css/termynal.css
@@ -120,6 +122,7 @@ extra_css:
 extra_javascript:
   - js/termynal.js
   - js/custom.js
+  - https://cdn.plot.ly/plotly-2.33.0.min.js
 
 markdown_extensions:
   - admonition
