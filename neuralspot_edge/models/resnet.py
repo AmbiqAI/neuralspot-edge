@@ -203,7 +203,7 @@ def resnet_layer(
 
     if params.include_top:
         name = "top"
-        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}_pool")(y)
         if 0 < params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)
 

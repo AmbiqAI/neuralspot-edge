@@ -266,7 +266,7 @@ def metaformer_block(
 
         if token_mixer:
             # Apply layer normalization
-            y1 = keras.layers.LayerNormalization(name=f"{name}.token_ln", axis=-1)(y)
+            y1 = keras.layers.LayerNormalization(name=f"{name}_token_ln", axis=-1)(y)
 
             # Apply token mixer
             y1 = token_mixer(y1)
@@ -277,7 +277,7 @@ def metaformer_block(
 
         if channel_mixer:
             # Apply layer normalization
-            y1 = keras.layers.LayerNormalization(name=f"{name}.ch_ln", axis=-1)(y)
+            y1 = keras.layers.LayerNormalization(name=f"{name}_ch_ln", axis=-1)(y)
 
             # Apply channel mixer
             y1 = channel_mixer(y1)
@@ -329,16 +329,16 @@ def metaformer_layer(
             y = metaformer_block(
                 token_mixer=token_mixer,
                 channel_mixer=channel_mixer,
-                name=f"B{b+1}.L{lyr+1}",
+                name=f"B{b+1}_L{lyr+1}",
             )(y)
         # END FOR
     # END FOR
 
     if params.include_top:
         name = "top"
-        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.gap")(y)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}_gap")(y)
         if 0 < params.dropout < 1:
-            y = keras.layers.Dropout(params.dropout, name=f"{name}.dropout")(y)
+            y = keras.layers.Dropout(params.dropout, name=f"{name}_dropout")(y)
         if num_classes is not None:
             y = keras.layers.Dense(num_classes, name=name)(y)
         if params.output_activation:

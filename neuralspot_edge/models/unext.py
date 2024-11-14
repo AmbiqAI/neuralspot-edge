@@ -89,21 +89,21 @@ def se_block(ratio: int = 8, name: str | None = None):
     def layer(x: keras.KerasTensor) -> keras.KerasTensor:
         num_chan = x.shape[-1]
         # Squeeze
-        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool" if name else None, keepdims=True)(x)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}_pool" if name else None, keepdims=True)(x)
 
         y = keras.layers.Conv2D(
             num_chan // ratio,
             kernel_size=1,
             use_bias=True,
-            name=f"{name}.sq" if name else None,
+            name=f"{name}_sq" if name else None,
         )(y)
 
-        y = keras.layers.Activation("relu6", name=f"{name}.relu" if name else None)(y)
+        y = keras.layers.Activation("relu6", name=f"{name}_relu" if name else None)(y)
 
         # Excite
-        y = keras.layers.Conv2D(num_chan, kernel_size=1, use_bias=True, name=f"{name}.ex" if name else None)(y)
-        y = keras.layers.Activation(keras.activations.hard_sigmoid, name=f"{name}.sigg" if name else None)(y)
-        y = keras.layers.Multiply(name=f"{name}.mul" if name else None)([x, y])
+        y = keras.layers.Conv2D(num_chan, kernel_size=1, use_bias=True, name=f"{name}_ex" if name else None)(y)
+        y = keras.layers.Activation(keras.activations.hard_sigmoid, name=f"{name}_sigg" if name else None)(y)
+        y = keras.layers.Multiply(name=f"{name}_mul" if name else None)([x, y])
         return y
 
     return layer
@@ -130,10 +130,10 @@ def norm_layer(norm: str, name: str) -> keras.Layer:
             keras.KerasTensor: Output tensor
         """
         if norm == "batch":
-            return keras.layers.BatchNormalization(axis=-1, name=f"{name}.BN")(x)
+            return keras.layers.BatchNormalization(axis=-1, name=f"{name}_BN")(x)
         if norm == "layer":
             ln_axis = 2 if x.shape[1] == 1 else 1 if x.shape[2] == 1 else (1, 2)
-            return keras.layers.LayerNormalization(axis=ln_axis, name=f"{name}.LN")(x)
+            return keras.layers.LayerNormalization(axis=ln_axis, name=f"{name}_LN")(x)
         return x
 
     return layer
@@ -167,16 +167,16 @@ def unext_block(
             use_bias=norm is None,
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.dwconv" if name else None,
+            name=f"{name}_dwconv" if name else None,
         )(x)
         if norm == "batch":
             y = keras.layers.BatchNormalization(
-                name=f"{name}.norm",
+                name=f"{name}_norm",
             )(y)
         elif norm == "layer":
             y = keras.layers.LayerNormalization(
                 axis=ln_axis,
-                name=f"{name}.norm" if name else None,
+                name=f"{name}_norm" if name else None,
             )(y)
         # END IF
 
@@ -191,17 +191,17 @@ def unext_block(
                 groups=input_filters,
                 kernel_initializer="he_normal",
                 kernel_regularizer=keras.regularizers.L2(1e-3),
-                name=f"{name}.expand" if name else None,
+                name=f"{name}_expand" if name else None,
             )(y)
 
             y = keras.layers.Activation(
                 "relu6",
-                name=f"{name}.relu" if name else None,
+                name=f"{name}_relu" if name else None,
             )(y)
 
         # Squeeze and excite
         if se_ratio > 1:
-            name_se = f"{name}.se" if name else None
+            name_se = f"{name}_se" if name else None
             y = se_block(ratio=se_ratio, name=name_se)(y)
 
         y = keras.layers.Conv2D(
@@ -212,7 +212,7 @@ def unext_block(
             use_bias=norm is None,
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.project" if name else None,
+            name=f"{name}_project" if name else None,
         )(y)
 
         if add_residual:
@@ -220,9 +220,9 @@ def unext_block(
                 y = keras.layers.Dropout(
                     dropout,
                     noise_shape=(y.shape),
-                    name=f"{name}.drop" if name else None,
+                    name=f"{name}_drop" if name else None,
                 )(y)
-            y = keras.layers.Add(name=f"{name}.res" if name else None)([x, y])
+            y = keras.layers.Add(name=f"{name}_res" if name else None)([x, y])
         return y
 
     # END DEF
@@ -258,7 +258,7 @@ def unext_core(
                 se_ratio=block.se_ratio,
                 dropout=block.dropout,
                 norm=block.norm,
-                name=f"{name}.D{d+1}",
+                name=f"{name}_D{d+1}",
             )(y)
         # END FOR
         skip_layers.append(y if block.skip else None)
@@ -272,17 +272,17 @@ def unext_core(
             use_bias=block.norm is None,
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.pool",
+            name=f"{name}_pool",
         )(y)
         if block.norm == "batch":
             y = keras.layers.BatchNormalization(
-                name=f"{name}.norm",
+                name=f"{name}_norm",
             )(y)
         elif block.norm == "layer":
             ln_axis = 2 if y.shape[1] == 1 else 1 if y.shape[2] == 1 else (1, 2)
             y = keras.layers.LayerNormalization(
                 axis=ln_axis,
-                name=f"{name}.norm",
+                name=f"{name}_norm",
             )(y)
         # END IF
     # END FOR
@@ -299,7 +299,7 @@ def unext_core(
                 se_ratio=block.se_ratio,
                 dropout=block.dropout,
                 norm=block.norm,
-                name=f"{name}.D{d+1}",
+                name=f"{name}_D{d+1}",
             )(y)
         # END FOR
 
@@ -311,7 +311,7 @@ def unext_core(
         #     padding="same",
         #     kernel_initializer="he_normal",
         #     kernel_regularizer=keras.regularizers.L2(1e-3),
-        #     name=f"{name}.unpool",
+        #     name=f"{name}_unpool",
         # )(y)
 
         y = keras.layers.Conv2D(
@@ -322,15 +322,15 @@ def unext_core(
             use_bias=block.norm is None,
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.conv",
+            name=f"{name}_conv",
         )(y)
-        y = keras.layers.UpSampling2D(size=block.strides, name=f"{name}.unpool")(y)
+        y = keras.layers.UpSampling2D(size=block.strides, name=f"{name}_unpool")(y)
 
         # Skip connection
         skip_layer = skip_layers.pop()
         if skip_layer is not None:
-            # y = keras.layers.Concatenate(name=f"{name}.S1.cat")([y, skip_layer])
-            y = keras.layers.Add(name=f"{name}.S1.cat")([y, skip_layer])
+            # y = keras.layers.Concatenate(name=f"{name}_S1_cat")([y, skip_layer])
+            y = keras.layers.Add(name=f"{name}_S1_cat")([y, skip_layer])
 
             # Use conv to reduce filters
             y = keras.layers.Conv2D(
@@ -340,24 +340,24 @@ def unext_core(
                 kernel_initializer="he_normal",
                 kernel_regularizer=keras.regularizers.L2(1e-3),
                 use_bias=block.norm is None,
-                name=f"{name}.S1.conv",
+                name=f"{name}_S1_conv",
             )(y)
 
             if block.norm == "batch":
                 y = keras.layers.BatchNormalization(
-                    name=f"{name}.S1.norm",
+                    name=f"{name}_S1_norm",
                 )(y)
             elif block.norm == "layer":
                 ln_axis = 2 if y.shape[1] == 1 else 1 if y.shape[2] == 1 else (1, 2)
                 y = keras.layers.LayerNormalization(
                     axis=ln_axis,
-                    name=f"{name}.S1.norm",
+                    name=f"{name}_S1_norm",
                 )(y)
             # END IF
 
             y = keras.layers.Activation(
                 "relu6",
-                name=f"{name}.S1.relu" if name else None,
+                name=f"{name}_S1_relu" if name else None,
             )(y)
         # END IF
 
@@ -369,7 +369,7 @@ def unext_core(
             se_ratio=block.se_ratio,
             dropout=block.dropout,
             norm=block.norm,
-            name=f"{name}.D{block.depth+1}",
+            name=f"{name}_D{block.depth+1}",
         )(y)
 
     # END FOR
@@ -407,7 +407,7 @@ def unext_layer(
             padding="same",
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name="NECK.conv",
+            name="NECK_conv",
             use_bias=True,
         )(y)
         if not params.use_logits:

@@ -165,10 +165,10 @@ def mobileone_block(
                 name=name,
             )(y)
             if se_ratio > 0:
-                name_se = f"{name}.se" if name else None
+                name_se = f"{name}_se" if name else None
                 y = se_layer(ratio=se_ratio, name=name_se)(y)
             # END IF
-            y = keras.layers.Activation(activation, name=f"{name}.act" if name else None)(y)
+            y = keras.layers.Activation(activation, name=f"{name}_act" if name else None)(y)
             return y
         # END IF
 
@@ -176,7 +176,7 @@ def mobileone_block(
 
         # Skip branch
         if has_skip_branch:
-            name_skip = f"{name}.skip" if name else None
+            name_skip = f"{name}_skip" if name else None
             y_skip = batch_normalization(name=name_skip)(x)
             branches.append(y_skip)
         # END IF
@@ -185,7 +185,7 @@ def mobileone_block(
 
         # Scale branch
         if kernel_len > 1:
-            name_scale = f"{name}.scale" if name else None
+            name_scale = f"{name}_scale" if name else None
             if is_depthwise:
                 y_scale = keras.layers.DepthwiseConv2D(
                     kernel_size=(1, 1),
@@ -193,7 +193,7 @@ def mobileone_block(
                     padding="valid",
                     use_bias=False,
                     depthwise_initializer="he_normal",
-                    name=f"{name_scale}.conv" if name_scale else None,
+                    name=f"{name_scale}_conv" if name_scale else None,
                 )(x)
                 y_scale = batch_normalization(name=name_scale)(y_scale)
                 if is_downsample:
@@ -207,7 +207,7 @@ def mobileone_block(
                     groups=groups,
                     use_bias=False,
                     kernel_initializer="he_normal",
-                    name=f"{name_scale}.conv" if name_scale else None,
+                    name=f"{name_scale}_conv" if name_scale else None,
                 )(x)
                 y_scale = batch_normalization(name=name_scale)(y_scale)
             branches.append(y_scale)
@@ -216,7 +216,7 @@ def mobileone_block(
         # Other branches
         yp = keras.layers.ZeroPadding2D(padding=padding)(x)
         for b in range(num_conv_branches):
-            name_branch = f"{name}.branch{b+1}" if name else None
+            name_branch = f"{name}_branch{b+1}" if name else None
             if is_depthwise:
                 y_branch = keras.layers.DepthwiseConv2D(
                     kernel_size=kernel_size,
@@ -224,7 +224,7 @@ def mobileone_block(
                     padding="valid",
                     use_bias=False,
                     depthwise_initializer="he_normal",
-                    name=f"{name_branch}.conv" if name else None,
+                    name=f"{name_branch}_conv" if name else None,
                 )(yp)
                 y_branch = batch_normalization(name=name_branch)(y_branch)
                 if is_downsample:
@@ -238,21 +238,21 @@ def mobileone_block(
                     padding="valid",
                     use_bias=False,
                     kernel_initializer="he_normal",
-                    name=f"{name_branch}.conv" if name else None,
+                    name=f"{name_branch}_conv" if name else None,
                 )(yp)
                 y_branch = batch_normalization(name=name_branch)(y_branch)
             branches.append(y_branch)
         # END FOR
 
         # Merge branches
-        y = keras.layers.Add(name=f"{name}.add" if name else None)(branches)
+        y = keras.layers.Add(name=f"{name}_add" if name else None)(branches)
 
         # Squeeze-Excite block
         if se_ratio > 0:
-            name_se = f"{name}.se" if name else None
+            name_se = f"{name}_se" if name else None
             y = se_layer(ratio=se_ratio, name=name_se)(y)
         # END IF
-        y = keras.layers.Activation(activation, name=f"{name}.act" if name else None)(y)
+        y = keras.layers.Activation(activation, name=f"{name}_act" if name else None)(y)
         return y
 
     # END DEF
@@ -290,7 +290,7 @@ def mobileone_layer(
         padding=params.input_padding,
         groups=1,
         inference_mode=inference_mode,
-        name=f"M0.B{0}.D{0}.DW",
+        name=f"M0_B{0}_D{0}_DW",
     )(y)
 
     for b, block in enumerate(params.blocks):
@@ -306,7 +306,7 @@ def mobileone_layer(
                 inference_mode=inference_mode,
                 se_ratio=se_ratio,
                 num_conv_branches=block.num_conv_branches,
-                name=f"M1.B{b+1}.D{d+1}.DW",
+                name=f"M1_B{b+1}_D{d+1}_DW",
             )(y)
 
             # Pointwise block
@@ -319,14 +319,14 @@ def mobileone_layer(
                 inference_mode=inference_mode,
                 se_ratio=se_ratio,
                 num_conv_branches=block.num_conv_branches,
-                name=f"M1.B{b+1}.D{d+1}.PW",
+                name=f"M1_B{b+1}_D{d+1}_PW",
             )(y)
         # END FOR
     # END FOR
 
     if params.include_top:
         name = "top"
-        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}_pool")(y)
         if 0 < params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)
         if num_classes is not None:

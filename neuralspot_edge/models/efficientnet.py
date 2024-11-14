@@ -121,7 +121,7 @@ def efficientnet_core(blocks: list[MBConvParams], drop_connect_rate: float = 0) 
         for i, block in enumerate(blocks):
             filters = make_divisible(block.filters, 8)
             for d in range(block.depth):
-                name = f"stage{i+1}.mbconv{d+1}"
+                name = f"stage{i+1}_mbconv{d+1}"
                 block_drop_rate = drop_connect_rate * global_block_id / total_blocks
                 x = mbconv_block(
                     filters,
@@ -178,7 +178,7 @@ def efficientnetv2_layer(
             name=name,
         )(y)
         y = batch_normalization(name=name)(y)
-        y = keras.layers.Activation(params.input_activation, name=f"{name}.act")(y)
+        y = keras.layers.Activation(params.input_activation, name=f"{name}_act")(y)
     # END IF
 
     y = efficientnet_core(blocks=params.blocks, drop_connect_rate=params.drop_connect_rate)(y)
@@ -188,11 +188,11 @@ def efficientnetv2_layer(
         filters = make_divisible(params.output_filters, 8)
         y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), padding="same", name=name)(y)
         y = batch_normalization(name=name)(y)
-        y = keras.layers.Activation(params.output_activation, name=f"{name}.act")(y)
+        y = keras.layers.Activation(params.output_activation, name=f"{name}_act")(y)
 
     if params.include_top:
         name = "top"
-        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}_pool")(y)
         if 0 < params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)
         if num_classes is not None:

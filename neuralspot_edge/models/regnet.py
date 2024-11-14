@@ -112,10 +112,10 @@ def yblock(
         groups = output_filters // group_width
         use_skip = (input_filters != output_filters) or (strides != 1 if isinstance(strides, int) else strides[0] != 1)
 
-        name_ex = f"{name}.exp" if name else None
+        name_ex = f"{name}_exp" if name else None
         y = conv2d(output_filters, kernel_size=(1, 1), name=name_ex)(x)
         y = batch_normalization(name=name_ex)(y)
-        y = keras.layers.Activation(activation, name=f"{name_ex}.act")(y)
+        y = keras.layers.Activation(activation, name=f"{name_ex}_act")(y)
 
         y = keras.layers.Conv2D(
             output_filters,
@@ -177,11 +177,11 @@ def zblock(
         use_add = input_filters == output_filters and (strides == 1 if isinstance(strides, int) else strides[0] == 1)
         expand_ratio = 2
 
-        name_ex = f"{name}.exp" if name else None
+        name_ex = f"{name}_exp" if name else None
         filters = input_filters * expand_ratio
         y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), name=name_ex)(x)
         y = batch_normalization(name=name_ex)(y)
-        y = keras.layers.Activation(activation, name=f"{name_ex}.act")(y)
+        y = keras.layers.Activation(activation, name=f"{name_ex}_act")(y)
 
         y = keras.layers.Conv2D(
             filters,
@@ -228,7 +228,7 @@ def regnet_core(
         for i, block in enumerate(blocks):
             filters = make_divisible(block.filters, 8)
             for d in range(block.depth):
-                name = f"stage{i}.block{d+1}"
+                name = f"stage{i}_block{d+1}"
                 x = block_fn(
                     output_filters=filters,
                     group_width=block.group_width,
@@ -273,7 +273,7 @@ def regnet_layer(
         filters = make_divisible(params.input_filters, 8)
         y = conv2d(filters, kernel_size=(3, 3), strides=params.input_strides, name=name)(y)
         y = batch_normalization(name=name)(y)
-        y = keras.layers.Activation(params.input_activation, name=f"{name}.act")(y)
+        y = keras.layers.Activation(params.input_activation, name=f"{name}_act")(y)
     else:
         y = x
 
@@ -284,11 +284,11 @@ def regnet_layer(
         filters = make_divisible(params.output_filters, 8)
         y = conv2d(filters, kernel_size=(1, 1), strides=(1, 1), padding="valid", name=name)(y)
         y = batch_normalization(name=name)(y)
-        y = keras.layers.Activation(params.output_activation, name=f"{name}.act")(y)
+        y = keras.layers.Activation(params.output_activation, name=f"{name}_act")(y)
 
     if params.include_top:
         name = "top"
-        y = keras.layers.GlobalAveragePooling2D(name=f"{name}.pool")(y)
+        y = keras.layers.GlobalAveragePooling2D(name=f"{name}_pool")(y)
 
         if params.dropout > 0 and params.dropout < 1:
             y = keras.layers.Dropout(params.dropout)(y)

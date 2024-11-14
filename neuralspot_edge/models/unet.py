@@ -169,7 +169,7 @@ def unet_layer(
         name = f"ENC{i+1}"
         ym = y
         for d in range(block.depth):
-            dname = f"{name}.D{d+1}"
+            dname = f"{name}_D{d+1}"
             if block.dilation is None:
                 dilation_rate = (1, 1)
             elif isinstance(block.dilation, int):
@@ -188,7 +188,7 @@ def unet_layer(
                     depthwise_regularizer=keras.regularizers.L2(1e-3),
                     pointwise_regularizer=keras.regularizers.L2(1e-3),
                     use_bias=block.norm is None,
-                    name=f"{dname}.conv",
+                    name=f"{dname}_conv",
                 )(ym)
             else:
                 ym = keras.layers.Conv2D(
@@ -200,13 +200,13 @@ def unet_layer(
                     kernel_initializer="he_normal",
                     kernel_regularizer=keras.regularizers.L2(1e-3),
                     use_bias=block.norm is None,
-                    name=f"{dname}.conv",
+                    name=f"{dname}_conv",
                 )(ym)
             if block.norm == "layer":
                 ym = layer_normalization(name=dname, axis=[1, 2])(ym)
             elif block.norm == "batch":
                 ym = batch_normalization(name=dname, momentum=0.99)(ym)
-            ym = keras.layers.Activation(block.activation, name=f"{dname}.act")(ym)
+            ym = keras.layers.Activation(block.activation, name=f"{dname}_act")(ym)
         # END FOR
 
         # Project residual
@@ -217,23 +217,23 @@ def unet_layer(
             padding="same",
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.skip",
+            name=f"{name}_skip",
         )(y)
 
         if block.dropout is not None:
             ym = keras.layers.Dropout(block.dropout, noise_shape=ym.shape)(ym)
-        y = keras.layers.add([ym, yr], name=f"{name}.add")
+        y = keras.layers.add([ym, yr], name=f"{name}_add")
 
         skip_layers.append(y if block.skip else None)
 
-        y = keras.layers.MaxPooling2D(block.pool, strides=block.strides, padding="same", name=f"{name}.pool")(y)
+        y = keras.layers.MaxPooling2D(block.pool, strides=block.strides, padding="same", name=f"{name}_pool")(y)
     # END FOR
 
     #### DECODER ####
     for i, block in enumerate(reversed(params.blocks)):
         name = f"DEC{i+1}"
         for d in range(block.ddepth or block.depth):
-            dname = f"{name}.D{d+1}"
+            dname = f"{name}_D{d+1}"
             if block.seperable:
                 y = keras.layers.SeparableConv2D(
                     block.filters,
@@ -246,7 +246,7 @@ def unet_layer(
                     depthwise_regularizer=keras.regularizers.L2(1e-3),
                     pointwise_regularizer=keras.regularizers.L2(1e-3),
                     use_bias=block.norm is None,
-                    name=f"{dname}.conv",
+                    name=f"{dname}_conv",
                 )(y)
             else:
                 y = keras.layers.Conv2D(
@@ -258,22 +258,22 @@ def unet_layer(
                     kernel_initializer="he_normal",
                     kernel_regularizer=keras.regularizers.L2(1e-3),
                     use_bias=block.norm is None,
-                    name=f"{dname}.conv",
+                    name=f"{dname}_conv",
                 )(y)
             if block.norm == "layer":
                 y = layer_normalization(name=dname, axis=[1, 2])(y)
             elif block.norm == "batch":
                 y = batch_normalization(name=dname, momentum=0.99)(y)
-            y = keras.layers.Activation(block.activation, name=f"{dname}.act")(y)
+            y = keras.layers.Activation(block.activation, name=f"{dname}_act")(y)
         # END FOR
 
-        y = keras.layers.UpSampling2D(size=block.strides, name=f"{dname}.unpool")(y)
+        y = keras.layers.UpSampling2D(size=block.strides, name=f"{dname}_unpool")(y)
 
         # Add skip connection
-        dname = f"{name}.D{block.depth+1}"
+        dname = f"{name}_D{block.depth+1}"
         skip_layer = skip_layers.pop()
         if skip_layer is not None:
-            y = keras.layers.concatenate([y, skip_layer], name=f"{dname}.cat")  # Can add or concatenate
+            y = keras.layers.concatenate([y, skip_layer], name=f"{dname}_cat")  # Can add or concatenate
             # Use 1x1 conv to reduce filters
             y = keras.layers.Conv2D(
                 block.filters,
@@ -282,16 +282,16 @@ def unet_layer(
                 kernel_initializer="he_normal",
                 kernel_regularizer=keras.regularizers.L2(1e-3),
                 use_bias=block.norm is None,
-                name=f"{dname}.conv",
+                name=f"{dname}_conv",
             )(y)
             if block.norm == "layer":
                 y = layer_normalization(name=dname, axis=[1, 2])(y)
             elif block.norm == "batch":
                 y = batch_normalization(name=dname, momentum=0.99)(y)
-            y = keras.layers.Activation(block.activation, name=f"{dname}.act")(y)
+            y = keras.layers.Activation(block.activation, name=f"{dname}_act")(y)
         # END IF
 
-        dname = f"{name}.D{block.depth+2}"
+        dname = f"{name}_D{block.depth+2}"
         if block.seperable:
             ym = keras.layers.SeparableConv2D(
                 block.filters,
@@ -303,7 +303,7 @@ def unet_layer(
                 depthwise_regularizer=keras.regularizers.L2(1e-3),
                 pointwise_regularizer=keras.regularizers.L2(1e-3),
                 use_bias=block.norm is None,
-                name=f"{dname}.conv",
+                name=f"{dname}_conv",
             )(y)
         else:
             ym = keras.layers.Conv2D(
@@ -314,13 +314,13 @@ def unet_layer(
                 kernel_initializer="he_normal",
                 kernel_regularizer=keras.regularizers.L2(1e-3),
                 use_bias=block.norm is None,
-                name=f"{dname}.conv",
+                name=f"{dname}_conv",
             )(y)
         if block.norm == "layer":
             ym = layer_normalization(name=dname, axis=[1, 2])(ym)
         elif block.norm == "batch":
             ym = batch_normalization(name=dname, momentum=0.99)(ym)
-        ym = keras.layers.Activation(block.activation, name=f"{dname}.act")(ym)
+        ym = keras.layers.Activation(block.activation, name=f"{dname}_act")(ym)
 
         # Project residual
         yr = keras.layers.Conv2D(
@@ -329,9 +329,9 @@ def unet_layer(
             padding="same",
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name=f"{name}.skip",
+            name=f"{name}_skip",
         )(y)
-        y = keras.layers.add([ym, yr], name=f"{name}.add")  # Add back residual
+        y = keras.layers.add([ym, yr], name=f"{name}_add")  # Add back residual
     # END FOR
 
     if params.include_top:
@@ -342,7 +342,7 @@ def unet_layer(
             padding="same",
             kernel_initializer="he_normal",
             kernel_regularizer=keras.regularizers.L2(1e-3),
-            name="NECK.conv",
+            name="NECK_conv",
             use_bias=True,
         )(y)
         if not params.use_logits:
