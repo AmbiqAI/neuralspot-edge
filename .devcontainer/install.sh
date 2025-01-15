@@ -44,8 +44,5 @@ if ! command -v nvcc &> /dev/null; then
     sudo rm -rf /var/lib/apt/lists/*
 fi
 
-# Install poetry
-pipx install poetry --pip-args '--no-cache-dir --force-reinstall'
-
 # Install project dependencies
-poetry install
+uv sync

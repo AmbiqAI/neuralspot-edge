@@ -9,6 +9,9 @@
         },
         "ghcr.io/devcontainers-contrib/features/pipenv:2": {
             "version": "latest"
+        },
+        "ghcr.io/va-h/devcontainers-features/uv:1": {
+            "version": "latest"
         }
     },
 
