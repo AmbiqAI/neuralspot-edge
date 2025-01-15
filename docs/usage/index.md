@@ -8,10 +8,10 @@ You can install __neuralspot-edge__ from PyPI via:
 pip install neuralspot-edge
 ```
 
-Alternatively, you can install using Poetry via:
+Alternatively, you can install using uv via:
 
 ```bash
-poetry add neuralspot-edge
+uv add neuralspot-edge
 ```
 
 !!! note

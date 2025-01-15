@@ -9,11 +9,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry
-      - uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.11'
-          cache: 'poetry'
-      - run: poetry install --no-root --only ci
-      - run: poetry run ruff check
+            enable-cache: true
+      - run: uv sync --only-group ci
+      - run: uv run ruff check
