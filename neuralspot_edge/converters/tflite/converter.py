@@ -24,6 +24,7 @@ import tensorflow as tf
 
 from ..cpp import xxd_c_dump
 from ...models import load_model
+from .utils import convert_flatbuffer_float32_to_float16
 
 
 class QuantizationType(StrEnum):
@@ -31,6 +32,7 @@ class QuantizationType(StrEnum):
 
     Attributes:
         FP32: FP32 quantization
+        FP16Q: FP16 dequantized to FP32
         FP16: FP16 quantization
         INT8: INT8 quantization
         INT16X8: INT16X8 quantization
@@ -38,6 +40,7 @@ class QuantizationType(StrEnum):
     """
 
     FP32 = "FP32"
+    FP16Q = "FP16Q"
     FP16 = "FP16"
     INT8 = "INT8"
     INT16X8 = "INT16X8"
@@ -147,7 +150,7 @@ class TfLiteKerasConverter:
                 self.model.export(self.tf_model_path.name, format="tf_saved_model")
                 converter = tf.lite.TFLiteConverter.from_saved_model(self.tf_model_path.name)
             # Following case is a workaround for bug (https://github.com/tensorflow/tflite-micro/issues/2319)
-            # Default TFLiteConverter generates equivalent graph w/ SpaceToBatchND operations but losses dilation_rate factor.
+            # Default TFLiteConverter generates equivalent graph w/ SpaceToBatchND operations but loses dilation_rate factor.
             case ConversionType.CONCRETE:
                 model_func = tf.function(func=self.model)
                 model_cf = model_func.get_concrete_function(input_spec)
@@ -172,6 +175,9 @@ class TfLiteKerasConverter:
                 pass
             # float16 weights, bias, activation
             case QuantizationType.FP16:
+                pass
+            # float16 weights only (dequantized to float32)
+            case QuantizationType.FP16Q:
                 converter.optimizations = [tf.lite.Optimize.DEFAULT]
                 converter.target_spec.supported_types = [tf.float16]
             # int8 weights, bias, activation
@@ -206,6 +212,11 @@ class TfLiteKerasConverter:
         self._converter = converter
 
         self._tflite_content = converter.convert()
+
+        # Experimental: This is a workaround to create fully float16 quantized model
+        # The routine creates a new flatbuffer with float16 weights, activations, and biases
+        if quantization == QuantizationType.FP16:
+            self._tflite_content = convert_flatbuffer_float32_to_float16(self._tflite_content)
 
         return self._tflite_content
 
